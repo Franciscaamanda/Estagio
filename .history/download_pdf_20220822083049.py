@@ -2,8 +2,8 @@ import PyPDF2
 from datetime import date
 import requests
 
-login = ""
-senha = ""
+login = "franciscaamanda843@gmail.com"
+senha = "0911Af@1"
 
 url_login = "https://inlabs.in.gov.br/logar.php"
 url_download = "https://inlabs.in.gov.br/index.php?p="

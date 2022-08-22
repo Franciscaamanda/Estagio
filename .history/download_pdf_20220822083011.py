@@ -2,8 +2,8 @@ import PyPDF2
 from datetime import date
 import requests
 
-login = ""
-senha = ""
+login = "franciscaamanda843@gmail.com"
+senha = "0911Af@1"
 
 url_login = "https://inlabs.in.gov.br/logar.php"
 url_download = "https://inlabs.in.gov.br/index.php?p="
@@ -21,7 +21,7 @@ mes = date.today().strftime("%m")
 dia = date.today().strftime("%d")
 data_completa = ano + "-" + mes + "-" + dia
 
-tipo_dou = ["do1", "do2", "do3"]
+tipo_dou = ["_do3", "_do2", "_do3"]
 
 
 def download():
