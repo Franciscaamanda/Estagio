@@ -30,15 +30,13 @@ Passo 2 - Abra a url "https://inlabs.in.gov.br/logar.php" no navegador;
 
 Passo 3 - Clique no ícone cadeado -> "A ligação é segura" -> "O certificado é válido";
 
-![alt text]("https://github.com/Franciscaamanda/Estagio/blob/master/imagens/Imagem1.jpg")
-
 Passo 4 - Logo em seguida, abrirá uma janela contendo algumas informações acerca do certificado digital,
 clique na aba "Certificação";
 
 Passo 5 - Neste item, aparecem 3 certificados, clique no "Autoridade Certificadora Raiz Brasileira v10" e logo em seguida, 
 selecione o botão "Exibir Certificado";
 
-Passo 6 - Com isto, aparecerá uma nova janela contendo as informações deste certificado. Clique em "Detalhes" e em 
+Passo 6 - Com isto, aparecerá uma nova janela contendo as informações deste certificado. Clique em "Detalhes" e, no item 
 "Mostrar" deixe definido a opção "Todas" e clique no botão "Copiar para Arquivo...";
 
 Passo 7 - Aparecerá disponível uma nova janela, clique em "Avançar";
