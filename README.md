@@ -30,7 +30,8 @@ biblioteca certifi do Python:
 * Passo 2 - Abra a url "https://inlabs.in.gov.br/logar.php" no navegador;
 
 * Passo 3 - Clique no ícone cadeado -> "A ligação é segura" -> "O certificado é válido";
-
+  
+![Alt text](Imagem1.jpg)
 
 * Passo 4 - Logo em seguida, abrirá uma janela contendo algumas informações acerca do certificado digital,
 clique na aba "Certificação";

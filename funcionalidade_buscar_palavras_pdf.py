@@ -67,6 +67,7 @@ def buscar_palavras(padrao):
                 resultado = re.findall(padrao, x)
                 print(f"Página {i + 1}:")
                 print(resultado)
+                input()
             print(f"Busca Encerrada no Arquivo {nome_arquivo}!")
     print("Procedimento Encerrado!")
 

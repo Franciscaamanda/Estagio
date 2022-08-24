@@ -60,6 +60,7 @@ def extrair_texto():
             for i in range(0, num):
                 page = texto.pages[i]
                 print(page.extract_text())
+                input('')
             print(f"Download Completo do Arquivo {nome_arquivo}!")
     print("Aplicação Encerrada!")
 
