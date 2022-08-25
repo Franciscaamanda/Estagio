@@ -31,21 +31,29 @@ biblioteca certifi do Python:
 
 * Passo 3 - Clique no ícone cadeado -> "A ligação é segura" -> "O certificado é válido";
   
-![Alt text](Imagem1.jpg)
+![Alt text](imagens/Imagem1.jpg)
+
+![Alt text](imagens/Imagem2.jpg)
 
 * Passo 4 - Logo em seguida, abrirá uma janela contendo algumas informações acerca do certificado digital,
-clique na aba "Certificação";
+clique na aba "Caminho de Certificação";
 
 * Passo 5 - Neste item, aparecem 3 certificados, clique no "Autoridade Certificadora Raiz Brasileira v10" e logo em seguida, 
 selecione o botão "Exibir Certificado";
 
+![Alt text](imagens/Imagem3.png)
+
 * Passo 6 - Com isto, aparecerá uma nova janela contendo as informações deste certificado. Clique em "Detalhes" e, no item 
 "Mostrar" deixe definido a opção "Todas" e clique no botão "Copiar para Arquivo...";
+
+![Alt text](imagens/Imagem4.jpg)
 
 * Passo 7 - Aparecerá disponível uma nova janela, clique em "Avançar";
 
 * Passo 8 - No formato do arquivo de exportação, marque a opção "codificado na base 64 (*.cer)" e depois clique em 
 "Avançar";
+
+![Alt text](imagens/Imagem5.jpg)
 
 * Passo 9 - Selecione o local em que salvará o arquivo e salve na mesma pasta que está o arquivo cacert.pem e clique em 
 "Avançar";

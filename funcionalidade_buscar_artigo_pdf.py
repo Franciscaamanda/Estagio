@@ -57,19 +57,16 @@ def buscar_palavras(padrao):
         with open(nome_arquivo, 'rb') as arquivo:
             texto = PyPDF2.PdfReader(arquivo)
             num = texto.numPages
-            #Inicia a busca da palavra por página:
+            #Extrai o texto do arquivo por página:
             for i in range(0, num):
                 page = texto.pages[i]
                 page.extract_text()
-                #Extrai o texto do arquivo:
                 x = page.extract_text()
-                #Faz a busca da palavra no texto:
-                #resultado = re.findall(padrao, x)
-                if re.findall(padrao, x):
+                #Verifica se o artigo contém a palavra pesquisada:
+                if re.findall(padrao, x, re.IGNORECASE):
                     print(f"Página {i + 1}:")
+                    #Imprime o texto do artigo:
                     print(x)
-                    #print(resultado)
-                #input()
             print(f"Busca Encerrada no Arquivo {nome_arquivo}!")
     print("Procedimento Encerrado!")
 
