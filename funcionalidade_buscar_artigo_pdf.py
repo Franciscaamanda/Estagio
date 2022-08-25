@@ -81,4 +81,4 @@ def login():
 
 
 login()
-buscar_palavras("O MINISTRO DE ESTADO DA AGRICULTURA")
+buscar_palavras("O Secretário Especial de Administração")
