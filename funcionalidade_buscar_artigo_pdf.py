@@ -53,7 +53,7 @@ def download():
 def buscar_palavras(padrao):
     for dou_secao in tipo_dou.split(' '):
         nome_arquivo = data_completa + "-" + dou_secao + ".pdf"
-        print(f"Ocorrências encontradas da palavra {padrao} no arquivo {nome_arquivo}:")
+        print(f"Procurando ocorrências da palavra {padrao} no arquivo {nome_arquivo}...")
         with open(nome_arquivo, 'rb') as arquivo:
             texto = PyPDF2.PdfReader(arquivo)
             num = texto.numPages
@@ -64,6 +64,7 @@ def buscar_palavras(padrao):
                 x = page.extract_text()
                 #Verifica se o artigo contém a palavra pesquisada:
                 if re.findall(padrao, x, re.IGNORECASE):
+                    print(f"Ocorrências encontradas da palavra {padrao} no arquivo {nome_arquivo}:")
                     print(f"Página {i + 1}:")
                     #Imprime o texto do artigo:
                     print(x)
