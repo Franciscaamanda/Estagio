@@ -63,20 +63,20 @@ def buscar_artigo(padrao):
             zip_ref.extractall(diretorio_arquivo)
         #Adiciona os arquivos em uma lista
         for arq in zip_ref.namelist():
-            arquivos.append(arq)
+            extensao = os.path.splitext(arq)
+            if extensao[1] == '.xml':
+                arquivos.append(arq)
         #Faz a leitura de cada arquivo:
         for file in arquivos:
-            print(f"Buscando no arquivo {file}...")
             with open(file, 'r', encoding="utf-8") as arquivo:
-                texto = arquivo.read()
-                bs_texto = BeautifulSoup(texto, 'xml')
+                conteudo_xml = arquivo.read()
+                bs_texto = BeautifulSoup(conteudo_xml, 'xml')
                 #Extrai o texto do arquivo xml:
-                x = bs_texto.find('Texto').get_text()
+                texto_artigo = bs_texto.find('Texto').get_text()
                 # Verifica se o arquivo tem a palavra pesquisada:
-                if re.findall(padrao, x, re.IGNORECASE):
+                if re.findall(padrao, texto_artigo, re.IGNORECASE):
                     print(f"Arquivo {file}:")
-                    print(x)
-            print(f"Busca Encerrada no arquivo {file}!")
+                    print(texto_artigo)
     print("Busca Encerrada!")
 
 
