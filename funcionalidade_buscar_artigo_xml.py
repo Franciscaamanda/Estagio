@@ -53,22 +53,31 @@ def download():
     print("Aplicação encerrada")
 
 
-def descompactar_zip():
+def buscar_artigo(padrao):
+    arquivos = list()
     for dou_secao in tipo_dou.split(' '):
         nome_arquivo = data_completa + "-" + dou_secao + ".zip"
         diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
+        #Extrai os arquivos:
         with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
             zip_ref.extractall(diretorio_arquivo)
-
-
-def buscar_palavras(padrao):
-    with open("530_20220825_14828973.xml", 'r', encoding="utf-8") as arquivo:
-        texto = arquivo.read()
-        bs_texto = BeautifulSoup(texto, 'xml')
-        x = bs_texto.find('Texto').get_text()
-        if re.findall(padrao, x, re.IGNORECASE):
-            print(f"Arquivo:")
-            print(x)
+        #Adiciona os arquivos em uma lista
+        for arq in zip_ref.namelist():
+            arquivos.append(arq)
+        #Faz a leitura de cada arquivo:
+        for file in arquivos:
+            print(f"Buscando no arquivo {file}...")
+            with open(file, 'r', encoding="utf-8") as arquivo:
+                texto = arquivo.read()
+                bs_texto = BeautifulSoup(texto, 'xml')
+                #Extrai o texto do arquivo xml:
+                x = bs_texto.find('Texto').get_text()
+                # Verifica se o arquivo tem a palavra pesquisada:
+                if re.findall(padrao, x, re.IGNORECASE):
+                    print(f"Arquivo {file}:")
+                    print(x)
+            print(f"Busca Encerrada no arquivo {file}!")
+    print("Busca Encerrada!")
 
 
 def login():
@@ -80,5 +89,4 @@ def login():
 
 
 login()
-descompactar_zip()
-buscar_palavras("")
+buscar_artigo("")
