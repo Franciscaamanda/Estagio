@@ -3,8 +3,7 @@ import requests
 import zipfile
 import os
 from bs4 import BeautifulSoup
-import xml.etree.ElementTree as et
-from xml.dom import minidom
+import re
 
 login = ""
 senha = ""
@@ -62,11 +61,14 @@ def descompactar_zip():
             zip_ref.extractall(diretorio_arquivo)
 
 
-def extrair_texto():
-    with open("515_20220825_14833147.xml", 'r', encoding="utf-8") as arquivo:
+def buscar_palavras(padrao):
+    with open("530_20220825_14828973.xml", 'r', encoding="utf-8") as arquivo:
         texto = arquivo.read()
         bs_texto = BeautifulSoup(texto, 'xml')
-        print(bs_texto.find('xml'))
+        x = bs_texto.find('Texto').get_text()
+        if re.findall(padrao, x, re.IGNORECASE):
+            print(f"Arquivo:")
+            print(x)
 
 
 def login():
@@ -79,4 +81,4 @@ def login():
 
 login()
 descompactar_zip()
-extrair_texto()
+buscar_palavras("")
