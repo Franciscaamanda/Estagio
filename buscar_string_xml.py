@@ -2,10 +2,11 @@ from bs4 import BeautifulSoup
 import re
 import zipfile
 import os
+import numpy as np
 
 dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
               "Secretaria Especial do Tesouro e Orçamento",
-              "Superintedência de Seguros Privados",
+              "Superintendência de Seguros Privados",
               "Superintedência Nacional de Previdência Complementar",
               "Banco Central do Brasil"]}
 
@@ -23,6 +24,8 @@ def buscar_artigo(dicionario):
         extensao = os.path.splitext(arq)
         if extensao[1] == '.xml':
             arquivos.append(arq)
+
+    print('****')
     # Faz a leitura de cada arquivo:
     for file in arquivos:
         with open(file, 'r', encoding="utf-8") as arquivo:
@@ -34,25 +37,19 @@ def buscar_artigo(dicionario):
             ementa_artigo = bs_texto.find('Ementa').get_text()
             ementa = bs_texto.find('Ementa').get_text()
             #Percorre os cada item do dicionário:
-            for escopo, itens in dicionario.items():
-                for item in itens:
-                    artcategory = bs_texto.find(artCategory=item)
-                    if bs_texto.find(artCategory=item):
-                        print(file)
-            #if re.findall(artcategory, ementa, re.IGNORECASE):
-            #        print(f"Arquivo {file}:")
-            #        print(identifica_artigo)
-            #        print(ementa_artigo)
-            #        print(texto_artigo)
-            #        print(bs_texto.find('article').get_text())
+            escopo = bs_texto.find('article').get('artCategory')
+            if True in np.isin(dicionario['Escopo'], escopo.split('/')):
+            #if escopo in dicionario['Escopo']:
+                print("Nosso dicionário: ") 
+                print(dicionario['Escopo'])
+                print("artCategory: " + escopo) 
+                print(escopo.split('/'))
+                print(np.isin(dicionario['Escopo'], escopo.split('/')))
+                print('***********************')
+                print(escopo + ' --- ' + file)
+                print('***********************')
+            #else:
+            #    print(escopo)
 
 
 buscar_artigo(dicionario)
-
-with open("530_20220825_14833382.xml", 'r', encoding="utf-8") as arquivo:
-    conteudo_xml = arquivo.read()
-    bs_texto = BeautifulSoup(conteudo_xml, 'xml')
-    for escopo, itens in dicionario.items():
-        for item in itens:
-            artcategory = bs_texto.find(artCategory="Ministério da Educação/Universidade Federal do Triângulo Mineiro/Pró-Reitoria de Administração/Departamento de Licitações e Contratos/Divisão de Contratos")
-            #print(artcategory)
