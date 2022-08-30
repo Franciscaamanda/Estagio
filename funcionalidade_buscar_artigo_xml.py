@@ -60,12 +60,15 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                         "Superintendência Nacional de Previdência Complementar",
                         "Banco Central do Brasil"],
               "Titulo": ["Resolução Coremec",
-                         " CMN",
-                         "PORTARIA SETO"]
+                         "([ ]CMN[ ])|([ ]CMN[0-9])",
+                         "PORTARIA SETO",
+                         "Resolução BCB",
+                         "Instrução Normativa BCB",
+                         "Despachos do Presidente da República"]
               }
 
 
-def buscar_artigo(dicionario):
+def buscar_escopo(dicionario):
     for dou_secao in tipo_dou.split(' '):
         nome_arquivo = data_completa + "-" + dou_secao + ".zip"
         diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
@@ -84,25 +87,43 @@ def buscar_artigo(dicionario):
             with open(file, 'r', encoding="utf-8") as arquivo:
                 conteudo_xml = arquivo.read()
                 bs_texto = BeautifulSoup(conteudo_xml, 'xml')
-                #Extrai uma determinada parte do arquivo xml:
+                #Extrai o conteúdo do artCategory do arquivo xml:
                 escopo = bs_texto.find('article').get('artCategory')
-                titulo = bs_texto.find('Identifica').get_text()
                 #Faz a busca pelo atributo artCategory:
                 if True in np.isin(dicionario['Escopo'], escopo.split('/')):
-                # if escopo in dicionario['Escopo']:
-                    print("Nosso dicionário: ")
-                    print(dicionario['Escopo'])
-                    print("artCategory: " + escopo)
-                    print(escopo.split('/'))
-                    print(np.isin(dicionario['Escopo'], escopo.split('/')))
-                    print('***********************')
                     print(escopo + ' --- ' + file)
-                    print('***********************')
-                #Faz a busca pela tag Identifica:
+                    #print("Nosso dicionário: ")
+                    #print(dicionario['Escopo'])
+                    #print("artCategory: " + escopo)
+                 #   print(escopo.split('/'))
+                  #  print(np.isin(dicionario['Escopo'], escopo.split('/')))
+    print("Busca Encerrada!")
+
+
+def buscar_titulo(dicionario):
+    for dou_secao in tipo_dou.split(' '):
+        nome_arquivo = data_completa + "-" + dou_secao + ".zip"
+        diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
+        arquivos = list()
+        #Extrai os arquivos:
+        with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
+            zip_ref.extractall(diretorio_arquivo)
+        #Adiciona os arquivos em uma lista
+        for arq in zip_ref.namelist():
+            extensao = os.path.splitext(arq)
+            if extensao[1] == '.xml':
+                arquivos.append(arq)
+        #Faz a leitura de cada arquivo:
+        for file in arquivos:
+            with open(file, 'r', encoding="utf-8") as arquivo:
+                conteudo_xml = arquivo.read()
+                bs_texto = BeautifulSoup(conteudo_xml, 'xml')
+                #Extrai o conteúdo do identifica do arquivo xml:
+                titulo = bs_texto.find('Identifica').get_text()
+                #Faz a busca pelo atributo artCategory:
                 for item in dicionario['Titulo']:
                     if re.findall(item, titulo, re.IGNORECASE):
                         print(f"Arquivo encontrado pelo Título:{file}")
-                        print('***********************')
     print("Busca Encerrada!")
 
 
@@ -115,4 +136,5 @@ def login():
 
 
 login()
-buscar_artigo(dicionario)
+#buscar_escopo(dicionario)
+buscar_titulo(dicionario)
