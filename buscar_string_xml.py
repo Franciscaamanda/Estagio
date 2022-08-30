@@ -2,19 +2,23 @@ from bs4 import BeautifulSoup
 import re
 import zipfile
 import os
+import numpy as np
 
 dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
-              "Secretaria Especial do Tesouro e Orçamento",
-              "Superintedência de Seguros Privados",
-              "Superintedência Nacional de Previdência Complementar",
-              "Banco Central do Brasil"]}
+                        "Secretaria Especial do Tesouro e Orçamento",
+                        "Superintendência de Seguros Privados",
+                        "Superintedência Nacional de Previdência Complementar",
+                        "Banco Central do Brasil"],
+              "Titulo": ["Resolução Coremec",
+                         " CMN",
+                         "PORTARIA SETO"]}
 
-for escopo, itens in dicionario.items():
-    for item in itens:
-        print(item)
+
+for item in dicionario['Titulo']:
+    print(item)
 
 def buscar_artigo(dicionario):
-    nome_arquivo = "2022-08-25-DO1.zip"
+    nome_arquivo = "2022-08-30-DO1.zip"
     diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
     arquivos = list()
     with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
@@ -29,30 +33,23 @@ def buscar_artigo(dicionario):
             conteudo_xml = arquivo.read()
             bs_texto = BeautifulSoup(conteudo_xml, 'xml')
             # Extrai o texto do arquivo xml:
-            texto_artigo = bs_texto.find('Texto').get_text()
-            identifica_artigo = bs_texto.find('Identifica').get_text()
-            ementa_artigo = bs_texto.find('Ementa').get_text()
-            ementa = bs_texto.find('Ementa').get_text()
-            #Percorre os cada item do dicionário:
-            for escopo, itens in dicionario.items():
+            texto_xml = bs_texto.find('Texto').get_text()
+            texto_xml = bs_texto.find('xml').get_text()
+            identifica_xml = bs_texto.find('Identifica').get_text()
+            #print(identifica_xml)
+            ementa_xml = bs_texto.find('Ementa').get_text()
+            artcategory_xml = bs_texto.find('article').get('artCategory')
+            #Percorre cada item do dicionário:
+            #for escopo, itens in dicionario.items():
+            #    for item in itens:
+            #        if bs_texto.find(artCategory=item):
+            #            print(file)
+                        #texto_artcategory = bs_texto.select('[artCategory]')
+            for chave, itens in dicionario.items():
                 for item in itens:
-                    artcategory = bs_texto.find(artCategory=item)
-                    if bs_texto.find(artCategory=item):
-                        print(file)
-            #if re.findall(artcategory, ementa, re.IGNORECASE):
-            #        print(f"Arquivo {file}:")
-            #        print(identifica_artigo)
-            #        print(ementa_artigo)
-            #        print(texto_artigo)
-            #        print(bs_texto.find('article').get_text())
+                    if chave == 'Titulo':
+                        if re.findall(item, identifica_xml, re.IGNORECASE):
+                            print(f"Arquivo {file}")
 
 
 buscar_artigo(dicionario)
-
-with open("530_20220825_14833382.xml", 'r', encoding="utf-8") as arquivo:
-    conteudo_xml = arquivo.read()
-    bs_texto = BeautifulSoup(conteudo_xml, 'xml')
-    for escopo, itens in dicionario.items():
-        for item in itens:
-            artcategory = bs_texto.find(artCategory="Ministério da Educação/Universidade Federal do Triângulo Mineiro/Pró-Reitoria de Administração/Departamento de Licitações e Contratos/Divisão de Contratos")
-            #print(artcategory)

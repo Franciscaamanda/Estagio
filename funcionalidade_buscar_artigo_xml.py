@@ -4,9 +4,10 @@ import zipfile
 import os
 from bs4 import BeautifulSoup
 import re
+import numpy as np
 
-login = ""
-senha = ""
+login = "franciscaamanda843@gmail.com"
+senha = "0911Af@1"
 
 tipo_dou = "DO1 DO2 DO3"
 #tipo_dou = "DO1 DO2 DO3 DO1E DO2E DO3E"  # Seções separadas por espaço
@@ -53,11 +54,22 @@ def download():
     print("Aplicação encerrada")
 
 
-def buscar_artigo(padrao):
-    arquivos = list()
+dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
+                        "Secretaria Especial do Tesouro e Orçamento",
+                        "Superintendência de Seguros Privados",
+                        "Superintendência Nacional de Previdência Complementar",
+                        "Banco Central do Brasil"],
+              "Titulo": ["Resolução Coremec",
+                         " CMN",
+                         "PORTARIA SETO"]
+              }
+
+
+def buscar_artigo(dicionario):
     for dou_secao in tipo_dou.split(' '):
         nome_arquivo = data_completa + "-" + dou_secao + ".zip"
         diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
+        arquivos = list()
         #Extrai os arquivos:
         with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
             zip_ref.extractall(diretorio_arquivo)
@@ -71,12 +83,18 @@ def buscar_artigo(padrao):
             with open(file, 'r', encoding="utf-8") as arquivo:
                 conteudo_xml = arquivo.read()
                 bs_texto = BeautifulSoup(conteudo_xml, 'xml')
-                #Extrai o texto do arquivo xml:
-                texto_artigo = bs_texto.find('Texto').get_text()
-                # Verifica se o arquivo tem a palavra pesquisada:
-                if re.findall(padrao, texto_artigo, re.IGNORECASE):
-                    print(f"Arquivo {file}:")
-                    print(texto_artigo)
+                #Extrai uma determinada parte do arquivo xml:
+                artcategory_xml = bs_texto.find('article').get('artCategory').split('/')
+                identifica_xml = bs_texto.find('Identifica').get_text()
+                #Faz a busca pelo atributo artCategory:
+                arr = np.isin(dicionario['Escopo'], artcategory_xml)
+                for item in arr:
+                    if item:
+                        print(f"Arquivos encontrados pelo Escopo:{file}")
+                #Faz a busca pela tag Identifica:
+                for item in dicionario['Titulo']:
+                    if re.findall(item, identifica_xml, re.IGNORECASE):
+                        print(f"Arquivo encontrado pelo Título:{file}")
     print("Busca Encerrada!")
 
 
@@ -89,4 +107,4 @@ def login():
 
 
 login()
-buscar_artigo("")
+buscar_artigo(dicionario)
