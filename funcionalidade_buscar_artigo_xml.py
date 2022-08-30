@@ -9,8 +9,8 @@ import numpy as np
 login = ""
 senha = ""
 
-tipo_dou = "DO1 DO2 DO3"
-#tipo_dou = "DO1 DO2 DO3 DO1E DO2E DO3E"  # Seções separadas por espaço
+#tipo_dou = "DO1 DO2 DO3"
+tipo_dou = "DO1 DO2 DO3 DO1E DO2E DO3E"  # Seções separadas por espaço
 # Opções DO1 DO2 DO3 DO1E DO2E DO3E
 
 url_login = "https://inlabs.in.gov.br/logar.php"
@@ -50,7 +50,6 @@ def download():
             del f
         elif response_arquivo.status_code == 404:
             print("Arquivo não encontrado: %s" % (data_completa + "-" + dou_secao + ".zip"))
-
     print("Aplicação encerrada")
 
 
@@ -58,13 +57,15 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                         "Secretaria Especial do Tesouro e Orçamento",
                         "Superintendência de Seguros Privados",
                         "Superintendência Nacional de Previdência Complementar",
-                        "Banco Central do Brasil"],
+                        "Banco Central do Brasil",
+                        "Conselho de Controle de Atividades Financeiras"],
               "Titulo": ["Resolução Coremec",
                          "([ ]CMN[ ])|([ ]CMN[0-9])",
                          "PORTARIA SETO",
                          "Resolução BCB",
                          "Instrução Normativa BCB",
-                         "Despachos do Presidente da República"]
+                         "Despachos do Presidente da República",
+                         "Resolução"]
               }
 
 
@@ -106,24 +107,25 @@ def buscar_titulo(dicionario):
         diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
         arquivos = list()
         #Extrai os arquivos:
-        with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
-            zip_ref.extractall(diretorio_arquivo)
-        #Adiciona os arquivos em uma lista
-        for arq in zip_ref.namelist():
-            extensao = os.path.splitext(arq)
-            if extensao[1] == '.xml':
-                arquivos.append(arq)
-        #Faz a leitura de cada arquivo:
-        for file in arquivos:
-            with open(file, 'r', encoding="utf-8") as arquivo:
-                conteudo_xml = arquivo.read()
-                bs_texto = BeautifulSoup(conteudo_xml, 'xml')
-                #Extrai o conteúdo do identifica do arquivo xml:
-                titulo = bs_texto.find('Identifica').get_text()
-                #Faz a busca pelo atributo artCategory:
-                for item in dicionario['Titulo']:
-                    if re.findall(item, titulo, re.IGNORECASE):
-                        print(f"Arquivo encontrado pelo Título:{file}")
+        if os.path.isfile(nome_arquivo):
+            with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
+                zip_ref.extractall(diretorio_arquivo)
+            #Adiciona os arquivos em uma lista
+            for arq in zip_ref.namelist():
+                extensao = os.path.splitext(arq)
+                if extensao[1] == '.xml':
+                    arquivos.append(arq)
+            #Faz a leitura de cada arquivo:
+            for file in arquivos:
+                with open(file, 'r', encoding="utf-8") as arquivo:
+                    conteudo_xml = arquivo.read()
+                    bs_texto = BeautifulSoup(conteudo_xml, 'xml')
+                    #Extrai o conteúdo do identifica do arquivo xml:
+                    titulo = bs_texto.find('Identifica').get_text()
+                    #Faz a busca pelo atributo artCategory:
+                    for item in dicionario['Titulo']:
+                        if re.findall(item, titulo, re.IGNORECASE):
+                            print(f"Arquivo encontrado pelo Título:{file}")
     print("Busca Encerrada!")
 
 
