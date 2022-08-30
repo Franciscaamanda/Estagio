@@ -6,8 +6,8 @@ from bs4 import BeautifulSoup
 import re
 import numpy as np
 
-login = "franciscaamanda843@gmail.com"
-senha = "0911Af@1"
+login = ""
+senha = ""
 
 tipo_dou = "DO1 DO2 DO3"
 #tipo_dou = "DO1 DO2 DO3 DO1E DO2E DO3E"  # Seções separadas por espaço
@@ -79,22 +79,30 @@ def buscar_artigo(dicionario):
             if extensao[1] == '.xml':
                 arquivos.append(arq)
         #Faz a leitura de cada arquivo:
+        print('****')
         for file in arquivos:
             with open(file, 'r', encoding="utf-8") as arquivo:
                 conteudo_xml = arquivo.read()
                 bs_texto = BeautifulSoup(conteudo_xml, 'xml')
                 #Extrai uma determinada parte do arquivo xml:
-                artcategory_xml = bs_texto.find('article').get('artCategory').split('/')
-                identifica_xml = bs_texto.find('Identifica').get_text()
+                escopo = bs_texto.find('article').get('artCategory')
+                titulo = bs_texto.find('Identifica').get_text()
                 #Faz a busca pelo atributo artCategory:
-                arr = np.isin(dicionario['Escopo'], artcategory_xml)
-                for item in arr:
-                    if item:
-                        print(f"Arquivos encontrados pelo Escopo:{file}")
+                if True in np.isin(dicionario['Escopo'], escopo.split('/')):
+                # if escopo in dicionario['Escopo']:
+                    print("Nosso dicionário: ")
+                    print(dicionario['Escopo'])
+                    print("artCategory: " + escopo)
+                    print(escopo.split('/'))
+                    print(np.isin(dicionario['Escopo'], escopo.split('/')))
+                    print('***********************')
+                    print(escopo + ' --- ' + file)
+                    print('***********************')
                 #Faz a busca pela tag Identifica:
                 for item in dicionario['Titulo']:
-                    if re.findall(item, identifica_xml, re.IGNORECASE):
+                    if re.findall(item, titulo, re.IGNORECASE):
                         print(f"Arquivo encontrado pelo Título:{file}")
+                        print('***********************')
     print("Busca Encerrada!")
 
 

@@ -11,7 +11,8 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                         "Banco Central do Brasil"],
               "Titulo": ["Resolução Coremec",
                          " CMN",
-                         "PORTARIA SETO"]}
+                         "PORTARIA SETO",
+                         "PORTARIA SUSEP Nº 7.997"]}
 
 
 for item in dicionario['Titulo']:
@@ -27,29 +28,38 @@ def buscar_artigo(dicionario):
         extensao = os.path.splitext(arq)
         if extensao[1] == '.xml':
             arquivos.append(arq)
+
+    print('****')
     # Faz a leitura de cada arquivo:
     for file in arquivos:
         with open(file, 'r', encoding="utf-8") as arquivo:
             conteudo_xml = arquivo.read()
             bs_texto = BeautifulSoup(conteudo_xml, 'xml')
             # Extrai o texto do arquivo xml:
-            texto_xml = bs_texto.find('Texto').get_text()
-            texto_xml = bs_texto.find('xml').get_text()
-            identifica_xml = bs_texto.find('Identifica').get_text()
-            #print(identifica_xml)
-            ementa_xml = bs_texto.find('Ementa').get_text()
-            artcategory_xml = bs_texto.find('article').get('artCategory')
-            #Percorre cada item do dicionário:
-            #for escopo, itens in dicionario.items():
-            #    for item in itens:
-            #        if bs_texto.find(artCategory=item):
-            #            print(file)
-                        #texto_artcategory = bs_texto.select('[artCategory]')
-            for chave, itens in dicionario.items():
-                for item in itens:
-                    if chave == 'Titulo':
-                        if re.findall(item, identifica_xml, re.IGNORECASE):
-                            print(f"Arquivo {file}")
+            xml = bs_texto.find('xml').get_text()
+            titulo = bs_texto.find('Identifica').get_text()
+            texto_artigo = bs_texto.find('Texto').get_text()
+            identifica_artigo = bs_texto.find('Identifica').get_text()
+            ementa_artigo = bs_texto.find('Ementa').get_text()
+            ementa = bs_texto.find('Ementa').get_text()
+            #Percorre os cada item do dicionário:
+            escopo = bs_texto.find('article').get('artCategory')
+            if True in np.isin(dicionario['Escopo'], escopo.split('/')):
+            #if escopo in dicionario['Escopo']:
+                print("Nosso dicionário: ") 
+                print(dicionario['Escopo'])
+                print("artCategory: " + escopo) 
+                print(escopo.split('/'))
+                print(np.isin(dicionario['Escopo'], escopo.split('/')))
+                print('***********************')
+                print(escopo + ' --- ' + file)
+                print('***********************')
+            #else:
+            #    print(escopo)
+            for item in dicionario['Titulo']:
+                if re.findall(item, titulo, re.IGNORECASE):
+                    print(f"Arquivo encontrado pelo Título:{file}")
+                    print('***********************')
 
 
 buscar_artigo(dicionario)
