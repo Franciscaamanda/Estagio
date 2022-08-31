@@ -64,8 +64,27 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                          "PORTARIA SETO",
                          "Resolução BCB",
                          "Instrução Normativa BCB",
-                         "Despachos do Presidente da República",
-                         "Resolução"]
+                         "Despachos do Presidente da República"],
+              "Ementa": ["Programa Nacional de Apoio às Microempresas e Empresas de Pequeno Porte",
+                         "lavagem de dinheiro",
+                         "Administração Pública federal direta, autárquia e fundacional",
+                         "Decreto nº 10.835",
+                         "Subdelega competências para a prática de atos de gestão de pessoas no âmbito do Ministério da Economia às Autoridades que menciona",
+                         "((Sistema de Pessoal Civil da Administração Pública Federal)|(Sistema de Pessoal Civil da Administração Federal)|(SIPEC))",
+                         "Comitê Gestor da Segurança da Informação",
+                         "Lei nº 8.429",
+                         "Lei nº 14.133",
+                         "Programa de Estímulo ao Crédito",
+                         "(Lei geral de proteção de dados)|(LGPD)",
+                         "Banco Central",
+                         "Conselho de Controle de Atividades Financeiras",
+                         "Grupo de Ação Financeira contra a Lavagem de Dinheiro e o Financiamento do Terrorismo",
+                         "Comitê de Regulação e Fiscalização dos Mercados Financeiro, de Capitais, de Seguros, de Previdência e Capitalização",
+                         "Proteção de Dados Pessoais",
+                         "Comitê de Estabilidade Financeira",
+                         "Educação Financeira",
+                         "Imposto sobre Operações Financeiras",
+                         "Poder|Poderes"]
               }
 
 
@@ -75,29 +94,30 @@ def buscar_escopo(dicionario):
         diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
         arquivos = list()
         #Extrai os arquivos:
-        with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
-            zip_ref.extractall(diretorio_arquivo)
-        #Adiciona os arquivos em uma lista
-        for arq in zip_ref.namelist():
-            extensao = os.path.splitext(arq)
-            if extensao[1] == '.xml':
-                arquivos.append(arq)
-        #Faz a leitura de cada arquivo:
-        print('****')
-        for file in arquivos:
-            with open(file, 'r', encoding="utf-8") as arquivo:
-                conteudo_xml = arquivo.read()
-                bs_texto = BeautifulSoup(conteudo_xml, 'xml')
-                #Extrai o conteúdo do artCategory do arquivo xml:
-                escopo = bs_texto.find('article').get('artCategory')
-                #Faz a busca pelo atributo artCategory:
-                if True in np.isin(dicionario['Escopo'], escopo.split('/')):
-                    print(escopo + ' --- ' + file)
-                    #print("Nosso dicionário: ")
-                    #print(dicionario['Escopo'])
-                    #print("artCategory: " + escopo)
-                 #   print(escopo.split('/'))
-                  #  print(np.isin(dicionario['Escopo'], escopo.split('/')))
+        if os.path.isfile(nome_arquivo):
+            with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
+                zip_ref.extractall(diretorio_arquivo)
+            #Adiciona os arquivos em uma lista
+            for arq in zip_ref.namelist():
+                extensao = os.path.splitext(arq)
+                if extensao[1] == '.xml':
+                    arquivos.append(arq)
+            #Faz a leitura de cada arquivo:
+            print('****')
+            for file in arquivos:
+                with open(file, 'r', encoding="utf-8") as arquivo:
+                    conteudo_xml = arquivo.read()
+                    bs_texto = BeautifulSoup(conteudo_xml, 'xml')
+                    #Extrai o conteúdo do artCategory do arquivo xml:
+                    escopo = bs_texto.find('article').get('artCategory')
+                    #Faz a busca pelo atributo artCategory:
+                    if True in np.isin(dicionario['Escopo'], escopo.split('/')):
+                        print(escopo + ' --- ' + file)
+                        #print("Nosso dicionário: ")
+                        #print(dicionario['Escopo'])
+                        #print("artCategory: " + escopo)
+                    #   print(escopo.split('/'))
+                    #  print(np.isin(dicionario['Escopo'], escopo.split('/')))
     print("Busca Encerrada!")
 
 
@@ -115,6 +135,7 @@ def buscar_titulo(dicionario):
                 extensao = os.path.splitext(arq)
                 if extensao[1] == '.xml':
                     arquivos.append(arq)
+            print('****')
             #Faz a leitura de cada arquivo:
             for file in arquivos:
                 with open(file, 'r', encoding="utf-8") as arquivo:
@@ -125,7 +146,47 @@ def buscar_titulo(dicionario):
                     #Faz a busca pelo atributo artCategory:
                     for item in dicionario['Titulo']:
                         if re.findall(item, titulo, re.IGNORECASE):
-                            print(f"Arquivo encontrado pelo Título:{file}")
+                            print(titulo + " --- " + file)
+    print("Busca Encerrada!")
+
+
+def buscar_ementa(dicionario):
+    for dou_secao in tipo_dou.split(' '):
+        nome_arquivo = data_completa + "-" + dou_secao + ".zip"
+        diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
+        arquivos = list()
+        #Extrai os arquivos:
+        if os.path.isfile(nome_arquivo):
+            with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
+                zip_ref.extractall(diretorio_arquivo)
+            #Adiciona os arquivos em uma lista
+            for arq in zip_ref.namelist():
+                extensao = os.path.splitext(arq)
+                if extensao[1] == '.xml':
+                    arquivos.append(arq)
+            print('****')
+            #Faz a leitura de cada arquivo:
+            for file in arquivos:
+                with open(file, 'r', encoding="utf-8") as arquivo:
+                    conteudo_xml = arquivo.read()
+                    bs_texto = BeautifulSoup(conteudo_xml, 'xml')
+                    #Extrai o conteúdo do identifica do arquivo xml:
+                    ementa = bs_texto.find('Ementa').get_text()
+                    #Faz a busca pelo atributo artCategory:
+                    for item in dicionario['Ementa']:
+                        #Frases que não podem estar contidas no item 5 da chave Ementa do dicionário
+                        padrao1 = "revogação de atos normativos"
+                        padrao2 = "dos servidores públicos dos Estados, do Distrito Federal e dos Municípios"
+                        #padrao3 = "no âmbito"
+                        #padrao4 = "no âmbito do Banco Central"
+                        if dicionario['Ementa'][5]:
+                            if re.findall(item, ementa, re.IGNORECASE) \
+                                    and not re.findall(padrao1, ementa, re.IGNORECASE) \
+                                    and not re.findall(padrao2, ementa, re.IGNORECASE):
+                                    print(ementa + " --- " + file)
+                        else:
+                            if re.findall(item, ementa, re.IGNORECASE):
+                                print(ementa + " --- " + file)
     print("Busca Encerrada!")
 
 
@@ -139,4 +200,5 @@ def login():
 
 login()
 #buscar_escopo(dicionario)
-buscar_titulo(dicionario)
+#buscar_titulo(dicionario)
+buscar_ementa(dicionario)
