@@ -85,15 +85,29 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                          "Educação Financeira",
                          "Imposto sobre Operações Financeiras",
                          "(Poder (.*?Executivo))|(Poderes (.*?Executivo))"],
-              "Presidente do Banco Central": ["Roberto de Oliveira Campos Neto"],
-              "Diretor de Relacionamento, Cidadania e Supervisão de Conduta": ["Maurício Costa de Moura"],
-              "Diretor de Fiscalização": ["Paulo sérgio Neves de Souza"],
-              "Diretor de Política Econômica": ["Bruno Serra Fernandes"],
-              "Diretor de Política Monetária": ["Fabio Kanczuk"],
-              "Diretor de Assuntos Internacionais e de Gestão de Riscos Corporativos": ["Fernanda Magalhães Rumenos Guardado"],
-              "Diretor de Organização do Sistema Financeiro e de Resolução": ["João Manuel Pinho de Mello"],
-              "Diretor de Regulação": ["Otávio Ribeiro Damaso"],
-              "Diretor de Administração": ["Carolina de Assis Barros"]
+              "Assinatura": [["Presidente do Banco Central do Brasil", "Roberto de Oliveira Campos Neto"],
+                            ["Diretor de Relacionamento, Cidadania e Supervisão de Conduta", "Maurício Costa de Moura"],
+                            ["Diretor de Fiscalização", "Paulo sérgio Neves de Souza"],
+                            ["Diretor de Política Econômica", "Bruno Serra Fernandes"],
+                            ["Diretor de Política Monetária", "Fabio Kanczuk"],
+                            ["Diretor de Assuntos Internacionais e de Gestão de Riscos Corporativos", "Fernanda Magalhães Rumenos Guardado"],
+                            ["Diretor de Organização do Sistema Financeiro e de Resolução", "João Manoel Pinho de Mello"],
+                            ["Diretor de Regulação", "Otávio Ribeiro Damaso"],
+                            ["Diretor de Administração", "Carolina de Assis Barros"]],
+              "Conteudo": ["cargo de Presidente do Banco Central",
+                           "cargo de (Diretor | Diretora) do Banco Central",
+                           "cargo de Ministro de Estado da Economia",
+                           "cargo de Secretário Especial de Fazenda do Ministério da Economia",
+                           "cargo de Secretário-Executivo do Ministério da Economia",
+                           "cargo de Secretário de Política Econômica",
+                           "cargo de Secretário do Tesouro Nacional",
+                           "cargo de Secretário do Tesouro e Orçamento do Ministério da Economia",
+                           "cargo de Presidente da casa da Moeda do Brasil",
+                           "cargo de Diretor da Comissão de Valores Mobiliários",
+                           "cargo de Superintendente da Superintendência de Seguros Privados",
+                           "cargo de Diretor da Superintendência de Seguros Privados",
+                           "cargo de Diretor-Superintendente da Superintendência de Seguros Privados",
+                           "cargo de Diretor de Licenciamento da Superintendência Nacional de Previdência Complementar"]
               }
 
 
@@ -193,14 +207,19 @@ def buscar_ementa(dicionario):
                                     and not re.findall(padrao2, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao3, ementa, re.IGNORECASE):
                                 print(ementa + " --- " + file)
-                        elif item in dicionario['Ementa'][19]:
+                        elif item in dicionario['Ementa'][20]:#19
                             #padrao_130 = "(Poder (.*?Executivo))|(Poderes (.*?Executivo))"
                             #Extrai o título do arquivo xml
                             titulo = bs_texto.find('Identifica').get_text()
                             padrao_titulo = "SETO/ME"
-                            #Intervalo para realizar a busca no conteúdo da ementa
                             inicio_busca = ementa.find('Poder')
-                            fim_busca = inicio_busca + len('Executivo') + 130
+                            item1 = 'Poder '
+                            item2 = 'Poderes'
+                            #Calcula o intervalo para realizar a busca no conteúdo da ementa
+                            if re.findall(item1, ementa, re.IGNORECASE):
+                                fim_busca = inicio_busca + len('Poder') + 130
+                            elif re.findall(item2, ementa, re.IGNORECASE):
+                                fim_busca = inicio_busca + len('Poderes') + 130
                             if re.findall(item, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao_titulo, titulo, re.IGNORECASE) \
                                     and re.findall(item, ementa[inicio_busca:fim_busca], re.IGNORECASE):
@@ -230,13 +249,23 @@ def buscar_assinatura(dicionario):
             for file in arquivos:
                 with open(file, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
-                    bs_texto = BeautifulSoup(conteudo_xml, 'xml')
-                    #Extrai o conteúdo do cargo e da assinatura do arquivo xml:
-                    cargo = bs_texto.find('Texto').get('cargo')
-                    assinatura = bs_texto.find('Texto').get('assina')
-                for item in dicionario[cargo]:
-                    if re.findall(item, assinatura, re.IGNORECASE):
-                        print(assinatura + ' --- ' + file)
+                    #O parâmetro xml foi substituído por lxml para obter o conteúdo de um parágrafo específico:
+                    bs_texto = BeautifulSoup(conteudo_xml, 'lxml')
+                    #Extrai o cargo e a assinatura do arquivo xml caso existam:
+                    if bs_texto.find('p', {'class':'assina'}):
+                        assinatura = bs_texto.find('p', {'class':'assina'}).get_text()
+                        #print(file + ' --- ' + assinatura)
+                    else:
+                        assinatura = ""
+                    if bs_texto.find('p', {'class': 'cargo'}):
+                        cargo = bs_texto.find('p', {'class': 'cargo'}).get_text()
+                        #print(file + ' --- ' + cargo)
+                    else:
+                        cargo = ""
+                #Faz a busca pela assinatura e pelo cargo:
+                for item in dicionario["Assinatura"]:
+                    if re.findall(item[1], assinatura, re.IGNORECASE) or re.findall(item[0], cargo, re.IGNORECASE):
+                        print(assinatura + ' --- ' + cargo + ' --- ' + file)
     print("Busca Encerrada!")
 
 
