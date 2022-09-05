@@ -11,7 +11,7 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
 
 
 def buscar_artigo(padrao):
-    nome_arquivo = "2022-09-02-DO2.zip"
+    nome_arquivo = "2022-09-05-DO3.zip"
     diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
     arquivos = list()
     with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
@@ -37,7 +37,7 @@ def buscar_artigo(padrao):
                     #if bs_texto.find(artCategory=item):
                      #   print(file)
             texto_xml = bs_texto.find('article').get_text()
-            identifica_xml = bs_texto.find('Identifica').get_text()
+            identifica_xml = bs_texto.find('Texto').get_text()
             if re.findall(padrao, identifica_xml, re.IGNORECASE):
                     print(f"Arquivo {file}")
             #        print(identifica_artigo)
@@ -46,4 +46,4 @@ def buscar_artigo(padrao):
             #        print(bs_texto.find('article').get_text())
 
 
-buscar_artigo("114.859")
+buscar_artigo("(Serviço de Interesse )(?!Restrito)")

@@ -107,7 +107,20 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                            "cargo de Superintendente da Superintendência de Seguros Privados",
                            "cargo de Diretor da Superintendência de Seguros Privados",
                            "cargo de Diretor-Superintendente da Superintendência de Seguros Privados",
-                           "cargo de Diretor de Licenciamento da Superintendência Nacional de Previdência Complementar"]
+                           "cargo de Diretor de Licenciamento da Superintendência Nacional de Previdência Complementar",
+                           "cargo de Secretário Especial Adjunto da Secfretaria Especial de Previdência e Trabalho do Ministério da Economia",
+                           "cargo de Ministro de Estado do Trabalho e Previdência",
+                           "cargo de Secretário-Executivo do Ministério do Trabalho e Previdência",
+                           "cargo de Procurador-Geral Federal da Advocacia-Geral da União",
+                           "(Exposição de Motivos ((.*?afastamento )(.*?Presidente do Banco Central do Brasil))) | (Exposições de Motivos ((.*?afastamento )(.*?Presidente do Banco Central do Brasil))) | (Exposição de Motivos ((.*?férias )(.*?Presidente do Banco Central do Brasil))) | (Exposições de Motivos ((.*?férias )(.*?Presidente do Banco Central do Brasil)))",
+                           "(Exposição de Motivos ((.*?afastamento )(.*?Ministro de Estado da Economia))) | (Exposições de Motivos ((.*?afastamento )(.*?Ministro de Estado da Economia))) | (Exposição de Motivos ((.*?férias )(.*?Ministro de Estado da Economia))) | (Exposições de Motivos ((.*?férias )(.*?Ministro de Estado da Economia)))"
+                           "((A Diretora) | (O Diretor)) de Administração do Banco Central do Brasil",
+                           "((PORTARIA)(.*?O MINISTRO DE ESTADO DA ECONOMIA)(.*?afastamento)(.*?Banco Central))",
+                           "Despacho do Presidente do Banco Central do Brasil",
+                           "Comissão Técnica da Moeda e do Crédito",
+                           "Secretário-Executivo Adjunto da Secretaria-Executiva do Ministério do Trabalho e Previdência",
+                           "Comitê de Regulação e Fiscalização dos Mercados Financeiro, de Capitais, de Seguros, de Previdência e Capitalização",
+                           "temas jurídicos relevantes para a administração pública"]
               }
 
 
@@ -207,7 +220,7 @@ def buscar_ementa(dicionario):
                                     and not re.findall(padrao2, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao3, ementa, re.IGNORECASE):
                                 print(ementa + " --- " + file)
-                        elif item in dicionario['Ementa'][20]:#19
+                        elif item in dicionario['Ementa'][19]:
                             #padrao_130 = "(Poder (.*?Executivo))|(Poderes (.*?Executivo))"
                             #Extrai o título do arquivo xml
                             titulo = bs_texto.find('Identifica').get_text()
@@ -269,6 +282,55 @@ def buscar_assinatura(dicionario):
     print("Busca Encerrada!")
 
 
+def buscar_conteudo(dicionario):
+    for dou_secao in tipo_dou.split(' '):
+        nome_arquivo = data_completa + "-" + dou_secao + ".zip"
+        diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
+        arquivos = list()
+        #Extrai os arquivos:
+        if os.path.isfile(nome_arquivo):
+            with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
+                zip_ref.extractall(diretorio_arquivo)
+            #Adiciona os arquivos em uma lista
+            for arq in zip_ref.namelist():
+                extensao = os.path.splitext(arq)
+                if extensao[1] == '.xml':
+                    arquivos.append(arq)
+            print('****')
+            #Faz a leitura de cada arquivo:
+            for file in arquivos:
+                with open(file, 'r', encoding="utf-8") as arquivo:
+                    conteudo_xml = arquivo.read()
+                    bs_texto = BeautifulSoup(conteudo_xml, 'xml')
+                    #Extrai o conteúdo do identifica do arquivo xml:
+                    conteudo = bs_texto.find('Texto').get_text()
+                    #Limpa o texto ao eliminar as tags e os atributos:
+                    texto_conteudo = conteudo.replace('<p>', '').replace('</p>', ' ')
+                    paragrafo = bs_texto.find('Texto').get_text('p')
+                    #print(paragrafo)
+                    #Faz a busca pelo atributo Texto:
+                    for item in dicionario['Conteudo']:
+                        if item in dicionario['Conteudo'][18] or item in dicionario['Conteudo'][19]:
+                            if texto_conteudo.find('Exposição de Motivos'):
+                                inicio_busca = texto_conteudo.find('Exposição de Motivos')
+                                fim_busca = inicio_busca + len('Exposição de Motivos') + 200
+                            elif texto_conteudo.find('Exposições de Motivos'):
+                                inicio_busca = texto_conteudo.find('Exposições de Motivos')
+                                fim_busca = inicio_busca + len('Exposições de Motivos') + 200
+                            if re.findall(item, conteudo, re.IGNORECASE) \
+                                    and re.findall(item, conteudo[inicio_busca:fim_busca], re.IGNORECASE):
+                                print(texto_conteudo + " --- " + file)
+                        elif item in dicionario['Conteudo'][22]:
+                            padrao = 'Presidente do COAF'
+                            if re.findall(item, conteudo, re.IGNORECASE) \
+                                    and re.findall(padrao, conteudo, re.IGNORECASE):
+                                print(texto_conteudo + " --- " + file)
+                        else:
+                            if re.findall(item, conteudo, re.IGNORECASE):
+                                print(texto_conteudo + " --- " + file)
+    print("Busca Encerrada!")
+
+
 def login():
     try:
         response = s.request("POST", url_login, data=payload, headers=headers)
@@ -281,4 +343,5 @@ login()
 #buscar_escopo(dicionario)
 #buscar_titulo(dicionario)
 #buscar_ementa(dicionario)
-buscar_assinatura(dicionario)
+#buscar_assinatura(dicionario)
+buscar_conteudo(dicionario)
