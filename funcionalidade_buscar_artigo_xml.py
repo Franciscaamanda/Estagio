@@ -264,21 +264,26 @@ def buscar_assinatura(dicionario):
                     conteudo_xml = arquivo.read()
                     #O parâmetro xml foi substituído por lxml para obter o conteúdo de um parágrafo específico:
                     bs_texto = BeautifulSoup(conteudo_xml, 'lxml')
-                    #Extrai o cargo e a assinatura do arquivo xml caso existam:
+                    #Extrai todas as ocorrências do cargo e da assinatura do arquivo xml caso existam:
                     if bs_texto.find('p', {'class':'assina'}):
-                        assinatura = bs_texto.find('p', {'class':'assina'}).get_text()
-                        #print(file + ' --- ' + assinatura)
+                        assinaturas = bs_texto.find_all('p', {'class':'assina'})
+                        #assinatura = bs_texto.find('p', {'class':'assina'}).get_text()
                     else:
-                        assinatura = ""
+                        assinaturas = ""
                     if bs_texto.find('p', {'class': 'cargo'}):
-                        cargo = bs_texto.find('p', {'class': 'cargo'}).get_text()
-                        #print(file + ' --- ' + cargo)
+                        cargos = bs_texto.find_all('p', {'class': 'cargo'})
                     else:
-                        cargo = ""
+                        cargos = ""
                 #Faz a busca pela assinatura e pelo cargo:
                 for item in dicionario["Assinatura"]:
-                    if re.findall(item[1], assinatura, re.IGNORECASE) or re.findall(item[0], cargo, re.IGNORECASE):
-                        print(assinatura + ' --- ' + cargo + ' --- ' + file)
+                    for assinatura in assinaturas:
+                        #if re.findall(item[1], str(assinatura), re.IGNORECASE) or re.findall(item[0], cargo, re.IGNORECASE):
+                        if re.findall(item[1], str(assinatura), re.IGNORECASE):
+                            indice_lista = assinaturas.index(assinatura)
+                            if bs_texto.find('p', {'class': 'cargo'}):
+                                print(str(assinatura.get_text()) + ' --- ' + str(cargos[indice_lista].get_text()) + ' --- '+ file)
+                            else:
+                                print(str(assinatura.get_text()) + ' --- '+ file)
     print("Busca Encerrada!")
 
 
@@ -305,9 +310,7 @@ def buscar_conteudo(dicionario):
                     #Extrai o conteúdo do identifica do arquivo xml:
                     conteudo = bs_texto.find('Texto').get_text()
                     #Limpa o texto ao eliminar as tags e os atributos:
-                    texto_conteudo = conteudo.replace('<p>', '').replace('</p>', ' ')
-                    paragrafo = bs_texto.find('Texto').get_text('p')
-                    #print(paragrafo)
+                    texto_conteudo = re.sub('<[^>]+?>', ' ', conteudo)
                     #Faz a busca pelo atributo Texto:
                     for item in dicionario['Conteudo']:
                         if item in dicionario['Conteudo'][18] or item in dicionario['Conteudo'][19]:
@@ -343,5 +346,5 @@ login()
 #buscar_escopo(dicionario)
 #buscar_titulo(dicionario)
 #buscar_ementa(dicionario)
-#buscar_assinatura(dicionario)
-buscar_conteudo(dicionario)
+buscar_assinatura(dicionario)
+#buscar_conteudo(dicionario)

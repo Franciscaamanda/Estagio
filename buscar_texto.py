@@ -46,4 +46,4 @@ def buscar_artigo(padrao):
             #        print(bs_texto.find('article').get_text())
 
 
-buscar_artigo("(Serviço de Interesse )(?!Restrito)")
+buscar_artigo("art. 3º da Circular nº 3.769, de 29 de outubro de 2015")
