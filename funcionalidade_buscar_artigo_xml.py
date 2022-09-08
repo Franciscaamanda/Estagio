@@ -85,15 +85,15 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                          "Educação Financeira",
                          "Imposto sobre Operações Financeiras",
                          "(Poder (.*?Executivo))|(Poderes (.*?Executivo))"],
-              "Assinatura": [["Presidente do Banco Central do Brasil", "Roberto de Oliveira Campos Neto"],
-                            ["Diretor de Relacionamento, Cidadania e Supervisão de Conduta", "Maurício Costa de Moura"],
-                            ["Diretor de Fiscalização", "Paulo sérgio Neves de Souza"],
-                            ["Diretor de Política Econômica", "Bruno Serra Fernandes"],
-                            ["Diretor de Política Monetária", "Fabio Kanczuk"],
-                            ["Diretor de Assuntos Internacionais e de Gestão de Riscos Corporativos", "Fernanda Magalhães Rumenos Guardado"],
-                            ["Diretor de Organização do Sistema Financeiro e de Resolução", "João Manoel Pinho de Mello"],
-                            ["Diretor de Regulação", "Otávio Ribeiro Damaso"],
-                            ["Diretor de Administração", "Carolina de Assis Barros"]],
+              "Assinatura": [["Presidente do Banco Central do Brasil[<]", "Roberto de Oliveira Campos Neto"],
+                            ["Diretor de Relacionamento, Cidadania e Supervisão de Conduta[<]", "Maurício Costa de Moura"],
+                            ["Diretor de Fiscalização[<]", "Paulo sérgio Neves de Souza"],
+                            ["Diretor de Política Econômica[<]", "Bruno Serra Fernandes"],
+                            ["Diretor de Política Monetária[<]", "Fabio Kanczuk"],
+                            ["Diretor de Assuntos Internacionais e de Gestão de Riscos Corporativos[<]", "Fernanda Magalhães Rumenos Guardado"],
+                            ["Diretor de Organização do Sistema Financeiro e de Resolução[<]", "João Manoel Pinho de Mello"],
+                            ["Diretor de Regulação[<]", "Otávio Ribeiro Damaso"],
+                            ["Diretor de Administração[<]", "Carolina de Assis Barros"]],
               "Conteudo": ["cargo de Presidente do Banco Central",
                            "cargo de (Diretor | Diretora) do Banco Central",
                            "cargo de Ministro de Estado da Economia",
@@ -145,9 +145,15 @@ def buscar_escopo(dicionario):
                     conteudo_xml = arquivo.read()
                     bs_texto = BeautifulSoup(conteudo_xml, 'xml')
                     #Extrai o conteúdo do artCategory do arquivo xml:
+                    titulo = bs_texto.find('Identifica').get_text()
                     escopo = bs_texto.find('article').get('artCategory')
+                    novo_dicionario = np.isin(dicionario['Escopo'], escopo.split('/'))
+                    #print(novo_dicionario[1])
                     #Faz a busca pelo atributo artCategory:
-                    if True in np.isin(dicionario['Escopo'], escopo.split('/')):
+                    if novo_dicionario[1] is True and titulo is not None:
+                        print(escopo + ' --- ' + file)
+                    if True in np.isin(dicionario['Escopo'], escopo.split('/')) \
+                            and not np.isin(dicionario['Escopo'], escopo.split('/'))[1]:
                         print(escopo + ' --- ' + file)
                         #print("Nosso dicionário: ")
                         #print(dicionario['Escopo'])
@@ -277,13 +283,21 @@ def buscar_assinatura(dicionario):
                 #Faz a busca pela assinatura e pelo cargo:
                 for item in dicionario["Assinatura"]:
                     for assinatura in assinaturas:
-                        #if re.findall(item[1], str(assinatura), re.IGNORECASE) or re.findall(item[0], cargo, re.IGNORECASE):
                         if re.findall(item[1], str(assinatura), re.IGNORECASE):
                             indice_lista = assinaturas.index(assinatura)
                             if bs_texto.find('p', {'class': 'cargo'}):
-                                print(str(assinatura.get_text()) + ' --- ' + str(cargos[indice_lista].get_text()) + ' --- '+ file)
+                                print(str(assinatura.get_text()) + ' --- ' + str(
+                                    cargos[indice_lista].get_text()) + ' --- '+ file)
                             else:
                                 print(str(assinatura.get_text()) + ' --- '+ file)
+                    for cargo in cargos:
+                        if re.findall(item[0], str(cargo), re.IGNORECASE):
+                            indice_lista = cargos.index(cargo)
+                            if bs_texto.find('p', {'class': 'assina'}):
+                                print(str(assinaturas[indice_lista].get_text()) + ' --- ' + str(
+                                    cargo.get_text()) + ' --- ' + file)
+                            else:
+                                print(str(cargo.get_text()) + ' --- ' + file)
     print("Busca Encerrada!")
 
 
@@ -334,6 +348,24 @@ def buscar_conteudo(dicionario):
     print("Busca Encerrada!")
 
 
+def ler_arquivo(file):
+    #Abre e lê o arquivo
+    with open(file, 'r', encoding="utf-8") as arquivo:
+        conteudo_xml = arquivo.read()
+        bs_texto = BeautifulSoup(conteudo_xml, 'lxml')
+        #bs_texto = BeautifulSoup(conteudo_xml, 'xml')
+        #Extrai o texto do arquivo xml:
+        #texto_artigo = bs_texto.find('Texto').get_text()
+        #print(texto_artigo)
+        #identifica_artigo = bs_texto.find('Identifica').get_text()
+        #ementa_artigo = bs_texto.find('Ementa').get_text()
+        assinaturas = bs_texto.find_all('p', {'class':'assina'})
+        print(str(assinaturas))
+        for assinatura in assinaturas:
+            print(str(assinatura.get_text()) + ' --- ' + file)
+    print('Fim!')
+
+
 def login():
     try:
         response = s.request("POST", url_login, data=payload, headers=headers)
@@ -343,8 +375,9 @@ def login():
 
 
 login()
-#buscar_escopo(dicionario)
+buscar_escopo(dicionario)
 #buscar_titulo(dicionario)
 #buscar_ementa(dicionario)
-buscar_assinatura(dicionario)
+#buscar_assinatura(dicionario)
 #buscar_conteudo(dicionario)
+#ler_arquivo('529_20220905_19869944.xml', dicionario)
