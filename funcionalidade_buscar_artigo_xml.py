@@ -144,19 +144,23 @@ def buscar_escopo(dicionario):
                 with open(file, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
                     bs_texto = BeautifulSoup(conteudo_xml, 'xml')
-                    #Extrai o conteúdo do artCategory do arquivo xml:
                     titulo = bs_texto.find('Identifica').get_text()
+                    # Extrai o conteúdo do artCategory do arquivo xml:
                     escopo = bs_texto.find('article').get('artCategory')
-                    novo_dicionario = np.isin(dicionario['Escopo'], escopo.split('/'))
-                    #print(novo_dicionario[1])
+                    tipo_normativo = bs_texto.find('article').get('artType')
+                    pub_name_secao = bs_texto.find('article').get('pubName')
                     #Faz a busca pelo atributo artCategory:
-                    if novo_dicionario[1] is True and titulo is not None:
+                    if True in np.isin(dicionario['Escopo'][1], escopo.split('/')) and titulo is not None:
                         print(escopo + ' --- ' + file)
-                    if True in np.isin(dicionario['Escopo'], escopo.split('/')) \
-                            and not np.isin(dicionario['Escopo'], escopo.split('/'))[1]:
+                    elif True in np.isin(dicionario['Escopo'][5], escopo.split('/')) \
+                            and re.findall("DO1", pub_name_secao, re.IGNORECASE) \
+                            and re.findall("Portaria", tipo_normativo, re.IGNORECASE):
                         print(escopo + ' --- ' + file)
-                        #print("Nosso dicionário: ")
-                        #print(dicionario['Escopo'])
+                    elif True in np.isin(dicionario['Escopo'][0], escopo.split('/')) \
+                            or True in np.isin(dicionario['Escopo'][2:5], escopo.split('/')):
+                        print(escopo + ' --- ' + file)
+                    #if True in np.isin(dicionario['Escopo'], escopo.split('/')):
+                     #   print(escopo + ' --- ' + file)
                         #print("artCategory: " + escopo)
                     #   print(escopo.split('/'))
                     #  print(np.isin(dicionario['Escopo'], escopo.split('/')))
