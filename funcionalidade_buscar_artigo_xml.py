@@ -372,25 +372,29 @@ def ler_arquivo(file):
 
 def selecionar_data(dia, mes, ano):
     data_completa = ano + "-" + mes + "-" + dia
+    if s.cookies.get('inlabs_session_cookie'):
+        cookie = s.cookies.get('inlabs_session_cookie')
+    else:
+        print("Falha ao obter cookie. Verifique suas credenciais");
+        exit(37)
     for dou_secao in tipo_dou.split(' '):
-        nome_arquivo = data_completa + "-" + dou_secao + ".zip"
-        diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
-        arquivos = list()
-        #Extrai os arquivos:
-        if os.path.isfile(nome_arquivo):
-            with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
-                zip_ref.extractall(diretorio_arquivo)
-            #Adiciona os arquivos em uma lista
-            for arq in zip_ref.namelist():
-                extensao = os.path.splitext(arq)
-                if extensao[1] == '.xml':
-                    arquivos.append(arq)
-            print('****')
-            #Faz a leitura de cada arquivo:
-            for file in arquivos:
-                with open(file, 'r', encoding="utf-8") as arquivo:
-                    conteudo_xml = arquivo.read()
-                    bs_texto = BeautifulSoup(conteudo_xml, 'xml')
+        print("Aguarde Download...")
+        url_arquivo = url_download + data_completa + "&dl=" + data_completa + "-" + dou_secao + ".zip"
+        cabecalho_arquivo = {'Cookie': 'inlabs_session_cookie=' + cookie, 'origem': '736372697074'}
+        response_arquivo = s.request("GET", url_arquivo, headers=cabecalho_arquivo)
+        if response_arquivo.status_code == 200:
+            with open(data_completa + "-" + dou_secao + ".zip", "wb") as f:
+                f.write(response_arquivo.content)
+                print("Arquivo %s salvo." % (data_completa + "-" + dou_secao + ".zip"))
+            del response_arquivo
+            del f
+        elif response_arquivo.status_code == 404:
+            print("Arquivo não encontrado: %s" % (data_completa + "-" + dou_secao + ".zip"))
+    print("Aplicação encerrada")
+
+
+def selecionar_secao(tipo_secao):
+    pass
 
 
 def login():
@@ -402,7 +406,7 @@ def login():
 
 
 login()
-buscar_escopo(dicionario)
+#buscar_escopo(dicionario)
 #buscar_titulo(dicionario)
 #buscar_ementa(dicionario)
 #buscar_assinatura(dicionario)
