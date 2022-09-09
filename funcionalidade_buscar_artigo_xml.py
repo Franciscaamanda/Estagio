@@ -370,6 +370,29 @@ def ler_arquivo(file):
     print('Fim!')
 
 
+def selecionar_data(dia, mes, ano):
+    data_completa = ano + "-" + mes + "-" + dia
+    for dou_secao in tipo_dou.split(' '):
+        nome_arquivo = data_completa + "-" + dou_secao + ".zip"
+        diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
+        arquivos = list()
+        #Extrai os arquivos:
+        if os.path.isfile(nome_arquivo):
+            with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
+                zip_ref.extractall(diretorio_arquivo)
+            #Adiciona os arquivos em uma lista
+            for arq in zip_ref.namelist():
+                extensao = os.path.splitext(arq)
+                if extensao[1] == '.xml':
+                    arquivos.append(arq)
+            print('****')
+            #Faz a leitura de cada arquivo:
+            for file in arquivos:
+                with open(file, 'r', encoding="utf-8") as arquivo:
+                    conteudo_xml = arquivo.read()
+                    bs_texto = BeautifulSoup(conteudo_xml, 'xml')
+
+
 def login():
     try:
         response = s.request("POST", url_login, data=payload, headers=headers)
