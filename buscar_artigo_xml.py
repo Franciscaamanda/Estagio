@@ -127,9 +127,9 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
               } #código DAS 101.6
 
 
-def buscar_escopo(dicionario, data = data_completa):
+def buscar_artigo(dicionario):
     for dou_secao in tipo_dou.split(' '):
-        nome_arquivo = data + "-" + dou_secao + ".zip"
+        nome_arquivo = data_completa + "-" + dou_secao + ".zip"
         diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
         arquivos = list()
         #Extrai os arquivos:
@@ -141,8 +141,8 @@ def buscar_escopo(dicionario, data = data_completa):
                 extensao = os.path.splitext(arq)
                 if extensao[1] == '.xml':
                     arquivos.append(arq)
-            #Faz a leitura de cada arquivo:
             print('****')
+            nova_lista = list()
             for file in arquivos:
                 with open(file, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
@@ -152,115 +152,62 @@ def buscar_escopo(dicionario, data = data_completa):
                     escopo = bs_texto.find('article').get('artCategory')
                     tipo_normativo = bs_texto.find('article').get('artType')
                     pub_name_secao = bs_texto.find('article').get('pubName')
-                    #Faz a busca pelo atributo artCategory:
+                    # Faz a busca pelo atributo artCategory:
                     if True in np.isin(dicionario['Escopo'][1], escopo.split('/')) and titulo is not None:
-                        print(escopo + ' --- ' + file)
+                        nova_lista.append(file)
                     elif True in np.isin(dicionario['Escopo'][5], escopo.split('/')) \
                             and re.findall("DO1", pub_name_secao, re.IGNORECASE) \
                             and re.findall("Portaria", tipo_normativo, re.IGNORECASE):
-                        print(escopo + ' --- ' + file)
+                        nova_lista.append(file)
                     elif True in np.isin(dicionario['Escopo'][0], escopo.split('/')) \
-                            or True in np.isin(dicionario['Escopo'][2:5], escopo.split('/')):
-                        print(escopo + ' --- ' + file)
-                    elif True in np.isin(dicionario['Escopo'][6], escopo.split('/')) \
-                            and not re.findall("Secretaria Executiva", escopo) \
-                            and re.findall("DO2", pub_name_secao, re.IGNORECASE):
-                        print(escopo + ' --- ' + file)
-                    elif True in np.isin(dicionario['Escopo'][6], escopo.split('/')) \
-                            and not re.findall("Instituto Nacional de Tecnologia da Informação", escopo) \
-                            and re.findall("DO1", pub_name_secao, re.IGNORECASE):
-                        print(escopo + ' --- ' + file)
-                    elif True in np.isin(dicionario['Escopo'][6], escopo.split('/')) \
-                            and re.findall("DO3", pub_name_secao, re.IGNORECASE):
-                        print(escopo + ' --- ' + file)
-                    #if True in np.isin(dicionario['Escopo'], escopo.split('/')):
-                     #   print(escopo + ' --- ' + file)
-                        #print("artCategory: " + escopo)
-                    #   print(escopo.split('/'))
-                    #  print(np.isin(dicionario['Escopo'], escopo.split('/')))
-    print("Busca Encerrada!")
-
-
-def buscar_titulo(dicionario, data= data_completa):
-    for dou_secao in tipo_dou.split(' '):
-        nome_arquivo = data + "-" + dou_secao + ".zip"
-        diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
-        arquivos = list()
-        #Extrai os arquivos:
-        if os.path.isfile(nome_arquivo):
-            with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
-                zip_ref.extractall(diretorio_arquivo)
-            #Adiciona os arquivos em uma lista
-            for arq in zip_ref.namelist():
-                extensao = os.path.splitext(arq)
-                if extensao[1] == '.xml':
-                    arquivos.append(arq)
-            print('****')
-            #Faz a leitura de cada arquivo:
-            for file in arquivos:
-                with open(file, 'r', encoding="utf-8") as arquivo:
+                            or True in np.isin(dicionario['Escopo'][2:5], escopo.split('/')) \
+                            or True in np.isin(dicionario['Escopo'][6], escopo.split('/')):
+                        nova_lista.append(file)
+            #arquivos encontrados pelo escopo
+            for arq in nova_lista:
+                with open(arq, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
                     bs_texto = BeautifulSoup(conteudo_xml, 'xml')
-                    #Extrai o conteúdo do identifica do arquivo xml:
+                    # Extrai o conteúdo do identifica do arquivo xml:
                     titulo = bs_texto.find('Identifica').get_text()
                     ementa = bs_texto.find('Ementa').get_text()
                     texto = bs_texto.find('Texto').get_text()
-                    #Faz a busca pelo atributo artCategory:
+                    # Faz a busca pelo atributo artCategory:
                     for item in dicionario['Titulo']:
                         if item in dicionario['Titulo'][2]:
                             if re.findall(item, titulo, re.IGNORECASE) \
                                     and (re.findall("Banco Central", ementa, re.IGNORECASE) or
                                          re.findall("Banco Central", texto, re.IGNORECASE)):
-                                print(titulo + " --- " + file)
+                                print(titulo + " --- " + arq)
                         else:
                             if re.findall(item, titulo, re.IGNORECASE):
-                                print(titulo + " --- " + file)
-    print("Busca Encerrada!")
-
-
-def buscar_ementa(dicionario, data=data_completa):
-    for dou_secao in tipo_dou.split(' '):
-        nome_arquivo = data + "-" + dou_secao + ".zip"
-        diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
-        arquivos = list()
-        #Extrai os arquivos:
-        if os.path.isfile(nome_arquivo):
-            with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
-                zip_ref.extractall(diretorio_arquivo)
-            #Adiciona os arquivos em uma lista
-            for arq in zip_ref.namelist():
-                extensao = os.path.splitext(arq)
-                if extensao[1] == '.xml':
-                    arquivos.append(arq)
-            print('****')
-            #Faz a leitura de cada arquivo:
-            for file in arquivos:
-                with open(file, 'r', encoding="utf-8") as arquivo:
+                                print(titulo + " --- " + arq)
+                with open(arq, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
                     bs_texto = BeautifulSoup(conteudo_xml, 'xml')
-                    #Extrai o conteúdo da ementa do arquivo xml:
+                    # Extrai o conteúdo da ementa do arquivo xml:
                     ementa = bs_texto.find('Ementa').get_text()
-                    #Faz a busca pela tag Ementa:
+                    # Faz a busca pela tag Ementa:
                     for item in dicionario['Ementa']:
                         if item in dicionario['Ementa'][5]:
                             padrao1 = "revogação de atos normativos"
                             padrao2 = "dos servidores públicos dos Estados, do Distrito Federal e dos Municípios"
-                            #Se tiver "no âmbito" só aceitar se for sucedida de "do Banco Central"
+                            # Se tiver "no âmbito" só aceitar se for sucedida de "do Banco Central"
                             padrao3 = "(no âmbito )(?!do Banco Central)"
                             if re.findall(item, ementa, re.IGNORECASE) \
-                                and not re.findall(padrao1, ementa, re.IGNORECASE) \
+                                    and not re.findall(padrao1, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao2, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao3, ementa, re.IGNORECASE):
-                                print(ementa + " --- " + file)
+                                print(ementa + " --- " + arq)
                         elif item in dicionario['Ementa'][19]:
-                            #padrao_130 = "(Poder (.*?Executivo))|(Poderes (.*?Executivo))"
-                            #Extrai o título do arquivo xml
+                            # padrao_130 = "(Poder (.*?Executivo))|(Poderes (.*?Executivo))"
+                            # Extrai o título do arquivo xml
                             titulo = bs_texto.find('Identifica').get_text()
                             padrao_titulo = "SETO/ME"
                             inicio_busca = ementa.find('Poder')
                             item1 = 'Poder '
                             item2 = 'Poderes'
-                            #Calcula o intervalo para realizar a busca no conteúdo da ementa
+                            # Calcula o intervalo para realizar a busca no conteúdo da ementa
                             if re.findall(item1, ementa, re.IGNORECASE):
                                 fim_busca = inicio_busca + len('Poder') + 130
                             elif re.findall(item2, ementa, re.IGNORECASE):
@@ -268,31 +215,11 @@ def buscar_ementa(dicionario, data=data_completa):
                             if re.findall(item, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao_titulo, titulo, re.IGNORECASE) \
                                     and re.findall(item, ementa[inicio_busca:fim_busca], re.IGNORECASE):
-                                print(ementa + " --- " + file)
+                                print(ementa + " --- " + arq)
                         else:
                             if re.findall(item, ementa, re.IGNORECASE):
-                                print(ementa + " --- " + file)
-    print("Busca Encerrada!")
-
-
-def buscar_assinatura(dicionario, data=data_completa):
-    for dou_secao in tipo_dou.split(' '):
-        nome_arquivo = data + "-" + dou_secao + ".zip"
-        diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
-        arquivos = list()
-        #Extrai os arquivos:
-        if os.path.isfile(nome_arquivo):
-            with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
-                zip_ref.extractall(diretorio_arquivo)
-            #Adiciona os arquivos em uma lista
-            for arq in zip_ref.namelist():
-                extensao = os.path.splitext(arq)
-                if extensao[1] == '.xml':
-                    arquivos.append(arq)
-            print('****')
-            #Faz a leitura de cada arquivo:
-            for file in arquivos:
-                with open(file, 'r', encoding="utf-8") as arquivo:
+                                print(ementa + " --- " + arq)
+                with open(arq, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
                     #O parâmetro xml foi substituído por lxml para obter o conteúdo de um parágrafo específico:
                     bs_texto = BeautifulSoup(conteudo_xml, 'lxml')
@@ -313,38 +240,18 @@ def buscar_assinatura(dicionario, data=data_completa):
                             indice_lista = assinaturas.index(assinatura)
                             if bs_texto.find('p', {'class': 'cargo'}):
                                 print(str(assinatura.get_text()) + ' --- ' + str(
-                                    cargos[indice_lista].get_text()) + ' --- '+ file)
+                                    cargos[indice_lista].get_text()) + ' --- '+ arq)
                             else:
-                                print(str(assinatura.get_text()) + ' --- '+ file)
+                                print(str(assinatura.get_text()) + ' --- '+ arq)
                     for cargo in cargos:
                         if re.findall(item[0], str(cargo), re.IGNORECASE):
                             indice_lista = cargos.index(cargo)
                             if bs_texto.find('p', {'class': 'assina'}):
                                 print(str(assinaturas[indice_lista].get_text()) + ' --- ' + str(
-                                    cargo.get_text()) + ' --- ' + file)
+                                    cargo.get_text()) + ' --- ' + arq)
                             else:
-                                print(str(cargo.get_text()) + ' --- ' + file)
-    print("Busca Encerrada!")
-
-
-def buscar_conteudo(dicionario, data=data_completa):
-    for dou_secao in tipo_dou.split(' '):
-        nome_arquivo = data + "-" + dou_secao + ".zip"
-        diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
-        arquivos = list()
-        #Extrai os arquivos:
-        if os.path.isfile(nome_arquivo):
-            with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
-                zip_ref.extractall(diretorio_arquivo)
-            #Adiciona os arquivos em uma lista
-            for arq in zip_ref.namelist():
-                extensao = os.path.splitext(arq)
-                if extensao[1] == '.xml':
-                    arquivos.append(arq)
-            print('****')
-            #Faz a leitura de cada arquivo:
-            for file in arquivos:
-                with open(file, 'r', encoding="utf-8") as arquivo:
+                                print(str(cargo.get_text()) + ' --- ' + arq)
+                with open(arq, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
                     bs_texto = BeautifulSoup(conteudo_xml, 'xml')
                     #Extrai o conteúdo do identifica do arquivo xml:
@@ -362,93 +269,16 @@ def buscar_conteudo(dicionario, data=data_completa):
                                 fim_busca = inicio_busca + len('Exposições de Motivos') + 200
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall(item, conteudo[inicio_busca:fim_busca], re.IGNORECASE):
-                                print(texto_conteudo + " --- " + file)
+                                print(texto_conteudo + " --- " + arq)
                         elif item in dicionario['Conteudo'][22]:
                             padrao = 'Presidente do COAF'
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall(padrao, conteudo, re.IGNORECASE):
-                                print(texto_conteudo + " --- " + file)
+                                print(texto_conteudo + " --- " + arq)
                         else:
                             if re.findall(item, conteudo, re.IGNORECASE):
-                                print(texto_conteudo + " --- " + file)
+                                print(texto_conteudo + " --- " + arq)
     print("Busca Encerrada!")
-
-
-def ler_arquivo(file):
-    #Abre e lê o arquivo
-    with open(file, 'r', encoding="utf-8") as arquivo:
-        conteudo_xml = arquivo.read()
-        bs_texto = BeautifulSoup(conteudo_xml, 'lxml')
-        #bs_texto = BeautifulSoup(conteudo_xml, 'xml')
-        #Extrai o texto do arquivo xml:
-        #texto_artigo = bs_texto.find('Texto').get_text()
-        #print(texto_artigo)
-        #identifica_artigo = bs_texto.find('Identifica').get_text()
-        #ementa_artigo = bs_texto.find('Ementa').get_text()
-        assinaturas = bs_texto.find_all('p', {'class':'assina'})
-        print(str(assinaturas))
-        for assinatura in assinaturas:
-            print(str(assinatura.get_text()) + ' --- ' + file)
-    print('Fim!')
-
-
-def selecionar_data(dia, mes, ano):
-    data_completa = ano + "-" + mes + "-" + dia
-    if s.cookies.get('inlabs_session_cookie'):
-        cookie = s.cookies.get('inlabs_session_cookie')
-    else:
-        print("Falha ao obter cookie. Verifique suas credenciais");
-        exit(37)
-    for dou_secao in tipo_dou.split(' '):
-        print("Aguarde Download...")
-        url_arquivo = url_download + data_completa + "&dl=" + data_completa + "-" + dou_secao + ".zip"
-        cabecalho_arquivo = {'Cookie': 'inlabs_session_cookie=' + cookie, 'origem': '736372697074'}
-        response_arquivo = s.request("GET", url_arquivo, headers=cabecalho_arquivo)
-        if response_arquivo.status_code == 200:
-            with open(data_completa + "-" + dou_secao + ".zip", "wb") as f:
-                f.write(response_arquivo.content)
-                print("Arquivo %s salvo." % (data_completa + "-" + dou_secao + ".zip"))
-            del response_arquivo
-            del f
-        elif response_arquivo.status_code == 404:
-            print("Arquivo não encontrado: %s" % (data_completa + "-" + dou_secao + ".zip"))
-    print("Aplicação encerrada")
-
-
-def selecionar_secao(tipo_secao):
-    #Primeiro ele baixa os arquivos do sistema:
-    if s.cookies.get('inlabs_session_cookie'):
-        cookie = s.cookies.get('inlabs_session_cookie')
-    else:
-        print("Falha ao obter cookie. Verifique suas credenciais");
-        exit(37)
-
-    print("Aguarde Download...")
-    url_arquivo = url_download + data_completa + "&dl=" + data_completa + "-" + tipo_secao + ".zip"
-    cabecalho_arquivo = {'Cookie': 'inlabs_session_cookie=' + cookie, 'origem': '736372697074'}
-    response_arquivo = s.request("GET", url_arquivo, headers=cabecalho_arquivo)
-    if response_arquivo.status_code == 200:
-        with open(data_completa + "-" + tipo_secao + ".zip", "wb") as f:
-            f.write(response_arquivo.content)
-            print("Arquivo %s salvo." % (data_completa + "-" + tipo_secao + ".zip"))
-        del response_arquivo
-        del f
-    elif response_arquivo.status_code == 404:
-        print("Arquivo não encontrado: %s" % (data_completa + "-" + tipo_secao + ".zip"))
-    print("Aplicação encerrada")
-    #Esta parte extrai os arquivos compactados:
-    nome_arquivo = data_completa + "-" + tipo_secao + ".zip"
-    diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
-    arquivos = list()
-    # Extrai os arquivos:
-    if os.path.isfile(nome_arquivo):
-        with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
-            zip_ref.extractall(diretorio_arquivo)
-        # Adiciona os arquivos em uma lista
-        for arq in zip_ref.namelist():
-            extensao = os.path.splitext(arq)
-            if extensao[1] == '.xml':
-                arquivos.append(arq)
 
 
 def login():
@@ -462,10 +292,4 @@ def login():
 
 
 login()
-#buscar_escopo(dicionario, "2022-09-09")
-#buscar_escopo(dicionario)
-buscar_titulo(dicionario)
-#buscar_ementa(dicionario)
-#buscar_assinatura(dicionario)
-#buscar_conteudo(dicionario)
-#ler_arquivo('529_20220905_19869944.xml', dicionario)
+buscar_artigo(dicionario)
