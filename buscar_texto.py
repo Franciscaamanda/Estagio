@@ -11,7 +11,7 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
 
 
 def buscar_artigo(padrao):
-    nome_arquivo = "2022-09-08-DO2.zip"
+    nome_arquivo = "2022-09-09-DO1.zip"
     diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
     arquivos = list()
     with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
@@ -46,4 +46,4 @@ def buscar_artigo(padrao):
             #        print(bs_texto.find('article').get_text())
 
 
-buscar_artigo("Portaria 114.895")
+buscar_artigo("Banco Central")

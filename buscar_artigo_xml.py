@@ -31,7 +31,7 @@ data_completa = ano + "-" + mes + "-" + dia
 nova_data = '2022' + "-" + '09' + "-" + '09'
 
 
-def download():
+def download(data=data_completa):
     if s.cookies.get('inlabs_session_cookie'):
         cookie = s.cookies.get('inlabs_session_cookie')
     else:
@@ -40,17 +40,17 @@ def download():
 
     for dou_secao in tipo_dou.split(' '):
         print("Aguarde Download...")
-        url_arquivo = url_download + data_completa + "&dl=" + data_completa + "-" + dou_secao + ".zip"
+        url_arquivo = url_download + data + "&dl=" + data + "-" + dou_secao + ".zip"
         cabecalho_arquivo = {'Cookie': 'inlabs_session_cookie=' + cookie, 'origem': '736372697074'}
         response_arquivo = s.request("GET", url_arquivo, headers=cabecalho_arquivo)
         if response_arquivo.status_code == 200:
-            with open(data_completa + "-" + dou_secao + ".zip", "wb") as f:
+            with open(data + "-" + dou_secao + ".zip", "wb") as f:
                 f.write(response_arquivo.content)
-                print("Arquivo %s salvo." % (data_completa + "-" + dou_secao + ".zip"))
+                print("Arquivo %s salvo." % (data + "-" + dou_secao + ".zip"))
             del response_arquivo
             del f
         elif response_arquivo.status_code == 404:
-            print("Arquivo não encontrado: %s" % (data_completa + "-" + dou_secao + ".zip"))
+            print("Arquivo não encontrado: %s" % (data + "-" + dou_secao + ".zip"))
     print("Aplicação encerrada")
 
 
@@ -65,7 +65,6 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                          "([ ]CMN[ ])|([ ]CMN[0-9])",
                          "PORTARIA SETO",
                          "Resolução BCB",
-                         "Instrução Normativa BCB",
                          "Despachos do Presidente da República"],
               "Ementa": ["Programa Nacional de Apoio às Microempresas e Empresas de Pequeno Porte",
                          "lavagem de dinheiro",
@@ -115,7 +114,7 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                            "cargo de Secretário-Executivo do Ministério do Trabalho e Previdência",
                            "cargo de Procurador-Geral Federal da Advocacia-Geral da União",
                            "(Exposição de Motivos ((.*?afastamento )(.*?Presidente do Banco Central do Brasil))) | (Exposições de Motivos ((.*?afastamento )(.*?Presidente do Banco Central do Brasil))) | (Exposição de Motivos ((.*?férias )(.*?Presidente do Banco Central do Brasil))) | (Exposições de Motivos ((.*?férias )(.*?Presidente do Banco Central do Brasil)))",
-                           "(Exposição de Motivos ((.*?afastamento )(.*?Ministro de Estado da Economia))) | (Exposições de Motivos ((.*?afastamento )(.*?Ministro de Estado da Economia))) | (Exposição de Motivos ((.*?férias )(.*?Ministro de Estado da Economia))) | (Exposições de Motivos ((.*?férias )(.*?Ministro de Estado da Economia)))"
+                           "(Exposição de Motivos ((.*?afastamento )(.*?Ministro de Estado da Economia))) | (Exposições de Motivos ((.*?afastamento )(.*?Ministro de Estado da Economia))) | (Exposição de Motivos ((.*?férias )(.*?Ministro de Estado da Economia))) | (Exposições de Motivos ((.*?férias )(.*?Ministro de Estado da Economia)))",
                            "((A Diretora) | (O Diretor)) de Administração do Banco Central do Brasil",
                            "((PORTARIA)(.*?O MINISTRO DE ESTADO DA ECONOMIA)(.*?afastamento)(.*?Banco Central))",
                            "Despacho do Presidente do Banco Central do Brasil",
@@ -123,13 +122,18 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                            "Secretário-Executivo Adjunto da Secretaria-Executiva do Ministério do Trabalho e Previdência",
                            "Comitê de Regulação e Fiscalização dos Mercados Financeiro, de Capitais, de Seguros, de Previdência e Capitalização",
                            "temas jurídicos relevantes para a administração pública",
-                           "cargo de Secretária Especial Adjunta da Secretaria Especial de Comércio Exterior e Assuntos Internacionais do Ministério da Economia"] #novo
+                           "cargo de Secretária Especial Adjunta da Secretaria Especial de Comércio Exterior e Assuntos Internacionais do Ministério da Economia",
+                           "Banco Central",
+                           "Procuradores do Banco Central",
+                           "Procurador do Banco Central",
+                           "Procuradoria-Geral do Banco Central",
+                           "Procurador-Geral do Banco Central"]
               } #código DAS 101.6
 
 
-def buscar_artigo(dicionario):
+def buscar_artigo(dicionario, data=data_completa):
     for dou_secao in tipo_dou.split(' '):
-        nome_arquivo = data_completa + "-" + dou_secao + ".zip"
+        nome_arquivo = data + "-" + dou_secao + ".zip"
         diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
         arquivos = list()
         #Extrai os arquivos:
@@ -152,6 +156,7 @@ def buscar_artigo(dicionario):
                     escopo = bs_texto.find('article').get('artCategory')
                     tipo_normativo = bs_texto.find('article').get('artType')
                     pub_name_secao = bs_texto.find('article').get('pubName')
+                    corpo_texto = bs_texto.find('Texto').get_text()
                     # Faz a busca pelo atributo artCategory:
                     if True in np.isin(dicionario['Escopo'][1], escopo.split('/')) and titulo is not None:
                         nova_lista.append(file)
@@ -160,10 +165,19 @@ def buscar_artigo(dicionario):
                             and re.findall("Portaria", tipo_normativo, re.IGNORECASE):
                         nova_lista.append(file)
                     elif True in np.isin(dicionario['Escopo'][0], escopo.split('/')) \
-                            or True in np.isin(dicionario['Escopo'][2:5], escopo.split('/')) \
-                            or True in np.isin(dicionario['Escopo'][6], escopo.split('/')):
+                            or True in np.isin(dicionario['Escopo'][2:5], escopo.split('/')):
                         nova_lista.append(file)
-            #arquivos encontrados pelo escopo
+                    elif True in np.isin(dicionario['Escopo'][6], escopo.split('/')):
+                            nova_lista.append(file)
+                        #elif re.findall("DO2", pub_name_secao, re.IGNORECASE) \
+                        #        and not re.findall("Secretaria Executiva", escopo):
+                        #    nova_lista.append(file)
+                        #elif re.findall("DO1", pub_name_secao, re.IGNORECASE) \
+                        #        and not re.findall("Instituto Nacional de Tecnologia da Informação", escopo):
+                        #    nova_lista.append(file)
+                        #elif re.findall("DO3", pub_name_secao, re.IGNORECASE):
+                        #    nova_lista.append(file)
+            #arquivos encontrados pelo escopo ficam armazenados na nova_lista e faz as buscas abaixo somente neles:
             for arq in nova_lista:
                 with open(arq, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
@@ -172,14 +186,19 @@ def buscar_artigo(dicionario):
                     titulo = bs_texto.find('Identifica').get_text()
                     ementa = bs_texto.find('Ementa').get_text()
                     texto = bs_texto.find('Texto').get_text()
-                    # Faz a busca pelo atributo artCategory:
+                    # Faz a busca pelo atributo título:
                     for item in dicionario['Titulo']:
                         if item in dicionario['Titulo'][2]:
                             if re.findall(item, titulo, re.IGNORECASE) \
                                     and (re.findall("Banco Central", ementa, re.IGNORECASE) or
                                          re.findall("Banco Central", texto, re.IGNORECASE)):
                                 print(titulo + " --- " + arq)
-                        else:
+                        elif item in dicionario['Titulo'][4]:
+                            if re.findall(item, titulo, re.IGNORECASE) \
+                                    and (re.findall("Banco Central", ementa, re.IGNORECASE) or
+                                         re.findall("Banco Central", texto, re.IGNORECASE)):
+                                print(titulo + " --- " + arq)
+                        elif item in dicionario['Titulo'][0:2] or item in dicionario['Titulo'][3:5]:
                             if re.findall(item, titulo, re.IGNORECASE):
                                 print(titulo + " --- " + arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
@@ -199,7 +218,12 @@ def buscar_artigo(dicionario):
                                     and not re.findall(padrao2, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao3, ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
-                        elif item in dicionario['Ementa'][19]:
+                        if item in dicionario["Ementa"][11]:
+                            nome_titulo = bs_texto.find('Identifica').get_text()
+                            if re.findall(item, ementa, re.IGNORECASE) \
+                                    and not re.findall("Instrução Normativa BCB", nome_titulo, re.IGNORECASE):
+                                print(ementa + " --- " + arq)
+                        if item in dicionario['Ementa'][19]:
                             # padrao_130 = "(Poder (.*?Executivo))|(Poderes (.*?Executivo))"
                             # Extrai o título do arquivo xml
                             titulo = bs_texto.find('Identifica').get_text()
@@ -216,7 +240,8 @@ def buscar_artigo(dicionario):
                                     and not re.findall(padrao_titulo, titulo, re.IGNORECASE) \
                                     and re.findall(item, ementa[inicio_busca:fim_busca], re.IGNORECASE):
                                 print(ementa + " --- " + arq)
-                        else:
+                        if item in dicionario['Ementa'][0:5] \
+                                or item in dicionario['Ementa'][6:11] or item in dicionario['Ementa'][12:19]:
                             if re.findall(item, ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
@@ -233,24 +258,24 @@ def buscar_artigo(dicionario):
                         cargos = bs_texto.find_all('p', {'class': 'cargo'})
                     else:
                         cargos = ""
-                #Faz a busca pela assinatura e pelo cargo:
-                for item in dicionario["Assinatura"]:
-                    for assinatura in assinaturas:
-                        if re.findall(item[1], str(assinatura), re.IGNORECASE):
-                            indice_lista = assinaturas.index(assinatura)
-                            if bs_texto.find('p', {'class': 'cargo'}):
-                                print(str(assinatura.get_text()) + ' --- ' + str(
-                                    cargos[indice_lista].get_text()) + ' --- '+ arq)
-                            else:
-                                print(str(assinatura.get_text()) + ' --- '+ arq)
-                    for cargo in cargos:
-                        if re.findall(item[0], str(cargo), re.IGNORECASE):
-                            indice_lista = cargos.index(cargo)
-                            if bs_texto.find('p', {'class': 'assina'}):
-                                print(str(assinaturas[indice_lista].get_text()) + ' --- ' + str(
-                                    cargo.get_text()) + ' --- ' + arq)
-                            else:
-                                print(str(cargo.get_text()) + ' --- ' + arq)
+                    #Faz a busca pela assinatura e pelo cargo:
+                    for item in dicionario["Assinatura"]:
+                        for assinatura in assinaturas:
+                            if re.findall(item[1], str(assinatura), re.IGNORECASE):
+                                indice_lista = assinaturas.index(assinatura)
+                                if bs_texto.find('p', {'class': 'cargo'}):
+                                    print(str(assinatura.get_text()) + ' --- ' + str(
+                                        cargos[indice_lista].get_text()) + ' --- '+ arq)
+                                else:
+                                    print(str(assinatura.get_text()) + ' --- '+ arq)
+                        for cargo in cargos:
+                            if re.findall(item[0], str(cargo), re.IGNORECASE):
+                                indice_lista = cargos.index(cargo)
+                                if bs_texto.find('p', {'class': 'assina'}):
+                                    print(str(assinaturas[indice_lista].get_text()) + ' --- ' + str(
+                                        cargo.get_text()) + ' --- ' + arq)
+                                else:
+                                    print(str(cargo.get_text()) + ' --- ' + arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
                     bs_texto = BeautifulSoup(conteudo_xml, 'xml')
@@ -258,9 +283,9 @@ def buscar_artigo(dicionario):
                     conteudo = bs_texto.find('Texto').get_text()
                     #Limpa o texto ao eliminar as tags e os atributos:
                     texto_conteudo = re.sub('<[^>]+?>', ' ', conteudo)
-                    #Faz a busca pelo atributo Texto:
+                    #Faz a busca pela tag Texto:
                     for item in dicionario['Conteudo']:
-                        if item in dicionario['Conteudo'][18] or item in dicionario['Conteudo'][19]:
+                        if item in dicionario["Conteudo"][18] or item in dicionario["Conteudo"][19]:
                             if texto_conteudo.find('Exposição de Motivos'):
                                 inicio_busca = texto_conteudo.find('Exposição de Motivos')
                                 fim_busca = inicio_busca + len('Exposição de Motivos') + 200
@@ -270,26 +295,30 @@ def buscar_artigo(dicionario):
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall(item, conteudo[inicio_busca:fim_busca], re.IGNORECASE):
                                 print(texto_conteudo + " --- " + arq)
-                        elif item in dicionario['Conteudo'][22]:
+                        if item in dicionario["Conteudo"][22]:
                             padrao = 'Presidente do COAF'
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall(padrao, conteudo, re.IGNORECASE):
                                 print(texto_conteudo + " --- " + arq)
-                        else:
+                        if item in dicionario["Conteudo"][28:33]:
+                            escopo = bs_texto.find('article').get('artCategory')
+                            if re.findall(item, conteudo, re.IGNORECASE) \
+                                    and re.findall("Presidência da República", escopo, re.IGNORECASE):
+                                print(" --- " + arq)
+                        if item in dicionario["Conteudo"][23:28] \
+                                or item in dicionario["Conteudo"][0:18] or item in dicionario["Conteudo"][20:22]:
                             if re.findall(item, conteudo, re.IGNORECASE):
-                                print(texto_conteudo + " --- " + arq)
+                                print(" --- " + arq)
     print("Busca Encerrada!")
 
 
 def login():
     try:
         response = s.request("POST", url_login, data=payload, headers=headers)
-        download()
-        #selecionar_data('09', '09', '2022')
-        #selecionar_secao('DO1')
+        download("2022-09-09")
     except requests.exceptions.ConnectionError:
         login()
 
 
 login()
-buscar_artigo(dicionario)
+buscar_artigo(dicionario, "2022-09-09")

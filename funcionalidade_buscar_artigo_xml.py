@@ -31,7 +31,7 @@ data_completa = ano + "-" + mes + "-" + dia
 nova_data = '2022' + "-" + '09' + "-" + '09'
 
 
-def download():
+def download(data=data_completa):
     if s.cookies.get('inlabs_session_cookie'):
         cookie = s.cookies.get('inlabs_session_cookie')
     else:
@@ -40,17 +40,17 @@ def download():
 
     for dou_secao in tipo_dou.split(' '):
         print("Aguarde Download...")
-        url_arquivo = url_download + data_completa + "&dl=" + data_completa + "-" + dou_secao + ".zip"
+        url_arquivo = url_download + data + "&dl=" + data + "-" + dou_secao + ".zip"
         cabecalho_arquivo = {'Cookie': 'inlabs_session_cookie=' + cookie, 'origem': '736372697074'}
         response_arquivo = s.request("GET", url_arquivo, headers=cabecalho_arquivo)
         if response_arquivo.status_code == 200:
-            with open(data_completa + "-" + dou_secao + ".zip", "wb") as f:
+            with open(data + "-" + dou_secao + ".zip", "wb") as f:
                 f.write(response_arquivo.content)
-                print("Arquivo %s salvo." % (data_completa + "-" + dou_secao + ".zip"))
+                print("Arquivo %s salvo." % (data + "-" + dou_secao + ".zip"))
             del response_arquivo
             del f
         elif response_arquivo.status_code == 404:
-            print("Arquivo não encontrado: %s" % (data_completa + "-" + dou_secao + ".zip"))
+            print("Arquivo não encontrado: %s" % (data + "-" + dou_secao + ".zip"))
     print("Aplicação encerrada")
 
 
@@ -115,7 +115,7 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                            "cargo de Secretário-Executivo do Ministério do Trabalho e Previdência",
                            "cargo de Procurador-Geral Federal da Advocacia-Geral da União",
                            "(Exposição de Motivos ((.*?afastamento )(.*?Presidente do Banco Central do Brasil))) | (Exposições de Motivos ((.*?afastamento )(.*?Presidente do Banco Central do Brasil))) | (Exposição de Motivos ((.*?férias )(.*?Presidente do Banco Central do Brasil))) | (Exposições de Motivos ((.*?férias )(.*?Presidente do Banco Central do Brasil)))",
-                           "(Exposição de Motivos ((.*?afastamento )(.*?Ministro de Estado da Economia))) | (Exposições de Motivos ((.*?afastamento )(.*?Ministro de Estado da Economia))) | (Exposição de Motivos ((.*?férias )(.*?Ministro de Estado da Economia))) | (Exposições de Motivos ((.*?férias )(.*?Ministro de Estado da Economia)))"
+                           "(Exposição de Motivos ((.*?afastamento )(.*?Ministro de Estado da Economia))) | (Exposições de Motivos ((.*?afastamento )(.*?Ministro de Estado da Economia))) | (Exposição de Motivos ((.*?férias )(.*?Ministro de Estado da Economia))) | (Exposições de Motivos ((.*?férias )(.*?Ministro de Estado da Economia)))",
                            "((A Diretora) | (O Diretor)) de Administração do Banco Central do Brasil",
                            "((PORTARIA)(.*?O MINISTRO DE ESTADO DA ECONOMIA)(.*?afastamento)(.*?Banco Central))",
                            "Despacho do Presidente do Banco Central do Brasil",
@@ -123,7 +123,8 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                            "Secretário-Executivo Adjunto da Secretaria-Executiva do Ministério do Trabalho e Previdência",
                            "Comitê de Regulação e Fiscalização dos Mercados Financeiro, de Capitais, de Seguros, de Previdência e Capitalização",
                            "temas jurídicos relevantes para a administração pública",
-                           "cargo de Secretária Especial Adjunta da Secretaria Especial de Comércio Exterior e Assuntos Internacionais do Ministério da Economia"] #novo
+                           "cargo de Secretária Especial Adjunta da Secretaria Especial de Comércio Exterior e Assuntos Internacionais do Ministério da Economia",
+                           "Banco Central"] #novo
               } #código DAS 101.6
 
 
@@ -212,7 +213,7 @@ def buscar_titulo(dicionario, data= data_completa):
                                     and (re.findall("Banco Central", ementa, re.IGNORECASE) or
                                          re.findall("Banco Central", texto, re.IGNORECASE)):
                                 print(titulo + " --- " + file)
-                        else:
+                        if item in dicionario['Titulo'][0:2] or item in dicionario['Titulo'][3:5]:
                             if re.findall(item, titulo, re.IGNORECASE):
                                 print(titulo + " --- " + file)
     print("Busca Encerrada!")
@@ -252,7 +253,7 @@ def buscar_ementa(dicionario, data=data_completa):
                                     and not re.findall(padrao2, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao3, ementa, re.IGNORECASE):
                                 print(ementa + " --- " + file)
-                        elif item in dicionario['Ementa'][19]:
+                        if item in dicionario['Ementa'][19]:
                             #padrao_130 = "(Poder (.*?Executivo))|(Poderes (.*?Executivo))"
                             #Extrai o título do arquivo xml
                             titulo = bs_texto.find('Identifica').get_text()
@@ -269,7 +270,8 @@ def buscar_ementa(dicionario, data=data_completa):
                                     and not re.findall(padrao_titulo, titulo, re.IGNORECASE) \
                                     and re.findall(item, ementa[inicio_busca:fim_busca], re.IGNORECASE):
                                 print(ementa + " --- " + file)
-                        else:
+                        if item in dicionario['Ementa'][0:5] \
+                                or item in dicionario['Ementa'][6:19]:
                             if re.findall(item, ementa, re.IGNORECASE):
                                 print(ementa + " --- " + file)
     print("Busca Encerrada!")
@@ -352,8 +354,11 @@ def buscar_conteudo(dicionario, data=data_completa):
                     #Limpa o texto ao eliminar as tags e os atributos:
                     texto_conteudo = re.sub('<[^>]+?>', ' ', conteudo)
                     #Faz a busca pelo atributo Texto:
-                    for item in dicionario['Conteudo']:
-                        if item in dicionario['Conteudo'][18] or item in dicionario['Conteudo'][19]:
+                    for item in dicionario["Conteudo"]:
+                        #if item in dicionario['Conteudo'][22]:
+                        #    if re.findall(item, conteudo, re.IGNORECASE):
+                        #        print(" --- " + file)
+                        if item in dicionario["Conteudo"][18] or item in dicionario["Conteudo"][19]:
                             if texto_conteudo.find('Exposição de Motivos'):
                                 inicio_busca = texto_conteudo.find('Exposição de Motivos')
                                 fim_busca = inicio_busca + len('Exposição de Motivos') + 200
@@ -363,14 +368,15 @@ def buscar_conteudo(dicionario, data=data_completa):
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall(item, conteudo[inicio_busca:fim_busca], re.IGNORECASE):
                                 print(texto_conteudo + " --- " + file)
-                        elif item in dicionario['Conteudo'][22]:
+                        if item in dicionario["Conteudo"][22]:
                             padrao = 'Presidente do COAF'
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall(padrao, conteudo, re.IGNORECASE):
                                 print(texto_conteudo + " --- " + file)
-                        else:
+                        if item in dicionario["Conteudo"][23:29] \
+                                or item in dicionario["Conteudo"][0:18] or item in dicionario["Conteudo"][20:22]:
                             if re.findall(item, conteudo, re.IGNORECASE):
-                                print(texto_conteudo + " --- " + file)
+                                print(" --- " + file)
     print("Busca Encerrada!")
 
 
@@ -390,29 +396,6 @@ def ler_arquivo(file):
         for assinatura in assinaturas:
             print(str(assinatura.get_text()) + ' --- ' + file)
     print('Fim!')
-
-
-def selecionar_data(dia, mes, ano):
-    data_completa = ano + "-" + mes + "-" + dia
-    if s.cookies.get('inlabs_session_cookie'):
-        cookie = s.cookies.get('inlabs_session_cookie')
-    else:
-        print("Falha ao obter cookie. Verifique suas credenciais");
-        exit(37)
-    for dou_secao in tipo_dou.split(' '):
-        print("Aguarde Download...")
-        url_arquivo = url_download + data_completa + "&dl=" + data_completa + "-" + dou_secao + ".zip"
-        cabecalho_arquivo = {'Cookie': 'inlabs_session_cookie=' + cookie, 'origem': '736372697074'}
-        response_arquivo = s.request("GET", url_arquivo, headers=cabecalho_arquivo)
-        if response_arquivo.status_code == 200:
-            with open(data_completa + "-" + dou_secao + ".zip", "wb") as f:
-                f.write(response_arquivo.content)
-                print("Arquivo %s salvo." % (data_completa + "-" + dou_secao + ".zip"))
-            del response_arquivo
-            del f
-        elif response_arquivo.status_code == 404:
-            print("Arquivo não encontrado: %s" % (data_completa + "-" + dou_secao + ".zip"))
-    print("Aplicação encerrada")
 
 
 def selecionar_secao(tipo_secao):
@@ -454,8 +437,7 @@ def selecionar_secao(tipo_secao):
 def login():
     try:
         response = s.request("POST", url_login, data=payload, headers=headers)
-        download()
-        #selecionar_data('09', '09', '2022')
+        download("2022-09-09")
         #selecionar_secao('DO1')
     except requests.exceptions.ConnectionError:
         login()
@@ -464,8 +446,8 @@ def login():
 login()
 #buscar_escopo(dicionario, "2022-09-09")
 #buscar_escopo(dicionario)
-buscar_titulo(dicionario)
-#buscar_ementa(dicionario)
+#buscar_titulo(dicionario, "2022-09-09")
+buscar_ementa(dicionario, "2022-09-09")
 #buscar_assinatura(dicionario)
-#buscar_conteudo(dicionario)
+#buscar_conteudo(dicionario, "2022-09-09")
 #ler_arquivo('529_20220905_19869944.xml', dicionario)
