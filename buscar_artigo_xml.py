@@ -60,7 +60,7 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                         "Superintendência Nacional de Previdência Complementar",
                         "Banco Central do Brasil",
                         "Conselho de Controle de Atividades Financeiras",
-                        "Presidência da República"], #novo
+                        "Presidência da República"],
               "Titulo": ["Resolução Coremec",
                          "([ ]CMN[ ])|([ ]CMN[0-9])",
                          "PORTARIA SETO",
@@ -128,7 +128,7 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                            "Procurador do Banco Central",
                            "Procuradoria-Geral do Banco Central",
                            "Procurador-Geral do Banco Central"]
-              } #código DAS 101.6
+              }
 
 
 def buscar_artigo(dicionario, data=data_completa):
@@ -160,14 +160,14 @@ def buscar_artigo(dicionario, data=data_completa):
                     # Faz a busca pelo atributo artCategory:
                     if True in np.isin(dicionario['Escopo'][1], escopo.split('/')) and titulo is not None:
                         nova_lista.append(file)
-                    elif True in np.isin(dicionario['Escopo'][5], escopo.split('/')) \
+                    if True in np.isin(dicionario['Escopo'][5], escopo.split('/')) \
                             and re.findall("DO1", pub_name_secao, re.IGNORECASE) \
                             and re.findall("Portaria", tipo_normativo, re.IGNORECASE):
                         nova_lista.append(file)
-                    elif True in np.isin(dicionario['Escopo'][0], escopo.split('/')) \
+                    if True in np.isin(dicionario['Escopo'][0], escopo.split('/')) \
                             or True in np.isin(dicionario['Escopo'][2:5], escopo.split('/')):
                         nova_lista.append(file)
-                    elif True in np.isin(dicionario['Escopo'][6], escopo.split('/')):
+                    if True in np.isin(dicionario['Escopo'][6], escopo.split('/')):
                             nova_lista.append(file)
                         #elif re.findall("DO2", pub_name_secao, re.IGNORECASE) \
                         #        and not re.findall("Secretaria Executiva", escopo):
@@ -315,10 +315,10 @@ def buscar_artigo(dicionario, data=data_completa):
 def login():
     try:
         response = s.request("POST", url_login, data=payload, headers=headers)
-        download("2022-09-09")
+        download()
     except requests.exceptions.ConnectionError:
         login()
 
 
 login()
-buscar_artigo(dicionario, "2022-09-09")
+buscar_artigo(dicionario)
