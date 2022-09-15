@@ -5,6 +5,10 @@ import os
 from bs4 import BeautifulSoup
 import re
 import numpy as np
+from shareplum.site import Version
+from shareplum import Site, Office365
+import sys
+from msal import ConfidentialClientApplication
 
 login = ""
 senha = ""
@@ -312,6 +316,35 @@ def buscar_artigo(dicionario, data=data_completa):
     print("Busca Encerrada!")
 
 
+def share_point_request():
+    url_sharepoint = 'https://bacen.sharepoint.com'
+    url_site = 'https://bacen.sharepoint.com/sites/sumula'
+    url_list = 'Lists/Artigos/'
+    headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'}
+    pload = {}
+    id_client = ''
+    id_secret = ''
+    r = requests.get(url_sharepoint, headers=headers)
+    lista = requests.get('https://bacen.sharepoint.com/sites/sumula/Lists/Artigos/', headers=headers)
+    #print(r.headers)
+    #print(r.cookies)
+    if r.status_code == 200:
+        print('OK')
+    else:
+        print('Erro ao estabelecer conexão com o sistema.')
+        #requests.post(url_, data=pload)
+    username = ''
+    password = ''
+    site = None
+    try:
+        authcookie = Office365(url_sharepoint, username=username, password=password).GetCookies()
+        site = Site(url_site, version=Version.v365, authcookie=authcookie)
+    except:
+        # We should log the specific type of error occurred.
+        print('Failed to connect to SP site: {}'.format(sys.exc_info()[1]))
+    return site
+
+
 def login():
     try:
         response = s.request("POST", url_login, data=payload, headers=headers)
@@ -320,5 +353,6 @@ def login():
         login()
 
 
-login()
-buscar_artigo(dicionario)
+#login()
+#buscar_artigo(dicionario)
+share_point_request()
