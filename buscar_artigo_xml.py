@@ -1,4 +1,7 @@
+import json
 from datetime import date
+
+import msal
 import requests
 import zipfile
 import os
@@ -9,6 +12,11 @@ from shareplum.site import Version
 from shareplum import Site, Office365
 import sys
 from msal import ConfidentialClientApplication
+from azure.identity import DefaultAzureCredential
+from azure.storage.blob import BlobServiceClient
+from office365.sharepoint.client_context import ClientContext
+from office365.runtime.auth.client_credential import ClientCredential
+from requests_ntlm import HttpNtlmAuth
 
 login = ""
 senha = ""
@@ -64,7 +72,8 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                         "Superintendência Nacional de Previdência Complementar",
                         "Banco Central do Brasil",
                         "Conselho de Controle de Atividades Financeiras",
-                        "Presidência da República"],
+                        "Presidência da República",
+                        "Ministério da Economia"],
               "Titulo": ["Resolução Coremec",
                          "([ ]CMN[ ])|([ ]CMN[0-9])",
                          "PORTARIA SETO",
@@ -89,7 +98,8 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                          "Comitê de Estabilidade Financeira",
                          "Educação Financeira",
                          "Imposto sobre Operações Financeiras",
-                         "(Poder (.*?Executivo))|(Poderes (.*?Executivo))"],
+                         "(Poder (.*?Executivo))|(Poderes (.*?Executivo))",
+                         "Decreto nº 93.872, de 23 de dezembro de 1986"],
               "Assinatura": [["Presidente do Banco Central do Brasil[<]", "Roberto de Oliveira Campos Neto"],
                             ["Diretor de Relacionamento, Cidadania e Supervisão de Conduta[<]", "Maurício Costa de Moura"],
                             ["Diretor de Fiscalização[<]", "Paulo sérgio Neves de Souza"],
@@ -131,7 +141,8 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                            "Procuradores do Banco Central",
                            "Procurador do Banco Central",
                            "Procuradoria-Geral do Banco Central",
-                           "Procurador-Geral do Banco Central"]
+                           "Procurador-Geral do Banco Central",
+                           "Presidência da CVM"]
               }
 
 
@@ -172,6 +183,8 @@ def buscar_artigo(dicionario, data=data_completa):
                             or True in np.isin(dicionario['Escopo'][2:5], escopo.split('/')):
                         nova_lista.append(file)
                     if True in np.isin(dicionario['Escopo'][6], escopo.split('/')):
+                            nova_lista.append(file)
+                    if True in np.isin(dicionario['Escopo'][7], escopo.split('/')):
                             nova_lista.append(file)
                         #elif re.findall("DO2", pub_name_secao, re.IGNORECASE) \
                         #        and not re.findall("Secretaria Executiva", escopo):
@@ -245,7 +258,8 @@ def buscar_artigo(dicionario, data=data_completa):
                                     and re.findall(item, ementa[inicio_busca:fim_busca], re.IGNORECASE):
                                 print(ementa + " --- " + arq)
                         if item in dicionario['Ementa'][0:5] \
-                                or item in dicionario['Ementa'][6:11] or item in dicionario['Ementa'][12:19]:
+                                or item in dicionario['Ementa'][6:11] or item in dicionario['Ementa'][12:19] \
+                                or item in dicionario['Ementa'][20]:
                             if re.findall(item, ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
@@ -313,32 +327,50 @@ def buscar_artigo(dicionario, data=data_completa):
                                 or item in dicionario["Conteudo"][0:18] or item in dicionario["Conteudo"][20:22]:
                             if re.findall(item, conteudo, re.IGNORECASE):
                                 print(" --- " + arq)
+                        if item in dicionario["Conteudo"][33]:
+                            pub_name_secao = bs_texto.find('article').get('pubName')
+                            escopo = bs_texto.find('article').get('artCategory')
+                            if re.findall(item, conteudo, re.IGNORECASE) \
+                                and re.findall("DO2", pub_name_secao, re.IGNORECASE):
+                                print(" --- " + arq)
     print("Busca Encerrada!")
 
 
 def share_point_request():
+    username = ''
+    password = ''
     url_sharepoint = 'https://bacen.sharepoint.com'
     url_site = 'https://bacen.sharepoint.com/sites/sumula'
     url_list = 'Lists/Artigos/'
+
     headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'}
-    pload = {}
-    id_client = ''
-    id_secret = ''
-    r = requests.get(url_sharepoint, headers=headers)
+    r = requests.get(url_sharepoint, headers=headers, auth=HttpNtlmAuth(username=username, password=password))
     lista = requests.get('https://bacen.sharepoint.com/sites/sumula/Lists/Artigos/', headers=headers)
-    #print(r.headers)
-    #print(r.cookies)
+    client_id = ''
+    client_secret = ''
+    #Biblioteca office365:
+    #default_credential = DefaultAzureCredential(managed_identity_client_id=client_id)
+    #client = BlobServiceClient(url_sharepoint, credential=default_credential)
+    #credentials = ClientCredential(client_id=client_id, client_secret='')
+    #ctx = ClientContext(url_sharepoint).with_credentials(credentials)
+    #web = ctx.web
+    #ctx.load(web)
+    #ctx.execute_query()
+
+    #Biblioteca msal:
+    #s = msal.ConfidentialClientApplication(client_id=client_id)
+
     if r.status_code == 200:
         print('OK')
     else:
         print('Erro ao estabelecer conexão com o sistema.')
         #requests.post(url_, data=pload)
-    username = ''
-    password = ''
     site = None
+    authcookie = HttpNtlmAuth('email', 'senha')
     try:
-        authcookie = Office365(url_sharepoint, username=username, password=password).GetCookies()
-        site = Site(url_site, version=Version.v365, authcookie=authcookie)
+        #authcookie = Office365(url_site, username=username, password=password).GetCookies()
+        #site = Site(url_site, version=Version.v365, auth=authcookie)
+        site = Site(url_site, version=Version.v365, auth=authcookie)
     except:
         # We should log the specific type of error occurred.
         print('Failed to connect to SP site: {}'.format(sys.exc_info()[1]))
