@@ -1,6 +1,5 @@
 import json
 from datetime import date
-
 import msal
 import requests
 import zipfile
@@ -16,7 +15,8 @@ from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 from office365.sharepoint.client_context import ClientContext
 from office365.runtime.auth.client_credential import ClientCredential
-from requests_ntlm import HttpNtlmAuth
+from office365.runtime.auth.authentication_context import AuthenticationContext
+from office365.sharepoint.lists.list import List
 
 login = ""
 senha = ""
@@ -339,42 +339,54 @@ def buscar_artigo(dicionario, data=data_completa):
 def share_point_request():
     username = ''
     password = ''
-    url_sharepoint = 'https://bacen.sharepoint.com'
+    url_sharepoint = 'https://bacen.sharepoint.com/'
     url_site = 'https://bacen.sharepoint.com/sites/sumula'
     url_list = 'Lists/Artigos/'
+    url = "https://bacen.sharepoint.com/_api/web/lists/GetByTitle('Artigos')/items"
 
     headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'}
-    r = requests.get(url_sharepoint, headers=headers, auth=HttpNtlmAuth(username=username, password=password))
+    #r = requests.get(url, headers=headers, auth=HttpNtlmAuth(username=username, password=password))
     lista = requests.get('https://bacen.sharepoint.com/sites/sumula/Lists/Artigos/', headers=headers)
+    #print(r.cookies)
     client_id = ''
     client_secret = ''
-    #Biblioteca office365:
-    #default_credential = DefaultAzureCredential(managed_identity_client_id=client_id)
+    default_credential = DefaultAzureCredential(managed_identity_client_id=client_id)
     #client = BlobServiceClient(url_sharepoint, credential=default_credential)
-    #credentials = ClientCredential(client_id=client_id, client_secret='')
-    #ctx = ClientContext(url_sharepoint).with_credentials(credentials)
-    #web = ctx.web
-    #ctx.load(web)
-    #ctx.execute_query()
-
+    context_auth = AuthenticationContext(url_site)
+    context_auth.acquire_token_for_app(client_id, client_secret)
+    #credentials = ClientCredential(client_id=client_id, client_secret=client_secret)
+    #ctx = ClientContext(url).with_credentials(credentials)
+    ctx = ClientContext(url_site, context_auth)
+    web = ctx.web
+    ctx.load(web)
+    ctx.execute_query()
+    print("Web site title: {0}".format(web.properties['Title']))
+    lista = ctx.web.lists.get_by_title("Artigos")
+    ctx.load(lista)
+    lista.items.get_all().execute_query()
+    print(lista.item_count)
+    #s = sharepy.connect(url_site, username=username, password=password)
+    #request = s.get(url_site, headers=headers)
+    #print(request.status_code)
     #Biblioteca msal:
     #s = msal.ConfidentialClientApplication(client_id=client_id)
 
-    if r.status_code == 200:
-        print('OK')
-    else:
-        print('Erro ao estabelecer conexão com o sistema.')
+    #if r.status_code == 200:
+    #    print('OK')
+    #else:
+    #    print('Erro ao estabelecer conexão com o sistema.')
         #requests.post(url_, data=pload)
-    site = None
-    authcookie = HttpNtlmAuth('email', 'senha')
-    try:
-        #authcookie = Office365(url_site, username=username, password=password).GetCookies()
+    #site = None
+    #authcookie = HttpNtlmAuth(, )
+    #authcookie = r.cookies
+    #try:
+        #authcookie = Office365(url_sharepoint, username=username, password=password).GetCookies()
+    #    site = Site(url_sharepoint, version=Version.v365, authcookie=authcookie)
         #site = Site(url_site, version=Version.v365, auth=authcookie)
-        site = Site(url_site, version=Version.v365, auth=authcookie)
-    except:
+    #except:
         # We should log the specific type of error occurred.
-        print('Failed to connect to SP site: {}'.format(sys.exc_info()[1]))
-    return site
+    #    print('Failed to connect to SP site: {}'.format(sys.exc_info()[1]))
+    #return site
 
 
 def login():
