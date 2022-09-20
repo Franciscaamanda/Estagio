@@ -354,8 +354,6 @@ def share_point_request():
     #client = BlobServiceClient(url_sharepoint, credential=default_credential)
     context_auth = AuthenticationContext(url_site)
     context_auth.acquire_token_for_app(client_id, client_secret)
-    #credentials = ClientCredential(client_id=client_id, client_secret=client_secret)
-    #ctx = ClientContext(url).with_credentials(credentials)
     ctx = ClientContext(url_site, context_auth)
     web = ctx.web
     ctx.load(web)
@@ -365,6 +363,29 @@ def share_point_request():
     ctx.load(lista)
     lista.items.get_all().execute_query()
     print(lista.item_count)
+    print(lista.title)
+    for l in lista.get_items():
+        print(l.properties)
+    #print(lista.items)
+    #print(lista)
+    #print(lista)
+    item_listas = ctx.web.lists
+    item_lista = item_listas.get_by_title("Artigos")
+    l_item = item_lista.get_items()
+    ctx.load(l_item)
+    ctx.execute_query()
+    for l in l_item:
+        print(l.properties["Título"],l.properties['Escopo'],l.properties['Ementa'],l.properties['Texto'],
+              l.properties['Assinatura'],l.properties['Seção'],l.properties['Edição'],l.properties['Data'])
+    print(l_item)
+    #ctx.load(itens)
+    #ctx.execute_query()
+    #print(len(itens))
+    #print(itens)
+
+    #print(lista.select(list['Artigos']))
+    #itens = lista.items.get_all().execute_query()
+    #print(itens)
     #s = sharepy.connect(url_site, username=username, password=password)
     #request = s.get(url_site, headers=headers)
     #print(request.status_code)
