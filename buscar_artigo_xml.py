@@ -1,18 +1,12 @@
 import json
 from datetime import date
-import msal
 import requests
 import zipfile
 import os
 from bs4 import BeautifulSoup
 import re
 import numpy as np
-from shareplum.site import Version
-from shareplum import Site, Office365
-import sys
-from msal import ConfidentialClientApplication
 from azure.identity import DefaultAzureCredential
-from azure.storage.blob import BlobServiceClient
 from office365.sharepoint.client_context import ClientContext
 from office365.runtime.auth.client_credential import ClientCredential
 from office365.runtime.auth.authentication_context import AuthenticationContext
@@ -337,69 +331,76 @@ def buscar_artigo(dicionario, data=data_completa):
 
 
 def share_point_request():
-    username = ''
-    password = ''
+    #URLs do sharepoint:
     url_sharepoint = 'https://bacen.sharepoint.com/'
     url_site = 'https://bacen.sharepoint.com/sites/sumula'
     url_list = 'Lists/Artigos/'
     url = "https://bacen.sharepoint.com/_api/web/lists/GetByTitle('Artigos')/items"
 
-    headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'}
-    #r = requests.get(url, headers=headers, auth=HttpNtlmAuth(username=username, password=password))
-    lista = requests.get('https://bacen.sharepoint.com/sites/sumula/Lists/Artigos/', headers=headers)
+    #headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'}
+    #lista = requests.get('https://bacen.sharepoint.com/sites/sumula/Lists/Artigos/', headers=headers)
     #print(r.cookies)
+
     client_id = ''
     client_secret = ''
-    default_credential = DefaultAzureCredential(managed_identity_client_id=client_id)
-    #client = BlobServiceClient(url_sharepoint, credential=default_credential)
+    token = ''
+
+    headers = {'Authorization':token}
+    h = {'Content-Type': 'application/json'}
+
+    params = {
+        'client_id':client_id,
+        'scope': '',
+        'code': '',
+        'redirect_uri': '',
+        'grant_type':'authorization_code',
+        'client_secret':client_secret
+    }
+
+    #Requisição POST para obter o token:
+    p = requests.post('https://login.microsoftonline.com/bacen/oauth2/v2.0/token', data=params)
+    #Requisição para verificar se os dados estão corretos:
+    r = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers)
+    print(p.json())
+    print(r.json())
+    #Conexão e Autenticação no Sharepoint:
     context_auth = AuthenticationContext(url_site)
     context_auth.acquire_token_for_app(client_id, client_secret)
     ctx = ClientContext(url_site, context_auth)
     web = ctx.web
     ctx.load(web)
     ctx.execute_query()
+    print(web.properties)
     print("Web site title: {0}".format(web.properties['Title']))
     lista = ctx.web.lists.get_by_title("Artigos")
     ctx.load(lista)
     lista.items.get_all().execute_query()
     print(lista.item_count)
     print(lista.title)
-    for l in lista.get_items():
-        print(l.properties)
-    #print(lista.items)
-    #print(lista)
-    #print(lista)
+
+    listas = lista.items.get_all()
+    ctx.load(listas)
+    ctx.execute_query()
+    for l in listas:
+        print(l.properties["Título"],l.properties['Escopo'],l.properties['Ementa'],l.properties['Texto'],
+              l.properties['Assinatura'],l.properties['Seção'],l.properties['Edição'],l.properties['Data'])
+    lists = ctx.web.lists.get_by_title("Artigos")
+    ctx.load(lists)
+    ctx.execute_query()
+    for l in lists.items:
+        print(l.properties["Título"])
+
     item_listas = ctx.web.lists
     item_lista = item_listas.get_by_title("Artigos")
     l_item = item_lista.get_items()
     ctx.load(l_item)
     ctx.execute_query()
+
     for l in l_item:
         print(l.properties["Título"],l.properties['Escopo'],l.properties['Ementa'],l.properties['Texto'],
               l.properties['Assinatura'],l.properties['Seção'],l.properties['Edição'],l.properties['Data'])
-    print(l_item)
-    #ctx.load(itens)
-    #ctx.execute_query()
-    #print(len(itens))
-    #print(itens)
 
-    #print(lista.select(list['Artigos']))
-    #itens = lista.items.get_all().execute_query()
-    #print(itens)
-    #s = sharepy.connect(url_site, username=username, password=password)
-    #request = s.get(url_site, headers=headers)
-    #print(request.status_code)
-    #Biblioteca msal:
-    #s = msal.ConfidentialClientApplication(client_id=client_id)
-
-    #if r.status_code == 200:
-    #    print('OK')
-    #else:
-    #    print('Erro ao estabelecer conexão com o sistema.')
-        #requests.post(url_, data=pload)
     #site = None
-    #authcookie = HttpNtlmAuth(, )
-    #authcookie = r.cookies
     #try:
         #authcookie = Office365(url_sharepoint, username=username, password=password).GetCookies()
     #    site = Site(url_sharepoint, version=Version.v365, authcookie=authcookie)
