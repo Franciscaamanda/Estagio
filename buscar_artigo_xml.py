@@ -67,12 +67,15 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                         "Banco Central do Brasil",
                         "Conselho de Controle de Atividades Financeiras",
                         "Presidência da República",
-                        "Ministério da Economia"],
+                        "Ministério da Economia",
+                        "Atos do Poder Legislativo",
+                        "Atos do Poder Executivo"],
               "Titulo": ["Resolução Coremec",
                          "([ ]CMN[ ])|([ ]CMN[0-9])",
                          "PORTARIA SETO",
                          "Resolução BCB",
-                         "Despachos do Presidente da República"],
+                         "Despachos do Presidente da República",
+                         "Medida Provisória"],
               "Ementa": ["Programa Nacional de Apoio às Microempresas e Empresas de Pequeno Porte",
                          "lavagem de dinheiro",
                          "Administração Pública federal direta, autárquia e fundacional",
@@ -93,7 +96,8 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                          "Educação Financeira",
                          "Imposto sobre Operações Financeiras",
                          "(Poder (.*?Executivo))|(Poderes (.*?Executivo))",
-                         "Decreto nº 93.872, de 23 de dezembro de 1986"],
+                         "Decreto nº 93.872, de 23 de dezembro de 1986",
+                         "Altera a Consolidação das Leis do Trabalho"],
               "Assinatura": [["Presidente do Banco Central do Brasil[<]", "Roberto de Oliveira Campos Neto"],
                             ["Diretor de Relacionamento, Cidadania e Supervisão de Conduta[<]", "Maurício Costa de Moura"],
                             ["Diretor de Fiscalização[<]", "Paulo sérgio Neves de Souza"],
@@ -166,6 +170,7 @@ def buscar_artigo(dicionario, data=data_completa):
                     tipo_normativo = bs_texto.find('article').get('artType')
                     pub_name_secao = bs_texto.find('article').get('pubName')
                     corpo_texto = bs_texto.find('Texto').get_text()
+                    ementa = bs_texto.find('Ementa').get_text()
                     # Faz a busca pelo atributo artCategory:
                     if True in np.isin(dicionario['Escopo'][1], escopo.split('/')) and titulo is not None:
                         nova_lista.append(file)
@@ -176,9 +181,12 @@ def buscar_artigo(dicionario, data=data_completa):
                     if True in np.isin(dicionario['Escopo'][0], escopo.split('/')) \
                             or True in np.isin(dicionario['Escopo'][2:5], escopo.split('/')):
                         nova_lista.append(file)
-                    if True in np.isin(dicionario['Escopo'][6], escopo.split('/')):
+                    if True in np.isin(dicionario['Escopo'][6:8], escopo.split('/')):
                             nova_lista.append(file)
-                    if True in np.isin(dicionario['Escopo'][7], escopo.split('/')):
+                    if True in np.isin(dicionario['Escopo'][8], escopo.split('/')) \
+                            and not re.findall("Turismo", ementa, re.IGNORECASE):
+                            nova_lista.append(file)
+                    if True in np.isin(dicionario['Escopo'][9], escopo.split('/')):
                             nova_lista.append(file)
                         #elif re.findall("DO2", pub_name_secao, re.IGNORECASE) \
                         #        and not re.findall("Secretaria Executiva", escopo):
@@ -204,13 +212,18 @@ def buscar_artigo(dicionario, data=data_completa):
                                     and (re.findall("Banco Central", ementa, re.IGNORECASE) or
                                          re.findall("Banco Central", texto, re.IGNORECASE)):
                                 print(titulo + " --- " + arq)
-                        elif item in dicionario['Titulo'][4]:
+                        if item in dicionario['Titulo'][4]:
                             if re.findall(item, titulo, re.IGNORECASE) \
                                     and (re.findall("Banco Central", ementa, re.IGNORECASE) or
                                          re.findall("Banco Central", texto, re.IGNORECASE)):
                                 print(titulo + " --- " + arq)
-                        elif item in dicionario['Titulo'][0:2] or item in dicionario['Titulo'][3:5]:
+                        if item in dicionario['Titulo'][0:2] or item in dicionario['Titulo'][3]:
                             if re.findall(item, titulo, re.IGNORECASE):
+                                print(titulo + " --- " + arq)
+                        if item in dicionario['Titulo'][5]:
+                            if re.findall(item, titulo, re.IGNORECASE) \
+                                    and (re.findall("Comissão de Valores Mobiliários", texto, re.IGNORECASE) or
+                                         re.findall("treinamento ou em missões oficiais", texto, re.IGNORECASE)):
                                 print(titulo + " --- " + arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
@@ -253,7 +266,7 @@ def buscar_artigo(dicionario, data=data_completa):
                                 print(ementa + " --- " + arq)
                         if item in dicionario['Ementa'][0:5] \
                                 or item in dicionario['Ementa'][6:11] or item in dicionario['Ementa'][12:19] \
-                                or item in dicionario['Ementa'][20]:
+                                or item in dicionario['Ementa'][20:22]:
                             if re.findall(item, ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
