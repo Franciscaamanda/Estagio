@@ -6,11 +6,11 @@ import os
 from bs4 import BeautifulSoup
 import re
 import numpy as np
-from azure.identity import DefaultAzureCredential
 from office365.sharepoint.client_context import ClientContext
-from office365.runtime.auth.client_credential import ClientCredential
 from office365.runtime.auth.authentication_context import AuthenticationContext
-from office365.sharepoint.lists.list import List
+import msal
+import sys
+import logging
 
 login = ""
 senha = ""
@@ -357,6 +357,7 @@ def share_point_request():
     client_id = ''
     client_secret = ''
     token = ''
+    scope = 'Site.All.Read'
 
     headers = {'Authorization':token}
     h = {'Content-Type': 'application/json'}
@@ -371,11 +372,11 @@ def share_point_request():
     }
 
     #Requisição POST para obter o token:
-    p = requests.post('https://login.microsoftonline.com/bacen/oauth2/v2.0/token', data=params)
+    #p = requests.post('https://login.microsoftonline.com/bacen/oauth2/v2.0/token', data=params)
     #Requisição para verificar se os dados estão corretos:
-    r = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers)
-    print(p.json())
-    print(r.json())
+    #r = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers)
+    #print(p.json())
+    #print(r.json())
     #Conexão e Autenticação no Sharepoint:
     context_auth = AuthenticationContext(url_site)
     context_auth.acquire_token_for_app(client_id, client_secret)
@@ -383,45 +384,47 @@ def share_point_request():
     web = ctx.web
     ctx.load(web)
     ctx.execute_query()
-    print(web.properties)
-    print("Web site title: {0}".format(web.properties['Title']))
+    #print(web.properties)
+    #print("Web site title: {0}".format(web.properties['Title']))
     lista = ctx.web.lists.get_by_title("Artigos")
     ctx.load(lista)
     lista.items.get_all().execute_query()
-    print(lista.item_count)
-    print(lista.title)
+    #print(lista.item_count)
+    #print(lista.title)
 
-    listas = lista.items.get_all()
-    ctx.load(listas)
-    ctx.execute_query()
-    for l in listas:
-        print(l.properties["Título"],l.properties['Escopo'],l.properties['Ementa'],l.properties['Texto'],
-              l.properties['Assinatura'],l.properties['Seção'],l.properties['Edição'],l.properties['Data'])
-    lists = ctx.web.lists.get_by_title("Artigos")
-    ctx.load(lists)
-    ctx.execute_query()
-    for l in lists.items:
-        print(l.properties["Título"])
+    data = {
+        'client_secret': client_secret
+    }
 
-    item_listas = ctx.web.lists
-    item_lista = item_listas.get_by_title("Artigos")
-    l_item = item_lista.get_items()
-    ctx.load(l_item)
-    ctx.execute_query()
+    #Biblioteca msal para obter o token:
+    #config = json.load(open(sys.argv[1]))
+    # Create a preferably long-lived app instance which maintains a token cache.
 
-    for l in l_item:
-        print(l.properties["Título"],l.properties['Escopo'],l.properties['Ementa'],l.properties['Texto'],
-              l.properties['Assinatura'],l.properties['Seção'],l.properties['Edição'],l.properties['Data'])
+    app = msal.ConfidentialClientApplication(
+        client_id=client_id, authority='https://login.microsoftonline.com/bacen',
+        client_credential=""
+        # token_cache=...  # Default cache is in memory only.
+        # You can learn how to use SerializableTokenCache from
+        # https://msal-python.rtfd.io/en/latest/#msal.SerializableTokenCache
+    )
 
-    #site = None
-    #try:
-        #authcookie = Office365(url_sharepoint, username=username, password=password).GetCookies()
-    #    site = Site(url_sharepoint, version=Version.v365, authcookie=authcookie)
-        #site = Site(url_site, version=Version.v365, auth=authcookie)
-    #except:
-        # We should log the specific type of error occurred.
-    #    print('Failed to connect to SP site: {}'.format(sys.exc_info()[1]))
-    #return site
+    result = app.acquire_token_silent(scopes='Site.All.Read', account=None)
+
+    if not result:
+        logging.info("No suitable token exists in cache. Let's get a new one from AAD.")
+        result = app.acquire_token_for_client(scopes=scope)
+
+    if "access_token" in result:
+        # Calling graph using the access token
+        graph_data = requests.get(  # Use token to call downstream service
+            url='https://graph.microsoft.com/v1.0/me',
+            headers={'Authorization': 'Bearer ' + result['access_token']}, ).json()
+        print("Graph API call result: ")
+        print(json.dumps(graph_data, indent=2))
+    else:
+        print(result.get("error"))
+        print(result.get("error_description"))
+        print(result.get("correlation_id"))  # You may need this when reporting a bug
 
 
 def login():

@@ -1,0 +1,7 @@
+{
+  "authority": "https://login.microsoftonline.com/bacen",
+  "client_id": "",
+  "scope": [ "Site.All.Read" ],
+  "secret": "",
+  "endpoint": "https://graph.microsoft.com/v1.0/me"
+}
