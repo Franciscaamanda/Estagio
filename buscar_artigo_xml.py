@@ -357,24 +357,39 @@ def share_point_request():
     client_id = ''
     client_secret = ''
     token = ''
-    scope = 'Site.All.Read'
+    scope = 'User.Read'
+    redirect_uri = ''
 
     headers = {'Authorization':token}
     h = {'Content-Type': 'application/json'}
 
+    data = {
+        'client_id': client_id,
+        'response_type': 'code',
+        'redirect_uri': redirect_uri,
+        'response_mode': 'query',
+        'scope': scope
+    }
+
+    #Requisição para obter o code:
+    s = requests.get('https://login.microsoftonline.com/{tenant id}/oauth2/v2.0/authorize?', params=data)
+    print(s.url)
+    print(s.text)
+    print("Fim")
+
     params = {
         'client_id':client_id,
-        'scope': '',
+        'scope': scope,
         'code': '',
-        'redirect_uri': '',
+        'redirect_uri': redirect_uri,
         'grant_type':'authorization_code',
         'client_secret':client_secret
     }
 
     #Requisição POST para obter o token:
-    #p = requests.post('https://login.microsoftonline.com/bacen/oauth2/v2.0/token', data=params)
+    p = requests.post('https://login.microsoftonline.com/bacen/oauth2/v2.0/token', data=params)
     #Requisição para verificar se os dados estão corretos:
-    #r = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers)
+    r = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers)
     #print(p.json())
     #print(r.json())
     #Conexão e Autenticação no Sharepoint:
@@ -400,31 +415,31 @@ def share_point_request():
     #config = json.load(open(sys.argv[1]))
     # Create a preferably long-lived app instance which maintains a token cache.
 
-    app = msal.ConfidentialClientApplication(
-        client_id=client_id, authority='https://login.microsoftonline.com/bacen',
-        client_credential=""
+    #app = msal.ConfidentialClientApplication(
+    #    client_id=client_id, authority='https://login.microsoftonline.com/bacen',
+    #    client_credential=""
         # token_cache=...  # Default cache is in memory only.
         # You can learn how to use SerializableTokenCache from
         # https://msal-python.rtfd.io/en/latest/#msal.SerializableTokenCache
-    )
+    #)
 
-    result = app.acquire_token_silent(scopes='Site.All.Read', account=None)
+    #result = app.acquire_token_silent(scopes='Site.All.Read', account=None)
 
-    if not result:
-        logging.info("No suitable token exists in cache. Let's get a new one from AAD.")
-        result = app.acquire_token_for_client(scopes=scope)
+    #if not result:
+    #    logging.info("No suitable token exists in cache. Let's get a new one from AAD.")
+    #    result = app.acquire_token_for_client(scopes=scope)
 
-    if "access_token" in result:
+    #if "access_token" in result:
         # Calling graph using the access token
-        graph_data = requests.get(  # Use token to call downstream service
-            url='https://graph.microsoft.com/v1.0/me',
-            headers={'Authorization': 'Bearer ' + result['access_token']}, ).json()
-        print("Graph API call result: ")
-        print(json.dumps(graph_data, indent=2))
-    else:
-        print(result.get("error"))
-        print(result.get("error_description"))
-        print(result.get("correlation_id"))  # You may need this when reporting a bug
+    #    graph_data = requests.get(  # Use token to call downstream service
+    #        url='https://graph.microsoft.com/v1.0/me',
+    #        headers={'Authorization': 'Bearer ' + result['access_token']}, ).json()
+    #    print("Graph API call result: ")
+    #    print(json.dumps(graph_data, indent=2))
+    #else:
+    #    print(result.get("error"))
+    #    print(result.get("error_description"))
+    #    print(result.get("correlation_id"))  # You may need this when reporting a bug
 
 
 def login():
