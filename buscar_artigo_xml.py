@@ -11,6 +11,9 @@ from office365.runtime.auth.authentication_context import AuthenticationContext
 import msal
 import sys
 import logging
+import webbrowser
+import urllib3
+from flask import request
 
 login = ""
 senha = ""
@@ -171,6 +174,7 @@ def buscar_artigo(dicionario, data=data_completa):
                     pub_name_secao = bs_texto.find('article').get('pubName')
                     corpo_texto = bs_texto.find('Texto').get_text()
                     ementa = bs_texto.find('Ementa').get_text()
+                    fim_dict = len(dicionario['Escopo'])
                     # Faz a busca pelo atributo artCategory:
                     if True in np.isin(dicionario['Escopo'][1], escopo.split('/')) and titulo is not None:
                         nova_lista.append(file)
@@ -186,7 +190,7 @@ def buscar_artigo(dicionario, data=data_completa):
                     if True in np.isin(dicionario['Escopo'][8], escopo.split('/')) \
                             and not re.findall("Turismo", ementa, re.IGNORECASE):
                             nova_lista.append(file)
-                    if True in np.isin(dicionario['Escopo'][9], escopo.split('/')):
+                    if True in np.isin(dicionario['Escopo'][9:fim_dict], escopo.split('/')):
                             nova_lista.append(file)
                         #elif re.findall("DO2", pub_name_secao, re.IGNORECASE) \
                         #        and not re.findall("Secretaria Executiva", escopo):
@@ -205,6 +209,7 @@ def buscar_artigo(dicionario, data=data_completa):
                     titulo = bs_texto.find('Identifica').get_text()
                     ementa = bs_texto.find('Ementa').get_text()
                     texto = bs_texto.find('Texto').get_text()
+                    fim = len(dicionario['Titulo'])
                     # Faz a busca pelo atributo título:
                     for item in dicionario['Titulo']:
                         if item in dicionario['Titulo'][2]:
@@ -230,6 +235,7 @@ def buscar_artigo(dicionario, data=data_completa):
                     bs_texto = BeautifulSoup(conteudo_xml, 'xml')
                     # Extrai o conteúdo da ementa do arquivo xml:
                     ementa = bs_texto.find('Ementa').get_text()
+                    fim = len(dicionario['Ementa'])
                     # Faz a busca pela tag Ementa:
                     for item in dicionario['Ementa']:
                         if item in dicionario['Ementa'][5]:
@@ -266,7 +272,7 @@ def buscar_artigo(dicionario, data=data_completa):
                                 print(ementa + " --- " + arq)
                         if item in dicionario['Ementa'][0:5] \
                                 or item in dicionario['Ementa'][6:11] or item in dicionario['Ementa'][12:19] \
-                                or item in dicionario['Ementa'][20:22]:
+                                or item in dicionario['Ementa'][20:fim]:
                             if re.findall(item, ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
@@ -308,6 +314,7 @@ def buscar_artigo(dicionario, data=data_completa):
                     conteudo = bs_texto.find('Texto').get_text()
                     #Limpa o texto ao eliminar as tags e os atributos:
                     texto_conteudo = re.sub('<[^>]+?>', ' ', conteudo)
+                    fim = len(dicionario['Conteudo'])
                     #Faz a busca pela tag Texto:
                     for item in dicionario['Conteudo']:
                         if item in dicionario["Conteudo"][18] or item in dicionario["Conteudo"][19]:
@@ -356,11 +363,13 @@ def share_point_request():
 
     client_id = ''
     client_secret = ''
-    token = ''
     scope = 'User.Read'
-    redirect_uri = ''
+    redirect_uri = 'https://bacen.sharepoint.com/sumula/sites/artigos'
+    #redirect_uri = 'https://bacen.sharepoint.com/sumula/sites/listas/artigos'
+    code = ''
 
-    headers = {'Authorization':token}
+    headers = {'Authorization': 'Bearer '}
+
     h = {'Content-Type': 'application/json'}
 
     data = {
@@ -372,26 +381,59 @@ def share_point_request():
     }
 
     #Requisição para obter o code:
-    s = requests.get('https://login.microsoftonline.com/{tenant id}/oauth2/v2.0/authorize?', params=data)
+    s = requests.get('https://login.microsoftonline.com/{tenant id}/oauth2/v2.0/authorize?',
+                     params=data)
     print(s.url)
-    print(s.text)
-    print("Fim")
+    print(s.headers['Set-Cookie'].split(';')[0][5:])
+    print(s.is_redirect)
+    print(s.cookies)
+    #request.args.get('code')
+    bs = BeautifulSoup(s.content, "html.parser")
+    #print(bs)
+    nova_url = s.url
+    #web = webbrowser.open(nova_url)
+
+    #code = s.headers['Set-Cookie'].split(';')[0][5:])
 
     params = {
         'client_id':client_id,
         'scope': scope,
-        'code': '',
+        'code': code,
         'redirect_uri': redirect_uri,
         'grant_type':'authorization_code',
         'client_secret':client_secret
     }
 
     #Requisição POST para obter o token:
-    p = requests.post('https://login.microsoftonline.com/bacen/oauth2/v2.0/token', data=params)
-    #Requisição para verificar se os dados estão corretos:
-    r = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers)
+    p = requests.post('https://login.microsoftonline.com/{tenant id}/oauth2/v2.0/token',
+                      data=params)
+    print(p.json())
     #print(p.json())
+
+    #Requisição para verificar se os dados estão corretos:
+    #r = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers)
     #print(r.json())
+    #dicio = r.json()
+    #print(dicio["displayName"])
+
+    refresh_token = ''
+
+    data_refresh_token = {
+        'client_id': client_id,
+        'scope': scope,
+        'code': code,
+        'refresh_token': refresh_token,
+        'grant_type': 'refresh_token',
+        'client_secret': client_secret
+    }
+    #Requisição para obter um novo token após a expiração:
+    #novo_token = requests.post('https://login.microsoftonline.com/{tenant id}/oauth2/v2.0/token',
+    #                           data=data_refresh_token)
+    #print(novo_token.json())
+    #dictionary = novo_token.json()
+    #token_refresh = dictionary['access_token']
+    #tempo_expiracao = dictionary['expires_in']
+
     #Conexão e Autenticação no Sharepoint:
     context_auth = AuthenticationContext(url_site)
     context_auth.acquire_token_for_app(client_id, client_secret)
