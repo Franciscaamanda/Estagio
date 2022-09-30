@@ -1,5 +1,6 @@
 import json
 from datetime import date
+import flask
 import requests
 import zipfile
 import os
@@ -14,6 +15,9 @@ import logging
 import webbrowser
 import urllib3
 from flask import request
+import builtwith
+from urllib.error import HTTPError
+from urllib.error import URLError
 
 login = ""
 senha = ""
@@ -185,7 +189,10 @@ def buscar_artigo(dicionario, data=data_completa):
                     if True in np.isin(dicionario['Escopo'][0], escopo.split('/')) \
                             or True in np.isin(dicionario['Escopo'][2:5], escopo.split('/')):
                         nova_lista.append(file)
-                    if True in np.isin(dicionario['Escopo'][6:8], escopo.split('/')):
+                    if True in np.isin(dicionario['Escopo'][6], escopo.split('/'))\
+                            and not re.findall("PORTARIA CHGAB/VPR", titulo, re.IGNORECASE):
+                            nova_lista.append(file)
+                    if True in np.isin(dicionario['Escopo'][7], escopo.split('/')):
                             nova_lista.append(file)
                     if True in np.isin(dicionario['Escopo'][8], escopo.split('/')) \
                             and not re.findall("Turismo", ementa, re.IGNORECASE):
@@ -200,7 +207,7 @@ def buscar_artigo(dicionario, data=data_completa):
                         #    nova_lista.append(file)
                         #elif re.findall("DO3", pub_name_secao, re.IGNORECASE):
                         #    nova_lista.append(file)
-            #arquivos encontrados pelo escopo ficam armazenados na nova_lista e faz as buscas abaixo somente neles:
+            #arquivos encontrados pelo escopo ficam armazenados na nova_lista e as buscas abaixo são feitas somente neles:
             for arq in nova_lista:
                 with open(arq, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
@@ -332,7 +339,13 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall(padrao, conteudo, re.IGNORECASE):
                                 print(texto_conteudo + " --- " + arq)
-                        if item in dicionario["Conteudo"][28:33]:
+                        if item in dicionario["Conteudo"][28]:
+                            escopo = bs_texto.find('article').get('artCategory')
+                            if re.findall(item, conteudo, re.IGNORECASE) \
+                                    and (re.findall("Presidência da República", escopo, re.IGNORECASE) or
+                                    re.findall("Secretaria Especial do Tesouro e Orçamento", escopo, re.IGNORECASE)):
+                                print(" --- " + arq)
+                        if item in dicionario["Conteudo"][29:33]:
                             escopo = bs_texto.find('article').get('artCategory')
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall("Presidência da República", escopo, re.IGNORECASE):
@@ -356,21 +369,18 @@ def share_point_request():
     url_site = 'https://bacen.sharepoint.com/sites/sumula'
     url_list = 'Lists/Artigos/'
     url = "https://bacen.sharepoint.com/_api/web/lists/GetByTitle('Artigos')/items"
+    url_lista = "https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')"
 
     #headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'}
     #lista = requests.get('https://bacen.sharepoint.com/sites/sumula/Lists/Artigos/', headers=headers)
-    #print(r.cookies)
 
     client_id = ''
     client_secret = ''
     scope = 'User.Read'
+    tenant_id = ''
     redirect_uri = 'https://bacen.sharepoint.com/sumula/sites/artigos'
-    #redirect_uri = 'https://bacen.sharepoint.com/sumula/sites/listas/artigos'
     code = ''
-
-    headers = {'Authorization': 'Bearer '}
-
-    h = {'Content-Type': 'application/json'}
+    session_state = ''
 
     data = {
         'client_id': client_id,
@@ -380,35 +390,32 @@ def share_point_request():
         'scope': scope
     }
 
+    h = {'Content-Type': 'application/json'}
+
     #Requisição para obter o code:
-    s = requests.get('https://login.microsoftonline.com/{tenant id}/oauth2/v2.0/authorize?',
-                     params=data)
-    print(s.url)
-    print(s.headers['Set-Cookie'].split(';')[0][5:])
-    print(s.is_redirect)
-    print(s.cookies)
-    #request.args.get('code')
-    bs = BeautifulSoup(s.content, "html.parser")
-    #print(bs)
-    nova_url = s.url
+    #s = requests.get(f'https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/authorize?',
+    #                 params=data)
+    #nova_url = s.url
     #web = webbrowser.open(nova_url)
 
-    #code = s.headers['Set-Cookie'].split(';')[0][5:])
-
     params = {
-        'client_id':client_id,
+        'client_id': client_id,
         'scope': scope,
         'code': code,
         'redirect_uri': redirect_uri,
-        'grant_type':'authorization_code',
-        'client_secret':client_secret
+        'grant_type': 'authorization_code',
+        'client_secret': client_secret,
+        'session_state': session_state
     }
 
+
     #Requisição POST para obter o token:
-    p = requests.post('https://login.microsoftonline.com/{tenant id}/oauth2/v2.0/token',
-                      data=params)
-    print(p.json())
+    #p = requests.post(f'https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token',
+    #                  data=params)
     #print(p.json())
+
+    token = ''
+    headers = {'Authorization': f'Bearer {token}'}
 
     #Requisição para verificar se os dados estão corretos:
     #r = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers)
@@ -416,7 +423,7 @@ def share_point_request():
     #dicio = r.json()
     #print(dicio["displayName"])
 
-    refresh_token = ''
+    refresh_token = token
 
     data_refresh_token = {
         'client_id': client_id,
@@ -424,15 +431,20 @@ def share_point_request():
         'code': code,
         'refresh_token': refresh_token,
         'grant_type': 'refresh_token',
-        'client_secret': client_secret
+        'client_secret': client_secret,
+        'session_state': session_state
     }
+
     #Requisição para obter um novo token após a expiração:
-    #novo_token = requests.post('https://login.microsoftonline.com/{tenant id}/oauth2/v2.0/token',
-    #                           data=data_refresh_token)
+   # novo_token = requests.post(f'https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token',
+   #                            data=data_refresh_token)
     #print(novo_token.json())
     #dictionary = novo_token.json()
     #token_refresh = dictionary['access_token']
     #tempo_expiracao = dictionary['expires_in']
+
+    r = requests.get(url_lista, headers=headers)
+    print(r.json())
 
     #Conexão e Autenticação no Sharepoint:
     context_auth = AuthenticationContext(url_site)
@@ -442,16 +454,17 @@ def share_point_request():
     ctx.load(web)
     ctx.execute_query()
     #print(web.properties)
-    #print("Web site title: {0}".format(web.properties['Title']))
+    print("Web site title: {0}".format(web.properties['Title']))
     lista = ctx.web.lists.get_by_title("Artigos")
     ctx.load(lista)
     lista.items.get_all().execute_query()
-    #print(lista.item_count)
-    #print(lista.title)
+    print(lista.item_count)
+    print(lista.items)
 
-    data = {
-        'client_secret': client_secret
-    }
+    items = ctx.web.lists.get_by_title('Artigos').items
+    ctx.load(items)
+    ctx.execute_query()
+    print(len(items))
 
     #Biblioteca msal para obter o token:
     #config = json.load(open(sys.argv[1]))
