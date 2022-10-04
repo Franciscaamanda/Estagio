@@ -381,6 +381,8 @@ def share_point_request():
     redirect_uri = 'https://bacen.sharepoint.com/sumula/sites/artigos'
     code = ''
     session_state = ''
+    username = ''
+    password = ''
 
     data = {
         'client_id': client_id,
@@ -443,7 +445,13 @@ def share_point_request():
     #token_refresh = dictionary['access_token']
     #tempo_expiracao = dictionary['expires_in']
 
-    r = requests.get(url_lista, headers=headers)
+    playload = {"username": username,
+                "password": password}
+
+    r = requests.get(url_site, headers=headers, data=playload)
+    print(r.status_code)
+
+    r = requests.get("https://graph.microsoft.com/v1.0/me", headers=headers, data=playload)
     print(r.json())
 
     #Conexão e Autenticação no Sharepoint:
@@ -457,15 +465,39 @@ def share_point_request():
     print("Web site title: {0}".format(web.properties['Title']))
     lista = ctx.web.lists.get_by_title("Artigos")
     ctx.load(lista)
-    lista.items.get_all().execute_query()
+    lista2 = lista.items.get_all().execute_query()
+    print(lista2)
     print(lista.item_count)
     print(lista.items)
+    #teste:
+    sp_lists = ctx.web.lists
+    s_list = sp_lists.get_by_title("Artigos")
+    l_items = s_list.get_items()
+    ctx.load(l_items)
+    ctx.execute_query()
+
+    for item in l_items:
+        print(item.properties)
 
     items = ctx.web.lists.get_by_title('Artigos').items
     ctx.load(items)
     ctx.execute_query()
     print(len(items))
+    print(items)
+    print(lista.resource_path)
+    l_itens = lista
+    ctx.load(l_itens)
+    ctx.execute_query()
+    print(lista.to_json())
 
+    #teste 2:
+    list_object = ctx.web.lists.get_by_title("Artigos")
+    items = list_object.get_items()
+    ctx.load(items)
+    ctx.execute_query()
+
+    for item in items:
+        print("Item title: {0}".format(item.properties["Title"]))
     #Biblioteca msal para obter o token:
     #config = json.load(open(sys.argv[1]))
     # Create a preferably long-lived app instance which maintains a token cache.
