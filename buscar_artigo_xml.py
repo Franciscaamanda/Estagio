@@ -1,4 +1,5 @@
 import json
+import time
 from datetime import date
 import flask
 import requests
@@ -147,7 +148,8 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                            "Procurador do Banco Central",
                            "Procuradoria-Geral do Banco Central",
                            "Procurador-Geral do Banco Central",
-                           "Presidência da CVM"]
+                           "Presidência da CVM",
+                           "Diretor-Presidente do Conselho Diretor da Autoridade Nacional de Proteção de Dados"]
               }
 
 
@@ -360,6 +362,9 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                 and re.findall("DO2", pub_name_secao, re.IGNORECASE):
                                 print(" --- " + arq)
+                        if item in dicionario["Conteudo"][34:fim]:
+                            if re.findall(item, conteudo, re.IGNORECASE):
+                                print(" --- " + arq)
     print("Busca Encerrada!")
 
 
@@ -449,55 +454,79 @@ def share_point_request():
                 "password": password}
 
     r = requests.get(url_site, headers=headers, data=playload)
-    print(r.status_code)
+    #print(r.status_code)
 
     r = requests.get("https://graph.microsoft.com/v1.0/me", headers=headers, data=playload)
-    print(r.json())
+    #print(r.json())
 
+    #Teste com a biblioteca msal:
+    connect_msal = msal.PublicClientApplication(client_id=client_id,
+                                                authority=f"https://login.microsoftonline.com/{tenant_id}")
+    #connect_msal.acquire_token_interactive(scopes=["User.Read"])
+    contas = connect_msal.get_accounts()
+    print(contas)
+    token = connect_msal.acquire_token_silent_with_error(scopes=["User.Read"], account=None)
+    print(token)
+    flow = connect_msal.initiate_device_flow(scopes=["User.Read"])
+    print(flow)
+    time.sleep(1)
+    token = connect_msal.acquire_token_by_device_flow(flow=flow)
+    print(token)
+
+    #token = connect_msal.acquire_token_silent(scopes=["User.Read"])
+    #print(token)
+    #connect_msal = msal.ClientApplication(client_id=client_id,client_credential=None,
+    #                                      authority=f"https://login.microsoftonline.com/{tenant_id}")
+    #token = connect_msal.acquire_token_silent(scopes=["User.ReadBasic.All", "User.Read", "Sites.ReadWrite.All",
+    #                                               "Sites.Manage.All", "email"], account=None)
+    #connect_msal = msal.ConfidentialClientApplication(client_id= client_id, client_credential=None,
+    #                                                  authority=f"https://login.microsoftonline.com/{tenant_id}")
+    #token = connect_msal.acquire_token_for_client(scopes=["User.ReadBasic.All", "User.Read", "Sites.ReadWrite.All",
+    #                                               "Sites.Manage.All", "email"])
     #Conexão e Autenticação no Sharepoint:
-    context_auth = AuthenticationContext(url_site)
-    context_auth.acquire_token_for_app(client_id, client_secret)
-    ctx = ClientContext(url_site, context_auth)
-    web = ctx.web
-    ctx.load(web)
-    ctx.execute_query()
+    #context_auth = AuthenticationContext(url_site)
+    #context_auth.acquire_token_for_app(client_id, client_secret)
+    #ctx = ClientContext(url_site, context_auth)
+    #web = ctx.web
+    #ctx.load(web)
+    #ctx.execute_query()
     #print(web.properties)
-    print("Web site title: {0}".format(web.properties['Title']))
-    lista = ctx.web.lists.get_by_title("Artigos")
-    ctx.load(lista)
-    lista2 = lista.items.get_all().execute_query()
-    print(lista2)
-    print(lista.item_count)
-    print(lista.items)
+    #print("Web site title: {0}".format(web.properties['Title']))
+    #lista = ctx.web.lists.get_by_title("Artigos")
+    #ctx.load(lista)
+    #lista2 = lista.items.get_all().execute_query()
+    #print(lista2)
+    #print(lista.item_count)
+    #print(lista.items)
     #teste:
-    sp_lists = ctx.web.lists
-    s_list = sp_lists.get_by_title("Artigos")
-    l_items = s_list.get_items()
-    ctx.load(l_items)
-    ctx.execute_query()
+    #sp_lists = ctx.web.lists
+    #s_list = sp_lists.get_by_title("Artigos")
+    #l_items = s_list.get_items()
+    #ctx.load(l_items)
+    #ctx.execute_query()
 
-    for item in l_items:
-        print(item.properties)
+    #for item in l_items:
+    #    print(item.properties)
 
-    items = ctx.web.lists.get_by_title('Artigos').items
-    ctx.load(items)
-    ctx.execute_query()
-    print(len(items))
-    print(items)
-    print(lista.resource_path)
-    l_itens = lista
-    ctx.load(l_itens)
-    ctx.execute_query()
-    print(lista.to_json())
+    #items = ctx.web.lists.get_by_title('Artigos').items
+    #ctx.load(items)
+    #ctx.execute_query()
+    #print(len(items))
+    #print(items)
+    #print(lista.resource_path)
+    #l_itens = lista
+    #ctx.load(l_itens)
+    #ctx.execute_query()
+    #print(lista.to_json())
 
     #teste 2:
-    list_object = ctx.web.lists.get_by_title("Artigos")
-    items = list_object.get_items()
-    ctx.load(items)
-    ctx.execute_query()
+    #list_object = ctx.web.lists.get_by_title("Artigos")
+    #items = list_object.get_items()
+    #ctx.load(items)
+    #ctx.execute_query()
 
-    for item in items:
-        print("Item title: {0}".format(item.properties["Title"]))
+    #for item in items:
+    #    print("Item title: {0}".format(item.properties["Title"]))
     #Biblioteca msal para obter o token:
     #config = json.load(open(sys.argv[1]))
     # Create a preferably long-lived app instance which maintains a token cache.
