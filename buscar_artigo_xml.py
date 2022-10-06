@@ -149,7 +149,8 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                            "Procuradoria-Geral do Banco Central",
                            "Procurador-Geral do Banco Central",
                            "Presidência da CVM",
-                           "Diretor-Presidente do Conselho Diretor da Autoridade Nacional de Proteção de Dados"]
+                           "Diretor-Presidente do Conselho Diretor da Autoridade Nacional de Proteção de Dados",
+                           "Presidente do Conselho de Controle de Atividades Financeiras"]
               }
 
 
@@ -181,6 +182,7 @@ def buscar_artigo(dicionario, data=data_completa):
                     corpo_texto = bs_texto.find('Texto').get_text()
                     ementa = bs_texto.find('Ementa').get_text()
                     fim_dict = len(dicionario['Escopo'])
+                    art_type = bs_texto.find('article').get('artType')
                     # Faz a busca pelo atributo artCategory:
                     if True in np.isin(dicionario['Escopo'][1], escopo.split('/')) and titulo is not None:
                         nova_lista.append(file)
@@ -194,7 +196,8 @@ def buscar_artigo(dicionario, data=data_completa):
                     if True in np.isin(dicionario['Escopo'][6], escopo.split('/'))\
                             and not re.findall("PORTARIA CHGAB/VPR", titulo, re.IGNORECASE):
                             nova_lista.append(file)
-                    if True in np.isin(dicionario['Escopo'][7], escopo.split('/')):
+                    if True in np.isin(dicionario['Escopo'][7], escopo.split('/')) \
+                            and not re.findall("Extrato de Inexigibilidade", art_type, re.IGNORECASE):
                             nova_lista.append(file)
                     if True in np.isin(dicionario['Escopo'][8], escopo.split('/')) \
                             and not re.findall("Turismo", ementa, re.IGNORECASE):
@@ -561,11 +564,11 @@ def share_point_request():
 def login():
     try:
         response = s.request("POST", url_login, data=payload, headers=headers)
-        download()
+        download("2022-10-05")
     except requests.exceptions.ConnectionError:
         login()
 
 
-#login()
-#buscar_artigo(dicionario)
-share_point_request()
+login()
+buscar_artigo(dicionario, "2022-10-05")
+#share_point_request()
