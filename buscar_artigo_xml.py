@@ -184,7 +184,8 @@ def buscar_artigo(dicionario, data=data_completa):
                     fim_dict = len(dicionario['Escopo'])
                     art_type = bs_texto.find('article').get('artType')
                     # Faz a busca pelo atributo artCategory:
-                    if True in np.isin(dicionario['Escopo'][1], escopo.split('/')) and titulo is not None:
+                    if True in np.isin(dicionario['Escopo'][1], escopo.split('/')) and titulo is not None \
+                            and not re.findall("IECP", corpo_texto, re.IGNORECASE):
                         nova_lista.append(file)
                     if True in np.isin(dicionario['Escopo'][5], escopo.split('/')) \
                             and re.findall("DO1", pub_name_secao, re.IGNORECASE) \
@@ -197,7 +198,8 @@ def buscar_artigo(dicionario, data=data_completa):
                             and not re.findall("PORTARIA CHGAB/VPR", titulo, re.IGNORECASE):
                             nova_lista.append(file)
                     if True in np.isin(dicionario['Escopo'][7], escopo.split('/')) \
-                            and not re.findall("Extrato de Inexigibilidade", art_type, re.IGNORECASE):
+                            and not re.findall("Extrato de Inexigibilidade", art_type, re.IGNORECASE) \
+                            and not re.findall("IECP", corpo_texto, re.IGNORECASE):
                             nova_lista.append(file)
                     if True in np.isin(dicionario['Escopo'][8], escopo.split('/')) \
                             and not re.findall("Turismo", ementa, re.IGNORECASE):
@@ -564,11 +566,11 @@ def share_point_request():
 def login():
     try:
         response = s.request("POST", url_login, data=payload, headers=headers)
-        download("2022-10-05")
+        download()
     except requests.exceptions.ConnectionError:
         login()
 
 
 login()
-buscar_artigo(dicionario, "2022-10-05")
+buscar_artigo(dicionario)
 #share_point_request()

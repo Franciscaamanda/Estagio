@@ -1,5 +1,6 @@
 from msal import PublicClientApplication
 import requests
+import datetime
 
 client_id = ''
 tenant_id = ''
@@ -35,11 +36,15 @@ else:
     print(result.get("error_description"))
     print(result.get("correlation_id"))  # You may need this when reporting a bug
 
-headers = {'Authorization': f'Bearer {result["access_token"]}'}
+headers = {'Authorization': f'Bearer {result["access_token"]}',
+            'Accept': 'application/json;odata=verbose',
+            'Content-Type': 'application/json;odata=verbose'}
 
 #Requisição para buscar itens na lista do Sharepoint:
 r = requests.get("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items", headers=headers)
 print(r.status_code)
+print(r.headers)
+#print(r.content)
 
 #Requisição para obter o FullEntityTypeFullName:
 request = requests.get("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')?select=ListItemEntityTypeFullName",
@@ -47,4 +52,15 @@ request = requests.get("https://bacen.sharepoint.com/sites/sumula/_api/web/lists
 print(request.content)
 list_entity_type_full_name = 'SP.Data.ArtigosListItem'
 #Requisição para inserir itens na lista do Sharepoint:
-#requests.post("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items")
+#content-type: application/atom+xml;type=feed;charset=utf-8
+#data = {"__metadata": {"type": "SP.Data.ArtigosListItem"},"Title": "Teste"}
+data = b'{"d": {"__metadata": {"type": "SP.Data.ArtigosListItem"},"Title": "Teste"}}'
+
+request_post = requests.post("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
+                        headers=headers, data=data)
+print(request_post.status_code)
+
+#Requisição para buscar os campos da lista:
+get_fields = requests.get("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/Fields",
+                          headers=headers)
+#print(get_fields.json())
