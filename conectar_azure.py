@@ -29,6 +29,7 @@ if accounts:
 if not result:
     # So no suitable token exists in cache. Let's get a new one from AAD.
     result = app.acquire_token_interactive(scopes=[f"https://bacen.sharepoint.com/.default"])
+#scope: f"https://bacen.sharepoint.com/.default"
 if "access_token" in result:
     print(result["access_token"])  # Yay!
 else:
@@ -54,13 +55,11 @@ list_entity_type_full_name = 'SP.Data.ArtigosListItem'
 #Requisição para inserir itens na lista do Sharepoint:
 #content-type: application/atom+xml;type=feed;charset=utf-8
 #data = {"__metadata": {"type": "SP.Data.ArtigosListItem"},"Title": "Teste"}
-data = b'{"d": {"__metadata": {"type": "SP.Data.ArtigosListItem"},"Title": "Teste"}}'
-
+data = '''{ "__metadata": {"type": "SP.Data.ArtigosListItem"},
+    "Title": "é",
+    "Escopo": "Escopo 1"
+}'''
+#"__metadata": {"type": "SP.Data.ArtigosListItem"}
 request_post = requests.post("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
                         headers=headers, data=data)
 print(request_post.status_code)
-
-#Requisição para buscar os campos da lista:
-get_fields = requests.get("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/Fields",
-                          headers=headers)
-#print(get_fields.json())

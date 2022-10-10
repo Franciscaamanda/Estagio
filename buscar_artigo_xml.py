@@ -1,24 +1,11 @@
-import json
-import time
 from datetime import date
-import flask
-import requests
 import zipfile
 import os
 from bs4 import BeautifulSoup
 import re
 import numpy as np
-from office365.sharepoint.client_context import ClientContext
-from office365.runtime.auth.authentication_context import AuthenticationContext
-import msal
-import sys
-import logging
-import webbrowser
-import urllib3
-from flask import request
-import builtwith
-from urllib.error import HTTPError
-from urllib.error import URLError
+import requests
+from msal import PublicClientApplication
 
 login = ""
 senha = ""
@@ -43,6 +30,8 @@ mes = date.today().strftime("%m")
 dia = date.today().strftime("%d")
 data_completa = ano + "-" + mes + "-" + dia
 nova_data = '2022' + "-" + '09' + "-" + '09'
+
+lista_sharepoint = list()
 
 
 def download(data=data_completa):
@@ -230,20 +219,28 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item, titulo, re.IGNORECASE) \
                                     and (re.findall("Banco Central", ementa, re.IGNORECASE) or
                                          re.findall("Banco Central", texto, re.IGNORECASE)):
-                                print(titulo + " --- " + arq)
+                                #print(titulo + " --- " + arq)
+                                if arq not in lista_sharepoint:
+                                    lista_sharepoint.append(arq)
                         if item in dicionario['Titulo'][4]:
                             if re.findall(item, titulo, re.IGNORECASE) \
                                     and (re.findall("Banco Central", ementa, re.IGNORECASE) or
                                          re.findall("Banco Central", texto, re.IGNORECASE)):
-                                print(titulo + " --- " + arq)
+                                #print(titulo + " --- " + arq)
+                                if arq not in lista_sharepoint:
+                                    lista_sharepoint.append(arq)
                         if item in dicionario['Titulo'][0:2] or item in dicionario['Titulo'][3]:
                             if re.findall(item, titulo, re.IGNORECASE):
-                                print(titulo + " --- " + arq)
+                                #print(titulo + " --- " + arq)
+                                if arq not in lista_sharepoint:
+                                    lista_sharepoint.append(arq)
                         if item in dicionario['Titulo'][5]:
                             if re.findall(item, titulo, re.IGNORECASE) \
                                     and (re.findall("Comissão de Valores Mobiliários", texto, re.IGNORECASE) or
                                          re.findall("treinamento ou em missões oficiais", texto, re.IGNORECASE)):
-                                print(titulo + " --- " + arq)
+                                #print(titulo + " --- " + arq)
+                                if arq not in lista_sharepoint:
+                                    lista_sharepoint.append(arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
                     bs_texto = BeautifulSoup(conteudo_xml, 'xml')
@@ -261,12 +258,16 @@ def buscar_artigo(dicionario, data=data_completa):
                                     and not re.findall(padrao1, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao2, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao3, ementa, re.IGNORECASE):
-                                print(ementa + " --- " + arq)
+                                #print(ementa + " --- " + arq)
+                                if arq not in lista_sharepoint:
+                                    lista_sharepoint.append(arq)
                         if item in dicionario["Ementa"][11]:
                             nome_titulo = bs_texto.find('Identifica').get_text()
                             if re.findall(item, ementa, re.IGNORECASE) \
                                     and not re.findall("Instrução Normativa BCB", nome_titulo, re.IGNORECASE):
-                                print(ementa + " --- " + arq)
+                                #print(ementa + " --- " + arq)
+                                if arq not in lista_sharepoint:
+                                    lista_sharepoint.append(arq)
                         if item in dicionario['Ementa'][19]:
                             # padrao_130 = "(Poder (.*?Executivo))|(Poderes (.*?Executivo))"
                             # Extrai o título do arquivo xml
@@ -283,12 +284,16 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao_titulo, titulo, re.IGNORECASE) \
                                     and re.findall(item, ementa[inicio_busca:fim_busca], re.IGNORECASE):
-                                print(ementa + " --- " + arq)
+                                #print(ementa + " --- " + arq)
+                                if arq not in lista_sharepoint:
+                                    lista_sharepoint.append(arq)
                         if item in dicionario['Ementa'][0:5] \
                                 or item in dicionario['Ementa'][6:11] or item in dicionario['Ementa'][12:19] \
                                 or item in dicionario['Ementa'][20:fim]:
                             if re.findall(item, ementa, re.IGNORECASE):
-                                print(ementa + " --- " + arq)
+                                #print(ementa + " --- " + arq)
+                                if arq not in lista_sharepoint:
+                                    lista_sharepoint.append(arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
                     #O parâmetro xml foi substituído por lxml para obter o conteúdo de um parágrafo específico:
@@ -309,18 +314,26 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item[1], str(assinatura), re.IGNORECASE):
                                 indice_lista = assinaturas.index(assinatura)
                                 if bs_texto.find('p', {'class': 'cargo'}):
-                                    print(str(assinatura.get_text()) + ' --- ' + str(
-                                        cargos[indice_lista].get_text()) + ' --- '+ arq)
+                                    #print(str(assinatura.get_text()) + ' --- ' + str(
+                                    #    cargos[indice_lista].get_text()) + ' --- '+ arq)
+                                    if arq not in lista_sharepoint:
+                                        lista_sharepoint.append(arq)
                                 else:
-                                    print(str(assinatura.get_text()) + ' --- '+ arq)
+                                    #print(str(assinatura.get_text()) + ' --- '+ arq)
+                                    if arq not in lista_sharepoint:
+                                        lista_sharepoint.append(arq)
                         for cargo in cargos:
                             if re.findall(item[0], str(cargo), re.IGNORECASE):
                                 indice_lista = cargos.index(cargo)
                                 if bs_texto.find('p', {'class': 'assina'}):
-                                    print(str(assinaturas[indice_lista].get_text()) + ' --- ' + str(
-                                        cargo.get_text()) + ' --- ' + arq)
+                                    #print(str(assinaturas[indice_lista].get_text()) + ' --- ' + str(
+                                     #   cargo.get_text()) + ' --- ' + arq)
+                                    if arq not in lista_sharepoint:
+                                        lista_sharepoint.append(arq)
                                 else:
-                                    print(str(cargo.get_text()) + ' --- ' + arq)
+                                    #print(str(cargo.get_text()) + ' --- ' + arq)
+                                    if arq not in lista_sharepoint:
+                                        lista_sharepoint.append(arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
                     bs_texto = BeautifulSoup(conteudo_xml, 'xml')
@@ -340,227 +353,58 @@ def buscar_artigo(dicionario, data=data_completa):
                                 fim_busca = inicio_busca + len('Exposições de Motivos') + 200
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall(item, conteudo[inicio_busca:fim_busca], re.IGNORECASE):
-                                print(texto_conteudo + " --- " + arq)
+                                #print(texto_conteudo + " --- " + arq)
+                                if arq not in lista_sharepoint:
+                                    lista_sharepoint.append(arq)
                         if item in dicionario["Conteudo"][22]:
                             padrao = 'Presidente do COAF'
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall(padrao, conteudo, re.IGNORECASE):
-                                print(texto_conteudo + " --- " + arq)
+                                #print(texto_conteudo + " --- " + arq)
+                                if arq not in lista_sharepoint:
+                                    lista_sharepoint.append(arq)
                         if item in dicionario["Conteudo"][28]:
                             escopo = bs_texto.find('article').get('artCategory')
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and (re.findall("Presidência da República", escopo, re.IGNORECASE) or
                                     re.findall("Secretaria Especial do Tesouro e Orçamento", escopo, re.IGNORECASE)):
-                                print(" --- " + arq)
+                                #print(" --- " + arq)
+                                if arq not in lista_sharepoint:
+                                    lista_sharepoint.append(arq)
                         if item in dicionario["Conteudo"][29:33]:
                             escopo = bs_texto.find('article').get('artCategory')
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall("Presidência da República", escopo, re.IGNORECASE):
-                                print(" --- " + arq)
+                                #print(" --- " + arq)
+                                if arq not in lista_sharepoint:
+                                    lista_sharepoint.append(arq)
                         if item in dicionario["Conteudo"][23:28] \
                                 or item in dicionario["Conteudo"][0:18] or item in dicionario["Conteudo"][20:22]:
                             if re.findall(item, conteudo, re.IGNORECASE):
-                                print(" --- " + arq)
+                                #print(" --- " + arq)
+                                if arq not in lista_sharepoint:
+                                    lista_sharepoint.append(arq)
                         if item in dicionario["Conteudo"][33]:
                             pub_name_secao = bs_texto.find('article').get('pubName')
                             escopo = bs_texto.find('article').get('artCategory')
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                 and re.findall("DO2", pub_name_secao, re.IGNORECASE):
-                                print(" --- " + arq)
-                        if item in dicionario["Conteudo"][34:fim]:
+                                #print(" --- " + arq)
+                                if arq not in lista_sharepoint:
+                                    lista_sharepoint.append(arq)
+                        if item in dicionario["Conteudo"][34]:
                             if re.findall(item, conteudo, re.IGNORECASE):
-                                print(" --- " + arq)
+                                #print(" --- " + arq)
+                                if arq not in lista_sharepoint:
+                                    lista_sharepoint.append(arq)
+                        if item in dicionario["Conteudo"][35]:
+                            if re.findall(item, conteudo, re.IGNORECASE) and \
+                                    re.findall("DO1", pub_name_secao, re.IGNORECASE):
+                                #print(" --- " + arq)
+                                if arq not in lista_sharepoint:
+                                    lista_sharepoint.append(arq)
     print("Busca Encerrada!")
-
-
-def share_point_request():
-    #URLs do sharepoint:
-    url_sharepoint = 'https://bacen.sharepoint.com/'
-    url_site = 'https://bacen.sharepoint.com/sites/sumula'
-    url_list = 'Lists/Artigos/'
-    url = "https://bacen.sharepoint.com/_api/web/lists/GetByTitle('Artigos')/items"
-    url_lista = "https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')"
-
-    #headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'}
-    #lista = requests.get('https://bacen.sharepoint.com/sites/sumula/Lists/Artigos/', headers=headers)
-
-    client_id = ''
-    client_secret = ''
-    scope = 'User.Read'
-    tenant_id = ''
-    redirect_uri = 'https://bacen.sharepoint.com/sumula/sites/artigos'
-    code = ''
-    session_state = ''
-    username = ''
-    password = ''
-
-    data = {
-        'client_id': client_id,
-        'response_type': 'code',
-        'redirect_uri': redirect_uri,
-        'response_mode': 'query',
-        'scope': scope
-    }
-
-    h = {'Content-Type': 'application/json'}
-
-    #Requisição para obter o code:
-    #s = requests.get(f'https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/authorize?',
-    #                 params=data)
-    #nova_url = s.url
-    #web = webbrowser.open(nova_url)
-
-    params = {
-        'client_id': client_id,
-        'scope': scope,
-        'code': code,
-        'redirect_uri': redirect_uri,
-        'grant_type': 'authorization_code',
-        'client_secret': client_secret,
-        'session_state': session_state
-    }
-
-
-    #Requisição POST para obter o token:
-    #p = requests.post(f'https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token',
-    #                  data=params)
-    #print(p.json())
-
-    token = ''
-    headers = {'Authorization': f'Bearer {token}'}
-
-    #Requisição para verificar se os dados estão corretos:
-    #r = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers)
-    #print(r.json())
-    #dicio = r.json()
-    #print(dicio["displayName"])
-
-    refresh_token = token
-
-    data_refresh_token = {
-        'client_id': client_id,
-        'scope': scope,
-        'code': code,
-        'refresh_token': refresh_token,
-        'grant_type': 'refresh_token',
-        'client_secret': client_secret,
-        'session_state': session_state
-    }
-
-    #Requisição para obter um novo token após a expiração:
-   # novo_token = requests.post(f'https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token',
-   #                            data=data_refresh_token)
-    #print(novo_token.json())
-    #dictionary = novo_token.json()
-    #token_refresh = dictionary['access_token']
-    #tempo_expiracao = dictionary['expires_in']
-
-    playload = {"username": username,
-                "password": password}
-
-    r = requests.get(url_site, headers=headers, data=playload)
-    #print(r.status_code)
-
-    r = requests.get("https://graph.microsoft.com/v1.0/me", headers=headers, data=playload)
-    #print(r.json())
-
-    #Teste com a biblioteca msal:
-    connect_msal = msal.PublicClientApplication(client_id=client_id,
-                                                authority=f"https://login.microsoftonline.com/{tenant_id}")
-    #connect_msal.acquire_token_interactive(scopes=["User.Read"])
-    contas = connect_msal.get_accounts()
-    print(contas)
-    token = connect_msal.acquire_token_silent_with_error(scopes=["User.Read"], account=None)
-    print(token)
-    flow = connect_msal.initiate_device_flow(scopes=["User.Read"])
-    print(flow)
-    time.sleep(1)
-    token = connect_msal.acquire_token_by_device_flow(flow=flow)
-    print(token)
-
-    #token = connect_msal.acquire_token_silent(scopes=["User.Read"])
-    #print(token)
-    #connect_msal = msal.ClientApplication(client_id=client_id,client_credential=None,
-    #                                      authority=f"https://login.microsoftonline.com/{tenant_id}")
-    #token = connect_msal.acquire_token_silent(scopes=["User.ReadBasic.All", "User.Read", "Sites.ReadWrite.All",
-    #                                               "Sites.Manage.All", "email"], account=None)
-    #connect_msal = msal.ConfidentialClientApplication(client_id= client_id, client_credential=None,
-    #                                                  authority=f"https://login.microsoftonline.com/{tenant_id}")
-    #token = connect_msal.acquire_token_for_client(scopes=["User.ReadBasic.All", "User.Read", "Sites.ReadWrite.All",
-    #                                               "Sites.Manage.All", "email"])
-    #Conexão e Autenticação no Sharepoint:
-    #context_auth = AuthenticationContext(url_site)
-    #context_auth.acquire_token_for_app(client_id, client_secret)
-    #ctx = ClientContext(url_site, context_auth)
-    #web = ctx.web
-    #ctx.load(web)
-    #ctx.execute_query()
-    #print(web.properties)
-    #print("Web site title: {0}".format(web.properties['Title']))
-    #lista = ctx.web.lists.get_by_title("Artigos")
-    #ctx.load(lista)
-    #lista2 = lista.items.get_all().execute_query()
-    #print(lista2)
-    #print(lista.item_count)
-    #print(lista.items)
-    #teste:
-    #sp_lists = ctx.web.lists
-    #s_list = sp_lists.get_by_title("Artigos")
-    #l_items = s_list.get_items()
-    #ctx.load(l_items)
-    #ctx.execute_query()
-
-    #for item in l_items:
-    #    print(item.properties)
-
-    #items = ctx.web.lists.get_by_title('Artigos').items
-    #ctx.load(items)
-    #ctx.execute_query()
-    #print(len(items))
-    #print(items)
-    #print(lista.resource_path)
-    #l_itens = lista
-    #ctx.load(l_itens)
-    #ctx.execute_query()
-    #print(lista.to_json())
-
-    #teste 2:
-    #list_object = ctx.web.lists.get_by_title("Artigos")
-    #items = list_object.get_items()
-    #ctx.load(items)
-    #ctx.execute_query()
-
-    #for item in items:
-    #    print("Item title: {0}".format(item.properties["Title"]))
-    #Biblioteca msal para obter o token:
-    #config = json.load(open(sys.argv[1]))
-    # Create a preferably long-lived app instance which maintains a token cache.
-
-    #app = msal.ConfidentialClientApplication(
-    #    client_id=client_id, authority='https://login.microsoftonline.com/bacen',
-    #    client_credential=""
-        # token_cache=...  # Default cache is in memory only.
-        # You can learn how to use SerializableTokenCache from
-        # https://msal-python.rtfd.io/en/latest/#msal.SerializableTokenCache
-    #)
-
-    #result = app.acquire_token_silent(scopes='Site.All.Read', account=None)
-
-    #if not result:
-    #    logging.info("No suitable token exists in cache. Let's get a new one from AAD.")
-    #    result = app.acquire_token_for_client(scopes=scope)
-
-    #if "access_token" in result:
-        # Calling graph using the access token
-    #    graph_data = requests.get(  # Use token to call downstream service
-    #        url='https://graph.microsoft.com/v1.0/me',
-    #        headers={'Authorization': 'Bearer ' + result['access_token']}, ).json()
-    #    print("Graph API call result: ")
-    #    print(json.dumps(graph_data, indent=2))
-    #else:
-    #    print(result.get("error"))
-    #    print(result.get("error_description"))
-    #    print(result.get("correlation_id"))  # You may need this when reporting a bug
+    #print(lista_sharepoint)
 
 
 def login():
@@ -571,6 +415,87 @@ def login():
         login()
 
 
-login()
-buscar_artigo(dicionario)
-#share_point_request()
+def share_point_request():
+    login()
+    buscar_artigo(dicionario)
+
+    client_id = ''
+    tenant_id = ''
+
+    for item in lista_sharepoint:
+        with open(item, 'r', encoding="utf-8") as arquivo:
+            conteudo_xml = arquivo.read()
+            bs_texto = BeautifulSoup(conteudo_xml, 'xml')
+            titulo = bs_texto.find('Identifica').get_text()
+            escopo = bs_texto.find('article').get('artCategory')
+            print(f'********* {item} *********')
+            #print(titulo)
+            #print(escopo)
+            app = PublicClientApplication(
+                client_id,
+                authority=f"https://login.microsoftonline.com/{tenant_id}")
+            #print(app.authority.tenant)
+            result = None
+            accounts = app.get_accounts()
+            if accounts:
+                # If so, you could then somehow display these accounts and let end user choose
+                print("Pick the account you want to use to proceed:")
+                for a in accounts:
+                    print(a["username"])
+                # Assuming the end user chose this one
+                chosen = accounts[0]
+                # Now let's try to find a token in cache for this account
+                result = app.acquire_token_silent([f"https://bacen.sharepoint.com/.default"], account=chosen)
+
+            if not result:
+                # So no suitable token exists in cache. Let's get a new one from AAD.
+                result = app.acquire_token_interactive(scopes=[f"https://bacen.sharepoint.com/.default"])
+
+            if "access_token" in result:
+                print(result["access_token"])  # Yay!
+            else:
+                print(result.get("error"))
+                print(result.get("error_description"))
+                print(result.get("correlation_id"))  # You may need this when reporting a bug
+
+            headers = {'Authorization': f'Bearer {result["access_token"]}',
+                        'Accept': 'application/json;odata=verbose',
+                        'Content-Type': 'application/json;odata=verbose'}
+
+            # Requisição para buscar itens na lista do Sharepoint:
+            r = requests.get("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
+                            headers=headers)
+            print(r.status_code)
+
+            # Requisição para obter o FullEntityTypeFullName:
+            request = requests.get(
+                "https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')?select=ListItemEntityTypeFullName",
+                headers=headers)
+            # Requisição para inserir itens na lista do Sharepoint:
+            data = '''{ "__metadata": {"type": "SP.Data.ArtigosListItem"},
+                "Title": "%s",
+                "Escopo": "%s"
+            }''' % (titulo, escopo)
+
+            request_post = requests.post("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
+                                        headers=headers, data=data)
+            print(request_post.status_code)
+
+
+def teste():
+    login()
+    buscar_artigo(dicionario)
+    for item in lista_sharepoint:
+        with open(item, 'r', encoding="utf-8") as arquivo:
+            conteudo_xml = arquivo.read()
+            bs_texto = BeautifulSoup(conteudo_xml, 'xml')
+            titulo = bs_texto.find('Identifica').get_text()
+            escopo = bs_texto.find('article').get('artCategory')
+            print(f'********* {item} *********')
+            print(titulo)
+            print(escopo)
+
+#login()
+#buscar_artigo(dicionario)
+share_point_request()
+#teste()
