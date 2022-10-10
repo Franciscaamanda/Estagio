@@ -472,10 +472,10 @@ def share_point_request():
                 "https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')?select=ListItemEntityTypeFullName",
                 headers=headers)
             # Requisição para inserir itens na lista do Sharepoint:
-            data = '''{ "__metadata": {"type": "SP.Data.ArtigosListItem"},
+            data = b'''{ "__metadata": {"type": "SP.Data.ArtigosListItem"},
                 "Title": "%s",
                 "Escopo": "%s"
-            }''' % (titulo, escopo)
+            }'''.encode('utf-8') % (titulo, escopo)
 
             request_post = requests.post("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
                                         headers=headers, data=data)
