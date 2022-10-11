@@ -115,7 +115,7 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                            "cargo de Secretário-Executivo do Ministério do Trabalho e Previdência",
                            "cargo de Procurador-Geral Federal da Advocacia-Geral da União",
                            "(Exposição de Motivos ((.*?afastamento )(.*?Presidente do Banco Central do Brasil))) | (Exposições de Motivos ((.*?afastamento )(.*?Presidente do Banco Central do Brasil))) | (Exposição de Motivos ((.*?férias )(.*?Presidente do Banco Central do Brasil))) | (Exposições de Motivos ((.*?férias )(.*?Presidente do Banco Central do Brasil)))",
-                           "(Exposição de Motivos ((.*?afastamento )(.*?Ministro de Estado da Economia))) | (Exposições de Motivos ((.*?afastamento )(.*?Ministro de Estado da Economia))) | (Exposição de Motivos ((.*?férias )(.*?Ministro de Estado da Economia))) | (Exposições de Motivos ((.*?férias )(.*?Ministro de Estado da Economia)))",
+                           "(Exposição de Motivos(.*?afastamento )(.*?Ministro de Estado da Economia))|(Exposições de Motivos(.*?afastamento )(.*?Ministro de Estado da Economia))|(Exposição de Motivos(.*?férias )(.*?Ministro de Estado da Economia))|(Exposições de Motivos(.*?férias )(.*?Ministro de Estado da Economia))",
                            "((A Diretora) | (O Diretor)) de Administração do Banco Central do Brasil",
                            "((PORTARIA)(.*?O MINISTRO DE ESTADO DA ECONOMIA)(.*?afastamento)(.*?Banco Central))",
                            "Despacho do Presidente do Banco Central do Brasil",
@@ -437,7 +437,7 @@ def selecionar_secao(tipo_secao):
 def login():
     try:
         response = s.request("POST", url_login, data=payload, headers=headers)
-        download("2022-09-09")
+        download()
         #selecionar_secao('DO1')
     except requests.exceptions.ConnectionError:
         login()
@@ -447,7 +447,7 @@ login()
 #buscar_escopo(dicionario, "2022-09-09")
 #buscar_escopo(dicionario)
 #buscar_titulo(dicionario, "2022-09-09")
-buscar_ementa(dicionario, "2022-09-09")
+#buscar_ementa(dicionario, "2022-09-09")
 #buscar_assinatura(dicionario)
-#buscar_conteudo(dicionario, "2022-09-09")
+buscar_conteudo(dicionario)
 #ler_arquivo('529_20220905_19869944.xml', dicionario)

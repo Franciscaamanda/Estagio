@@ -94,7 +94,8 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                          "Imposto sobre Operações Financeiras",
                          "(Poder (.*?Executivo))|(Poderes (.*?Executivo))",
                          "Decreto nº 93.872, de 23 de dezembro de 1986",
-                         "Altera a Consolidação das Leis do Trabalho"],
+                         "Altera a Consolidação das Leis do Trabalho",
+                         "Comissão de Valores Mobiliários"],
               "Assinatura": [["Presidente do Banco Central do Brasil[<]", "Roberto de Oliveira Campos Neto"],
                             ["Diretor de Relacionamento, Cidadania e Supervisão de Conduta[<]", "Maurício Costa de Moura"],
                             ["Diretor de Fiscalização[<]", "Paulo sérgio Neves de Souza"],
@@ -122,9 +123,9 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                            "cargo de Ministro de Estado do Trabalho e Previdência",
                            "cargo de Secretário-Executivo do Ministério do Trabalho e Previdência",
                            "cargo de Procurador-Geral Federal da Advocacia-Geral da União",
-                           "(Exposição de Motivos ((.*?afastamento )(.*?Presidente do Banco Central do Brasil))) | (Exposições de Motivos ((.*?afastamento )(.*?Presidente do Banco Central do Brasil))) | (Exposição de Motivos ((.*?férias )(.*?Presidente do Banco Central do Brasil))) | (Exposições de Motivos ((.*?férias )(.*?Presidente do Banco Central do Brasil)))",
-                           "(Exposição de Motivos ((.*?afastamento )(.*?Ministro de Estado da Economia))) | (Exposições de Motivos ((.*?afastamento )(.*?Ministro de Estado da Economia))) | (Exposição de Motivos ((.*?férias )(.*?Ministro de Estado da Economia))) | (Exposições de Motivos ((.*?férias )(.*?Ministro de Estado da Economia)))",
-                           "((A Diretora) | (O Diretor)) de Administração do Banco Central do Brasil",
+                           "(Exposição de Motivos(.*?afastamento )(.*?Presidente do Banco Central do Brasil))|(Exposições de Motivos(.*?afastamento )(.*?Presidente do Banco Central do Brasil))|(Exposição de Motivos(.*?férias )(.*?Presidente do Banco Central do Brasil))|(Exposições de Motivos(.*?férias )(.*?Presidente do Banco Central do Brasil))",
+                           "(Exposição de Motivos(.*?afastamento )(.*?Ministro de Estado da Economia))|(Exposições de Motivos(.*?afastamento )(.*?Ministro de Estado da Economia))|(Exposição de Motivos(.*?férias )(.*?Ministro de Estado da Economia))|(Exposições de Motivos(.*?férias )(.*?Ministro de Estado da Economia))",
+                           "((A Diretora)|(O Diretor)) de Administração do Banco Central do Brasil",
                            "((PORTARIA)(.*?O MINISTRO DE ESTADO DA ECONOMIA)(.*?afastamento)(.*?Banco Central))",
                            "Despacho do Presidente do Banco Central do Brasil",
                            "Comissão Técnica da Moeda e do Crédito",
@@ -219,26 +220,26 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item, titulo, re.IGNORECASE) \
                                     and (re.findall("Banco Central", ementa, re.IGNORECASE) or
                                          re.findall("Banco Central", texto, re.IGNORECASE)):
-                                #print(titulo + " --- " + arq)
+                                print(titulo + " --- " + arq)
                                 if arq not in lista_sharepoint:
                                     lista_sharepoint.append(arq)
                         if item in dicionario['Titulo'][4]:
                             if re.findall(item, titulo, re.IGNORECASE) \
                                     and (re.findall("Banco Central", ementa, re.IGNORECASE) or
                                          re.findall("Banco Central", texto, re.IGNORECASE)):
-                                #print(titulo + " --- " + arq)
+                                print(titulo + " --- " + arq)
                                 if arq not in lista_sharepoint:
                                     lista_sharepoint.append(arq)
                         if item in dicionario['Titulo'][0:2] or item in dicionario['Titulo'][3]:
                             if re.findall(item, titulo, re.IGNORECASE):
-                                #print(titulo + " --- " + arq)
+                                print(titulo + " --- " + arq)
                                 if arq not in lista_sharepoint:
                                     lista_sharepoint.append(arq)
                         if item in dicionario['Titulo'][5]:
                             if re.findall(item, titulo, re.IGNORECASE) \
                                     and (re.findall("Comissão de Valores Mobiliários", texto, re.IGNORECASE) or
                                          re.findall("treinamento ou em missões oficiais", texto, re.IGNORECASE)):
-                                #print(titulo + " --- " + arq)
+                                print(titulo + " --- " + arq)
                                 if arq not in lista_sharepoint:
                                     lista_sharepoint.append(arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
@@ -258,7 +259,7 @@ def buscar_artigo(dicionario, data=data_completa):
                                     and not re.findall(padrao1, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao2, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao3, ementa, re.IGNORECASE):
-                                #print(ementa + " --- " + arq)
+                                print(ementa + " --- " + arq)
                                 if arq not in lista_sharepoint:
                                     lista_sharepoint.append(arq)
                         if item in dicionario["Ementa"][11]:
@@ -284,14 +285,14 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao_titulo, titulo, re.IGNORECASE) \
                                     and re.findall(item, ementa[inicio_busca:fim_busca], re.IGNORECASE):
-                                #print(ementa + " --- " + arq)
+                                print(ementa + " --- " + arq)
                                 if arq not in lista_sharepoint:
                                     lista_sharepoint.append(arq)
                         if item in dicionario['Ementa'][0:5] \
                                 or item in dicionario['Ementa'][6:11] or item in dicionario['Ementa'][12:19] \
                                 or item in dicionario['Ementa'][20:fim]:
                             if re.findall(item, ementa, re.IGNORECASE):
-                                #print(ementa + " --- " + arq)
+                                print(ementa + " --- " + arq)
                                 if arq not in lista_sharepoint:
                                     lista_sharepoint.append(arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
@@ -314,24 +315,24 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item[1], str(assinatura), re.IGNORECASE):
                                 indice_lista = assinaturas.index(assinatura)
                                 if bs_texto.find('p', {'class': 'cargo'}):
-                                    #print(str(assinatura.get_text()) + ' --- ' + str(
-                                    #    cargos[indice_lista].get_text()) + ' --- '+ arq)
+                                    print(str(assinatura.get_text()) + ' --- ' + str(
+                                        cargos[indice_lista].get_text()) + ' --- '+ arq)
                                     if arq not in lista_sharepoint:
                                         lista_sharepoint.append(arq)
                                 else:
-                                    #print(str(assinatura.get_text()) + ' --- '+ arq)
+                                    print(str(assinatura.get_text()) + ' --- '+ arq)
                                     if arq not in lista_sharepoint:
                                         lista_sharepoint.append(arq)
                         for cargo in cargos:
                             if re.findall(item[0], str(cargo), re.IGNORECASE):
                                 indice_lista = cargos.index(cargo)
                                 if bs_texto.find('p', {'class': 'assina'}):
-                                    #print(str(assinaturas[indice_lista].get_text()) + ' --- ' + str(
-                                     #   cargo.get_text()) + ' --- ' + arq)
+                                    print(str(assinaturas[indice_lista].get_text()) + ' --- ' + str(
+                                        cargo.get_text()) + ' --- ' + arq)
                                     if arq not in lista_sharepoint:
                                         lista_sharepoint.append(arq)
                                 else:
-                                    #print(str(cargo.get_text()) + ' --- ' + arq)
+                                    print(str(cargo.get_text()) + ' --- ' + arq)
                                     if arq not in lista_sharepoint:
                                         lista_sharepoint.append(arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
@@ -353,14 +354,14 @@ def buscar_artigo(dicionario, data=data_completa):
                                 fim_busca = inicio_busca + len('Exposições de Motivos') + 200
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall(item, conteudo[inicio_busca:fim_busca], re.IGNORECASE):
-                                #print(texto_conteudo + " --- " + arq)
+                                print(texto_conteudo + " --- " + arq)
                                 if arq not in lista_sharepoint:
                                     lista_sharepoint.append(arq)
                         if item in dicionario["Conteudo"][22]:
                             padrao = 'Presidente do COAF'
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall(padrao, conteudo, re.IGNORECASE):
-                                #print(texto_conteudo + " --- " + arq)
+                                print(texto_conteudo + " --- " + arq)
                                 if arq not in lista_sharepoint:
                                     lista_sharepoint.append(arq)
                         if item in dicionario["Conteudo"][28]:
@@ -368,20 +369,20 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and (re.findall("Presidência da República", escopo, re.IGNORECASE) or
                                     re.findall("Secretaria Especial do Tesouro e Orçamento", escopo, re.IGNORECASE)):
-                                #print(" --- " + arq)
+                                print(" --- " + arq)
                                 if arq not in lista_sharepoint:
                                     lista_sharepoint.append(arq)
                         if item in dicionario["Conteudo"][29:33]:
                             escopo = bs_texto.find('article').get('artCategory')
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall("Presidência da República", escopo, re.IGNORECASE):
-                                #print(" --- " + arq)
+                                print(" --- " + arq)
                                 if arq not in lista_sharepoint:
                                     lista_sharepoint.append(arq)
                         if item in dicionario["Conteudo"][23:28] \
                                 or item in dicionario["Conteudo"][0:18] or item in dicionario["Conteudo"][20:22]:
                             if re.findall(item, conteudo, re.IGNORECASE):
-                                #print(" --- " + arq)
+                                print(" --- " + arq)
                                 if arq not in lista_sharepoint:
                                     lista_sharepoint.append(arq)
                         if item in dicionario["Conteudo"][33]:
@@ -389,22 +390,22 @@ def buscar_artigo(dicionario, data=data_completa):
                             escopo = bs_texto.find('article').get('artCategory')
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                 and re.findall("DO2", pub_name_secao, re.IGNORECASE):
-                                #print(" --- " + arq)
+                                print(" --- " + arq)
                                 if arq not in lista_sharepoint:
                                     lista_sharepoint.append(arq)
                         if item in dicionario["Conteudo"][34]:
                             if re.findall(item, conteudo, re.IGNORECASE):
-                                #print(" --- " + arq)
+                                print(" --- " + arq)
                                 if arq not in lista_sharepoint:
                                     lista_sharepoint.append(arq)
                         if item in dicionario["Conteudo"][35]:
                             if re.findall(item, conteudo, re.IGNORECASE) and \
                                     re.findall("DO1", pub_name_secao, re.IGNORECASE):
-                                #print(" --- " + arq)
+                                print(" --- " + arq)
                                 if arq not in lista_sharepoint:
                                     lista_sharepoint.append(arq)
     print("Busca Encerrada!")
-    #print(lista_sharepoint)
+    print(lista_sharepoint)
 
 
 def login():
@@ -422,41 +423,62 @@ def share_point_request():
     client_id = ''
     tenant_id = ''
 
+    app = PublicClientApplication(
+        client_id,
+        authority=f"https://login.microsoftonline.com/{tenant_id}")
+    # print(app.authority.tenant)
+    result = None
+    accounts = app.get_accounts()
+    if accounts:
+        # If so, you could then somehow display these accounts and let end user choose
+        print("Pick the account you want to use to proceed:")
+        for a in accounts:
+            print(a["username"])
+        # Assuming the end user chose this one
+        chosen = accounts[0]
+        # Now let's try to find a token in cache for this account
+        result = app.acquire_token_silent([f"https://bacen.sharepoint.com/.default"], account=chosen)
+
+    if not result:
+        # So no suitable token exists in cache. Let's get a new one from AAD.
+        result = app.acquire_token_interactive(scopes=[f"https://bacen.sharepoint.com/.default"])
+
+    if "access_token" in result:
+        print(result["access_token"])  # Yay!
+    else:
+        print(result.get("error"))
+        print(result.get("error_description"))
+        print(result.get("correlation_id"))  # You may need this when reporting a bug
+
     for item in lista_sharepoint:
         with open(item, 'r', encoding="utf-8") as arquivo:
             conteudo_xml = arquivo.read()
             bs_texto = BeautifulSoup(conteudo_xml, 'xml')
             titulo = bs_texto.find('Identifica').get_text()
             escopo = bs_texto.find('article').get('artCategory')
+            ementa = bs_texto.find('Ementa').get_text()
+            conteudo = bs_texto.find('Texto').get_text()
+            # Limpa o texto ao eliminar as tags e os atributos:
+            texto_conteudo = re.sub('<[^>]+?>', ' ', conteudo).replace('"', ' ')
+            pub_name_secao = bs_texto.find('article').get('pubName')
+            edicao = bs_texto.find('article').get('editionNumber')
+            #Para assinatura, muda o xml para lxml:
+            bs_texto_lxml = BeautifulSoup(conteudo_xml, 'lxml')
+            # Extrai todas as ocorrências do cargo e da assinatura do arquivo xml caso existam:
+            if bs_texto_lxml.find('p', {'class': 'assina'}):
+                assinaturas = bs_texto_lxml.find_all('p', {'class': 'assina'})
+                #assinatura = str(assinaturas).strip('[]')
+                #assinatura = bs_texto.find('p', {'class':'assina'}).get_text()
+            else:
+                assinaturas = ""
             print(f'********* {item} *********')
+            assinatura_str = list()
+            for assinatura in assinaturas:
+                assinatura_str.append(str(assinatura.get_text()))
+            nova_assinatura = str(assinatura_str).strip('[]').replace("'", "")
+            #print(texto_conteudo)
             #print(titulo)
             #print(escopo)
-            app = PublicClientApplication(
-                client_id,
-                authority=f"https://login.microsoftonline.com/{tenant_id}")
-            #print(app.authority.tenant)
-            result = None
-            accounts = app.get_accounts()
-            if accounts:
-                # If so, you could then somehow display these accounts and let end user choose
-                print("Pick the account you want to use to proceed:")
-                for a in accounts:
-                    print(a["username"])
-                # Assuming the end user chose this one
-                chosen = accounts[0]
-                # Now let's try to find a token in cache for this account
-                result = app.acquire_token_silent([f"https://bacen.sharepoint.com/.default"], account=chosen)
-
-            if not result:
-                # So no suitable token exists in cache. Let's get a new one from AAD.
-                result = app.acquire_token_interactive(scopes=[f"https://bacen.sharepoint.com/.default"])
-
-            if "access_token" in result:
-                print(result["access_token"])  # Yay!
-            else:
-                print(result.get("error"))
-                print(result.get("error_description"))
-                print(result.get("correlation_id"))  # You may need this when reporting a bug
 
             headers = {'Authorization': f'Bearer {result["access_token"]}',
                         'Accept': 'application/json;odata=verbose',
@@ -472,14 +494,20 @@ def share_point_request():
                 "https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')?select=ListItemEntityTypeFullName",
                 headers=headers)
             # Requisição para inserir itens na lista do Sharepoint:
-            data = b'''{ "__metadata": {"type": "SP.Data.ArtigosListItem"},
+            data = '''{ "__metadata": {"type": "SP.Data.ArtigosListItem"},
                 "Title": "%s",
-                "Escopo": "%s"
-            }'''.encode('utf-8') % (titulo, escopo)
+                "Escopo": "%s",
+                "Ementa": "%s",
+                "Texto": "%s",
+                "Assinatura": "%s",
+                "Se_x00e7__x00e3_o": "%s",
+                "Edi_x00e7__x00e3_o": "%s"
+            }''' % (titulo, escopo, ementa, texto_conteudo, nova_assinatura, pub_name_secao, edicao)
 
             request_post = requests.post("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
-                                        headers=headers, data=data)
+                                        headers=headers, data=data.encode('utf-8', 'ignore'))
             print(request_post.status_code)
+            print(request_post.content)
 
 
 def teste():
