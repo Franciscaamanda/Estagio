@@ -459,7 +459,7 @@ def share_point_request():
             ementa = bs_texto.find('Ementa').get_text()
             conteudo = bs_texto.find('Texto').get_text()
             # Limpa o texto ao eliminar as tags e os atributos:
-            texto_conteudo = re.sub('<[^>]+?>', ' ', conteudo).replace('"', ' ')
+            texto_conteudo = re.sub('<[^>]+?>', ' ', conteudo).replace('"', '\\"')
             pub_name_secao = bs_texto.find('article').get('pubName')
             edicao = bs_texto.find('article').get('editionNumber')
             #Para assinatura, muda o xml para lxml:
