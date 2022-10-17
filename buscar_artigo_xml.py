@@ -66,7 +66,8 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                         "Presidência da República",
                         "Ministério da Economia",
                         "Atos do Poder Legislativo",
-                        "Atos do Poder Executivo"],
+                        "Atos do Poder Executivo",
+                        "Controladoria-Geral da União"],
               "Titulo": ["Resolução Coremec",
                          "([ ]CMN[ ])|([ ]CMN[0-9])",
                          "PORTARIA SETO",
@@ -140,7 +141,8 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                            "Procurador-Geral do Banco Central",
                            "Presidência da CVM",
                            "Diretor-Presidente do Conselho Diretor da Autoridade Nacional de Proteção de Dados",
-                           "Presidente do Conselho de Controle de Atividades Financeiras"]
+                           "Presidente do Conselho de Controle de Atividades Financeiras",
+                           "Portaria nº 179"]
               }
 
 
@@ -175,7 +177,8 @@ def buscar_artigo(dicionario, data=data_completa):
                     art_type = bs_texto.find('article').get('artType')
                     # Faz a busca pelo atributo artCategory:
                     if True in np.isin(dicionario['Escopo'][1], escopo.split('/')) and titulo is not None \
-                            and not re.findall("IECP", corpo_texto, re.IGNORECASE):
+                            and not re.findall("IECP", corpo_texto, re.IGNORECASE) \
+                            and not re.findall("PORTARIA DE PESSOAL SEACO/SOF/SETO/ME", titulo, re.IGNORECASE):
                         nova_lista.append(file)
                     if True in np.isin(dicionario['Escopo'][5], escopo.split('/')) \
                             and re.findall("DO1", pub_name_secao, re.IGNORECASE) \
@@ -189,7 +192,8 @@ def buscar_artigo(dicionario, data=data_completa):
                             nova_lista.append(file)
                     if True in np.isin(dicionario['Escopo'][7], escopo.split('/')) \
                             and not re.findall("Extrato de Inexigibilidade", art_type, re.IGNORECASE) \
-                            and not re.findall("IECP", corpo_texto, re.IGNORECASE):
+                            and not re.findall("IECP", corpo_texto, re.IGNORECASE) \
+                            and not re.findall("PORTARIA DE PESSOAL SEACO/SOF/SETO/ME", titulo, re.IGNORECASE):
                             nova_lista.append(file)
                     if True in np.isin(dicionario['Escopo'][8], escopo.split('/')) \
                             and not re.findall("Turismo", ementa, re.IGNORECASE):
@@ -284,7 +288,8 @@ def buscar_artigo(dicionario, data=data_completa):
                                 fim_busca = inicio_busca + len('Poderes') + 130
                             if re.findall(item, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao_titulo, titulo, re.IGNORECASE) \
-                                    and re.findall(item, ementa[inicio_busca:fim_busca], re.IGNORECASE):
+                                    and re.findall(item, ementa[inicio_busca:fim_busca], re.IGNORECASE) \
+                                    and not re.findall("no âmbito da Secretaria de Gestão e Desempenho de Pessoal da Secretaria Especial de Desburocratização, Gestão e Governo Digital do Ministério da Economia", ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
                                 if arq not in lista_sharepoint:
                                     lista_sharepoint.append(arq)
@@ -342,7 +347,14 @@ def buscar_artigo(dicionario, data=data_completa):
                     conteudo = bs_texto.find('Texto').get_text()
                     #Limpa o texto ao eliminar as tags e os atributos:
                     texto_conteudo = re.sub('<[^>]+?>', ' ', conteudo)
+                    escopo = bs_texto.find('article').get('artCategory')
                     fim = len(dicionario['Conteudo'])
+                    #para obter só o arquivo principal dos arquivos que são divididos em vários arquivos xml:
+                    if re.findall('-[2-9]', arq, re.IGNORECASE):
+                        numero = arq.find('-')
+                        n = arq[numero:numero+2]
+                        # deixa no formato xxx_xxxxxxxx_xxxxxxxx-1.xml:
+                        arq = arq.replace(n, '-1')
                     #Faz a busca pela tag Texto:
                     for item in dicionario['Conteudo']:
                         if item in dicionario["Conteudo"][18] or item in dicionario["Conteudo"][19]:
@@ -354,14 +366,14 @@ def buscar_artigo(dicionario, data=data_completa):
                                 fim_busca = inicio_busca + len('Exposições de Motivos') + 200
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall(item, conteudo[inicio_busca:fim_busca], re.IGNORECASE):
-                                print(texto_conteudo + " --- " + arq)
+                                print(" --- " + arq)
                                 if arq not in lista_sharepoint:
                                     lista_sharepoint.append(arq)
                         if item in dicionario["Conteudo"][22]:
                             padrao = 'Presidente do COAF'
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall(padrao, conteudo, re.IGNORECASE):
-                                print(texto_conteudo + " --- " + arq)
+                                print(" --- " + arq)
                                 if arq not in lista_sharepoint:
                                     lista_sharepoint.append(arq)
                         if item in dicionario["Conteudo"][28]:
@@ -387,10 +399,9 @@ def buscar_artigo(dicionario, data=data_completa):
                                     lista_sharepoint.append(arq)
                         if item in dicionario["Conteudo"][33]:
                             pub_name_secao = bs_texto.find('article').get('pubName')
-                            escopo = bs_texto.find('article').get('artCategory')
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                 and re.findall("DO2", pub_name_secao, re.IGNORECASE):
-                                print(" --- " + arq)
+                                print(texto_conteudo + " --- " + arq)
                                 if arq not in lista_sharepoint:
                                     lista_sharepoint.append(arq)
                         if item in dicionario["Conteudo"][34]:
@@ -404,8 +415,37 @@ def buscar_artigo(dicionario, data=data_completa):
                                 print(" --- " + arq)
                                 if arq not in lista_sharepoint:
                                     lista_sharepoint.append(arq)
+                        if item in dicionario["Conteudo"][36:fim]:
+                            if re.findall(item, conteudo, re.IGNORECASE):
+                                print(" --- " + arq)
+                                if arq not in lista_sharepoint:
+                                    lista_sharepoint.append(arq)
     print("Busca Encerrada!")
     print(lista_sharepoint)
+
+
+def teste_texto():
+    login()
+    buscar_artigo(dicionario)
+    for item in lista_sharepoint:
+        with open(item, 'r', encoding="utf-8") as arquivo:
+            #Concatenar o texto de um conjunto de arquivos xml:
+            lista_arquivo_extenso = list()
+            texto_completo = ""
+            if re.findall('-1', item):
+                for i in range(1, 10):
+                    numero = item.find('-')
+                    n = item[numero:numero + 2]
+                    item = item.replace(n, f'-{i}')
+                    lista_arquivo_extenso.append(item)
+                for arquivo in lista_arquivo_extenso:
+                    with open(arquivo, 'r', encoding="utf-8") as a:
+                        conteudo_xml = a.read()
+                        bs_texto = BeautifulSoup(conteudo_xml, 'xml')
+                        conteudo = bs_texto.find('Texto').get_text()
+                        texto_conteudo = re.sub('<[^>]+?>', ' ', conteudo).replace('"', '\\"')
+                        texto_completo = texto_completo + texto_conteudo
+            print(texto_completo)
 
 
 def login():
@@ -454,31 +494,54 @@ def share_point_request():
         with open(item, 'r', encoding="utf-8") as arquivo:
             conteudo_xml = arquivo.read()
             bs_texto = BeautifulSoup(conteudo_xml, 'xml')
-            titulo = bs_texto.find('Identifica').get_text()
-            escopo = bs_texto.find('article').get('artCategory')
+            titulo_completo = bs_texto.find('Identifica').get_text().split(',')
+            titulo = titulo_completo[0]
+            escopo_completo = bs_texto.find('article').get('artCategory').split('/')
+            escopo = escopo_completo[0]
             ementa = bs_texto.find('Ementa').get_text()
-            conteudo = bs_texto.find('Texto').get_text()
-            # Limpa o texto ao eliminar as tags e os atributos:
-            texto_conteudo = re.sub('<[^>]+?>', ' ', conteudo).replace('"', '\\"')
             pub_name_secao = bs_texto.find('article').get('pubName')
             edicao = bs_texto.find('article').get('editionNumber')
-            #Para assinatura, muda o xml para lxml:
+            link = bs_texto.find('article').get('pdfPage')
+
+            # Para assinatura, muda o xml para lxml:
             bs_texto_lxml = BeautifulSoup(conteudo_xml, 'lxml')
             # Extrai todas as ocorrências do cargo e da assinatura do arquivo xml caso existam:
             if bs_texto_lxml.find('p', {'class': 'assina'}):
                 assinaturas = bs_texto_lxml.find_all('p', {'class': 'assina'})
-                #assinatura = str(assinaturas).strip('[]')
-                #assinatura = bs_texto.find('p', {'class':'assina'}).get_text()
+                # assinatura = str(assinaturas).strip('[]')
+                # assinatura = bs_texto.find('p', {'class':'assina'}).get_text()
             else:
                 assinaturas = ""
-            print(f'********* {item} *********')
             assinatura_str = list()
             for assinatura in assinaturas:
                 assinatura_str.append(str(assinatura.get_text()))
             nova_assinatura = str(assinatura_str).strip('[]').replace("'", "")
-            #print(texto_conteudo)
-            #print(titulo)
-            #print(escopo)
+            # print(texto_conteudo)
+            # print(titulo)
+            # print(escopo)
+
+            #Concatenar o texto de um conjunto de arquivos xml:
+            lista_arquivo_extenso = list()
+            texto_conteudo = ""
+            if re.findall('-1', item):
+                for i in range(1, 10):
+                    numero = item.find('-')
+                    n = item[numero:numero + 2]
+                    item = item.replace(n, f'-{i}')
+                    lista_arquivo_extenso.append(item)
+                for arquivo in lista_arquivo_extenso:
+                    with open(arquivo, 'r', encoding="utf-8") as a:
+                        conteudo_xml = a.read()
+                        bs_texto = BeautifulSoup(conteudo_xml, 'xml')
+                        conteudo = bs_texto.find('Texto').get_text()
+                        texto_limpo = re.sub('<[^>]+?>', ' ', conteudo).replace('"', '\\"')
+                        texto_conteudo = texto_conteudo + texto_limpo
+            else:
+                conteudo = bs_texto.find('Texto').get_text()
+                # Limpa o texto ao eliminar as tags e os atributos:
+                texto_conteudo = re.sub('<[^>]+?>', ' ', conteudo).replace('"', '\\"')
+
+            print(f'********* {item} *********')
 
             headers = {'Authorization': f'Bearer {result["access_token"]}',
                         'Accept': 'application/json;odata=verbose',
@@ -487,7 +550,7 @@ def share_point_request():
             # Requisição para buscar itens na lista do Sharepoint:
             r = requests.get("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
                             headers=headers)
-            print(r.status_code)
+            #print(r.status_code)
 
             # Requisição para obter o FullEntityTypeFullName:
             request = requests.get(
@@ -507,23 +570,10 @@ def share_point_request():
             request_post = requests.post("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
                                         headers=headers, data=data.encode('utf-8', 'ignore'))
             print(request_post.status_code)
-            print(request_post.content)
+            #print(request_post.content)
 
-
-def teste():
-    login()
-    buscar_artigo(dicionario)
-    for item in lista_sharepoint:
-        with open(item, 'r', encoding="utf-8") as arquivo:
-            conteudo_xml = arquivo.read()
-            bs_texto = BeautifulSoup(conteudo_xml, 'xml')
-            titulo = bs_texto.find('Identifica').get_text()
-            escopo = bs_texto.find('article').get('artCategory')
-            print(f'********* {item} *********')
-            print(titulo)
-            print(escopo)
 
 #login()
 #buscar_artigo(dicionario)
 share_point_request()
-#teste()
+#teste_texto()
