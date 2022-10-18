@@ -142,7 +142,7 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                            "Presidência da CVM",
                            "Diretor-Presidente do Conselho Diretor da Autoridade Nacional de Proteção de Dados",
                            "Presidente do Conselho de Controle de Atividades Financeiras",
-                           "Portaria nº 179"]
+                           "Portaria nº 179, de 22 de abril de 2019"]
               }
 
 
@@ -498,10 +498,16 @@ def share_point_request():
             titulo = titulo_completo[0]
             escopo_completo = bs_texto.find('article').get('artCategory').split('/')
             escopo = escopo_completo[0]
+            subescopo = ""
+            if len(escopo_completo) > 1:
+                sub = escopo_completo[1:]
+                subescopo = str(sub).strip('[]').replace("', '", "/").replace("'", "")
+
             ementa = bs_texto.find('Ementa').get_text()
             pub_name_secao = bs_texto.find('article').get('pubName')
             edicao = bs_texto.find('article').get('editionNumber')
-            link = bs_texto.find('article').get('pdfPage')
+            link_artigo = bs_texto.find('article').get('pdfPage')
+            #print(link_artigo)
 
             # Para assinatura, muda o xml para lxml:
             bs_texto_lxml = BeautifulSoup(conteudo_xml, 'lxml')
@@ -551,6 +557,8 @@ def share_point_request():
             r = requests.get("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
                             headers=headers)
             #print(r.status_code)
+            #print(r.content)
+            #print(r.json())
 
             # Requisição para obter o FullEntityTypeFullName:
             request = requests.get(
@@ -564,8 +572,10 @@ def share_point_request():
                 "Texto": "%s",
                 "Assinatura": "%s",
                 "Se_x00e7__x00e3_o": "%s",
-                "Edi_x00e7__x00e3_o": "%s"
-            }''' % (titulo, escopo, ementa, texto_conteudo, nova_assinatura, pub_name_secao, edicao)
+                "Edi_x00e7__x00e3_o": "%s",
+                "SubEscopo": "%s",
+                "LinkArtigo": "%s"
+            }''' % (titulo, escopo, ementa, texto_conteudo, nova_assinatura, pub_name_secao, edicao, subescopo, link_artigo)
 
             request_post = requests.post("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
                                         headers=headers, data=data.encode('utf-8', 'ignore'))

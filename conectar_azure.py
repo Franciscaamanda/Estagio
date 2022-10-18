@@ -45,7 +45,7 @@ r = requests.get("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetBy
 print(r.status_code)
 print(r.headers)
 print(r.encoding)
-print(r.content)
+#print(r.content)
 
 #Requisição para obter o FullEntityTypeFullName:
 request = requests.get("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')?select=ListItemEntityTypeFullName",
@@ -62,8 +62,8 @@ data = '''{ "__metadata": {"type": "SP.Data.ArtigosListItem"},
     "Escopo": "Escopo 1"
 }''' % (titulo)
 #"__metadata": {"type": "SP.Data.ArtigosListItem"}
-request_post = requests.post("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
-                        headers=headers, data=data.encode('utf-8', 'ignore'))
-print(request_post.status_code)
-print(request_post.encoding)
-print(request_post.apparent_encoding)
+#request_post = requests.post("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
+#                        headers=headers, data=data.encode('utf-8', 'ignore'))
+#print(request_post.status_code)
+#print(request_post.encoding)
+#print(request_post.apparent_encoding)
