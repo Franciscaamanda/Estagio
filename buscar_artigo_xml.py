@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date,timedelta
 import zipfile
 import os
 from bs4 import BeautifulSoup
@@ -34,14 +34,31 @@ nova_data = '2022' + "-" + '09' + "-" + '09'
 lista_sharepoint = list()
 
 
+def data_anterior_util(data=data_completa):
+    data_com = data.split('-')
+    ano = data_com[0]
+    mes = data_com[1]
+    dia = data_com[2]
+    # Troca a data de hoje pela data que quer trabalhar
+    data_escolhida = date.today().replace(int(ano), int(mes), int(dia))
+    dia_semana = data_escolhida.weekday()
+    if dia_semana == 0: #segunda-feira
+        data_anterior = data_escolhida - timedelta(3)
+    else:
+        data_anterior = data_escolhida - timedelta(1)
+    return data_anterior
+
+
 def download(data=data_completa):
+    data_anterior = data_anterior_util()
     if s.cookies.get('inlabs_session_cookie'):
         cookie = s.cookies.get('inlabs_session_cookie')
     else:
         print("Falha ao obter cookie. Verifique suas credenciais");
         exit(37)
-
     for dou_secao in tipo_dou.split(' '):
+        if dou_secao == 'DO1E' or dou_secao == 'DO2E' or dou_secao == 'DO3E':
+            data = str(data_anterior)
         print("Aguarde Download...")
         url_arquivo = url_download + data + "&dl=" + data + "-" + dou_secao + ".zip"
         cabecalho_arquivo = {'Cookie': 'inlabs_session_cookie=' + cookie, 'origem': '736372697074'}
@@ -147,7 +164,10 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
 
 
 def buscar_artigo(dicionario, data=data_completa):
+    data_anterior = data_anterior_util()
     for dou_secao in tipo_dou.split(' '):
+        if dou_secao == 'DO1E' or dou_secao == 'DO2E' or dou_secao == 'DO3E':
+            data = str(data_anterior)
         nome_arquivo = data + "-" + dou_secao + ".zip"
         diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
         arquivos = list()
@@ -424,30 +444,6 @@ def buscar_artigo(dicionario, data=data_completa):
     print(lista_sharepoint)
 
 
-def teste_texto():
-    login()
-    buscar_artigo(dicionario)
-    for item in lista_sharepoint:
-        with open(item, 'r', encoding="utf-8") as arquivo:
-            #Concatenar o texto de um conjunto de arquivos xml:
-            lista_arquivo_extenso = list()
-            texto_completo = ""
-            if re.findall('-1', item):
-                for i in range(1, 10):
-                    numero = item.find('-')
-                    n = item[numero:numero + 2]
-                    item = item.replace(n, f'-{i}')
-                    lista_arquivo_extenso.append(item)
-                for arquivo in lista_arquivo_extenso:
-                    with open(arquivo, 'r', encoding="utf-8") as a:
-                        conteudo_xml = a.read()
-                        bs_texto = BeautifulSoup(conteudo_xml, 'xml')
-                        conteudo = bs_texto.find('Texto').get_text()
-                        texto_conteudo = re.sub('<[^>]+?>', ' ', conteudo).replace('"', '\\"')
-                        texto_completo = texto_completo + texto_conteudo
-            print(texto_completo)
-
-
 def login():
     try:
         response = s.request("POST", url_login, data=payload, headers=headers)
@@ -514,8 +510,6 @@ def share_point_request():
             # Extrai todas as ocorrências do cargo e da assinatura do arquivo xml caso existam:
             if bs_texto_lxml.find('p', {'class': 'assina'}):
                 assinaturas = bs_texto_lxml.find_all('p', {'class': 'assina'})
-                # assinatura = str(assinaturas).strip('[]')
-                # assinatura = bs_texto.find('p', {'class':'assina'}).get_text()
             else:
                 assinaturas = ""
             assinatura_str = list()
@@ -536,12 +530,13 @@ def share_point_request():
                     item = item.replace(n, f'-{i}')
                     lista_arquivo_extenso.append(item)
                 for arquivo in lista_arquivo_extenso:
-                    with open(arquivo, 'r', encoding="utf-8") as a:
-                        conteudo_xml = a.read()
-                        bs_texto = BeautifulSoup(conteudo_xml, 'xml')
-                        conteudo = bs_texto.find('Texto').get_text()
-                        texto_limpo = re.sub('<[^>]+?>', ' ', conteudo).replace('"', '\\"')
-                        texto_conteudo = texto_conteudo + texto_limpo
+                    if os.path.isfile(arquivo):
+                        with open(arquivo, 'r', encoding="utf-8") as a:
+                            conteudo_xml = a.read()
+                            bs_texto = BeautifulSoup(conteudo_xml, 'xml')
+                            conteudo = bs_texto.find('Texto').get_text()
+                            texto_limpo = re.sub('<[^>]+?>', ' ', conteudo).replace('"', '\\"')
+                            texto_conteudo = texto_conteudo + texto_limpo
             else:
                 conteudo = bs_texto.find('Texto').get_text()
                 # Limpa o texto ao eliminar as tags e os atributos:
@@ -586,4 +581,4 @@ def share_point_request():
 #login()
 #buscar_artigo(dicionario)
 share_point_request()
-#teste_texto()
+#data_anterior_util("2022-10-17")
