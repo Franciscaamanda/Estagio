@@ -39,10 +39,10 @@ def data_anterior_util(data=data_completa):
     ano = data_com[0]
     mes = data_com[1]
     dia = data_com[2]
-    # Troca a data de hoje pela data que quer trabalhar
+    # Troca a data de hoje pela data que o usuário definir
     data_escolhida = date.today().replace(int(ano), int(mes), int(dia))
     dia_semana = data_escolhida.weekday()
-    if dia_semana == 0: #segunda-feira
+    if dia_semana == 0: #segunda-feira é representada pelo valor 0
         data_anterior = data_escolhida - timedelta(3)
     else:
         data_anterior = data_escolhida - timedelta(1)
@@ -220,14 +220,6 @@ def buscar_artigo(dicionario, data=data_completa):
                             nova_lista.append(file)
                     if True in np.isin(dicionario['Escopo'][9:fim_dict], escopo.split('/')):
                             nova_lista.append(file)
-                        #elif re.findall("DO2", pub_name_secao, re.IGNORECASE) \
-                        #        and not re.findall("Secretaria Executiva", escopo):
-                        #    nova_lista.append(file)
-                        #elif re.findall("DO1", pub_name_secao, re.IGNORECASE) \
-                        #        and not re.findall("Instituto Nacional de Tecnologia da Informação", escopo):
-                        #    nova_lista.append(file)
-                        #elif re.findall("DO3", pub_name_secao, re.IGNORECASE):
-                        #    nova_lista.append(file)
             #arquivos encontrados pelo escopo ficam armazenados na nova_lista e as buscas abaixo são feitas somente neles:
             for arq in nova_lista:
                 with open(arq, 'r', encoding="utf-8") as arquivo:
@@ -520,7 +512,7 @@ def share_point_request():
             # print(titulo)
             # print(escopo)
 
-            #Concatenar o texto de um conjunto de arquivos xml:
+            #Concatena o texto de um conjunto de arquivos xml que estão no formato xxx_xxxxxxxx_xxxxxxxx-x.xml:
             lista_arquivo_extenso = list()
             texto_conteudo = ""
             if re.findall('-1', item):
@@ -548,18 +540,33 @@ def share_point_request():
                         'Accept': 'application/json;odata=verbose',
                         'Content-Type': 'application/json;odata=verbose'}
 
+            header_atualiza = {'Authorization': f'Bearer {result["access_token"]}',
+                               'Accept': 'application/json;odata=verbose',
+                               'Content-Type': 'application/json;odata=verbose',
+                               'If-Match': '*',
+                               'X-HTTP-Method': "MERGE"}
+
             # Requisição para buscar itens na lista do Sharepoint:
             r = requests.get("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
                             headers=headers)
             #print(r.status_code)
-            #print(r.content)
-            #print(r.json())
 
+            #Pegar o id de um item da lista no sharepoint pelo título:
+            dados = r.json()
+            lista_itens = dados['d']['results']
+            tamanho = len(lista_itens)
+            data_hj = str(date.today())
+            id = 0
+            for n in range(0, tamanho):
+                lista_item = lista_itens[n]
+                if re.findall(titulo, lista_item['Title'], re.IGNORECASE) \
+                        and re.findall(data_hj, lista_item['Data']):
+                    id = lista_item['ID']
             # Requisição para obter o FullEntityTypeFullName:
             request = requests.get(
                 "https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')?select=ListItemEntityTypeFullName",
                 headers=headers)
-            # Requisição para inserir itens na lista do Sharepoint:
+
             data = '''{ "__metadata": {"type": "SP.Data.ArtigosListItem"},
                 "Title": "%s",
                 "Escopo": "%s",
@@ -572,13 +579,20 @@ def share_point_request():
                 "LinkArtigo": "%s"
             }''' % (titulo, escopo, ementa, texto_conteudo, nova_assinatura, pub_name_secao, edicao, subescopo, link_artigo)
 
-            request_post = requests.post("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
+            if id == 0: # não encontrou nenhum item na data de hoje com o título do arquivo encontrado
+                # Requisição para inserir itens na lista do Sharepoint:
+                request_post = requests.post("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
                                         headers=headers, data=data.encode('utf-8', 'ignore'))
-            print(request_post.status_code)
-            #print(request_post.content)
+                print(request_post.status_code)
+                #print(request_post.content)
+            else:
+                # Requisição para atualizar itens na lista do Sharepoint:
+                r_atualiza = requests.post(f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items({id})",
+                                        headers=header_atualiza, data=data.encode('utf-8', 'ignore'))
+                print(r_atualiza.status_code)
 
 
 #login()
 #buscar_artigo(dicionario)
 share_point_request()
-#data_anterior_util("2022-10-17")
+#data_anterior_util()

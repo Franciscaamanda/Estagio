@@ -1,5 +1,8 @@
+from datetime import date
+
 from msal import PublicClientApplication
 import requests
+import re
 
 client_id = ''
 tenant_id = ''
@@ -43,20 +46,35 @@ headers = {'Authorization': f'Bearer {result["access_token"]}',
 #Requisição para buscar itens na lista do Sharepoint:
 r = requests.get("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items", headers=headers)
 print(r.status_code)
-print(r.headers)
-print(r.encoding)
-#print(r.content)
+dicionario = r.json()
+lista = dicionario['d']['results']
+tam = len(lista)
+data_hj = str(date.today())
+id = 0
+for n in range(0, tam):
+    item_1 = lista[n]
+    if re.findall('DESPACHO DE 19 de outubro de 2022', item_1['Title'], re.IGNORECASE)\
+            and re.findall(data_hj, item_1['Data']):
+        id = item_1['ID']
+item_1 = lista[1]
+print(id)
+print(item_1['Title'])
+dat = str(item_1['Data'])[0:10]
+print(dat[0:10])
+print(date.today())
+r = requests.get("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items(6)", headers=headers)
+print(r.status_code)
+title = 'teste'
+r1 = requests.get("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items?select=Title", headers=headers)
 
 #Requisição para obter o FullEntityTypeFullName:
 request = requests.get("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')?select=ListItemEntityTypeFullName",
              headers=headers)
-print(request.content)
-print(request.apparent_encoding)
 list_entity_type_full_name = 'SP.Data.ArtigosListItem'
 #Requisição para inserir itens na lista do Sharepoint:
 #content-type: application/atom+xml;type=feed;charset=utf-8
 #data = {"__metadata": {"type": "SP.Data.ArtigosListItem"},"Title": "Teste"}
-titulo = "é"
+titulo = "teste"
 data = '''{ "__metadata": {"type": "SP.Data.ArtigosListItem"},
     "Title": "%s",
     "Escopo": "Escopo 1"
@@ -67,3 +85,13 @@ data = '''{ "__metadata": {"type": "SP.Data.ArtigosListItem"},
 #print(request_post.status_code)
 #print(request_post.encoding)
 #print(request_post.apparent_encoding)
+
+header_atualiza = {'Authorization': f'Bearer {result["access_token"]}',
+            'Accept': 'application/json;odata=verbose',
+            'Content-Type': 'application/json;odata=verbose',
+            'If-Match': '*',
+            'X-HTTP-Method': "MERGE"}
+
+#r_atualiza = requests.post(f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items({id})",
+#                  headers=header_atualiza, data=data.encode('utf-8', 'ignore'))
+#print(r_atualiza.status_code)
