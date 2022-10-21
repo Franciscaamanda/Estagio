@@ -6,6 +6,7 @@ import re
 import numpy as np
 import requests
 from msal import PublicClientApplication
+import holidays
 
 login = ""
 senha = ""
@@ -31,7 +32,21 @@ dia = date.today().strftime("%d")
 data_completa = ano + "-" + mes + "-" + dia
 nova_data = '2022' + "-" + '09' + "-" + '09'
 
-lista_sharepoint = list()
+artigos_encontrados = list()
+
+
+def feriados(data=data_completa):
+    feriados = holidays.Brazil()
+    if data in feriados:
+        return True
+    else:
+        return False
+
+
+def lista_feriados():
+    feriados = holidays.Brazil()
+    for feriado in feriados['2022-01-01': '2022-12-31']:
+        print(feriado)
 
 
 def data_anterior_util(data=data_completa):
@@ -46,7 +61,11 @@ def data_anterior_util(data=data_completa):
         data_anterior = data_escolhida - timedelta(3)
     else:
         data_anterior = data_escolhida - timedelta(1)
-    return data_anterior
+    feriado = feriados(str(data_anterior))
+    if feriado is True:
+        return data_anterior_util(str(data_anterior))
+    else:
+        return data_anterior
 
 
 def download(data=data_completa):
@@ -237,27 +256,27 @@ def buscar_artigo(dicionario, data=data_completa):
                                     and (re.findall("Banco Central", ementa, re.IGNORECASE) or
                                          re.findall("Banco Central", texto, re.IGNORECASE)):
                                 print(titulo + " --- " + arq)
-                                if arq not in lista_sharepoint:
-                                    lista_sharepoint.append(arq)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
                         if item in dicionario['Titulo'][4]:
                             if re.findall(item, titulo, re.IGNORECASE) \
                                     and (re.findall("Banco Central", ementa, re.IGNORECASE) or
                                          re.findall("Banco Central", texto, re.IGNORECASE)):
                                 print(titulo + " --- " + arq)
-                                if arq not in lista_sharepoint:
-                                    lista_sharepoint.append(arq)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
                         if item in dicionario['Titulo'][0:2] or item in dicionario['Titulo'][3]:
                             if re.findall(item, titulo, re.IGNORECASE):
                                 print(titulo + " --- " + arq)
-                                if arq not in lista_sharepoint:
-                                    lista_sharepoint.append(arq)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
                         if item in dicionario['Titulo'][5]:
                             if re.findall(item, titulo, re.IGNORECASE) \
                                     and (re.findall("Comissão de Valores Mobiliários", texto, re.IGNORECASE) or
                                          re.findall("treinamento ou em missões oficiais", texto, re.IGNORECASE)):
                                 print(titulo + " --- " + arq)
-                                if arq not in lista_sharepoint:
-                                    lista_sharepoint.append(arq)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
                     bs_texto = BeautifulSoup(conteudo_xml, 'xml')
@@ -276,15 +295,15 @@ def buscar_artigo(dicionario, data=data_completa):
                                     and not re.findall(padrao2, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao3, ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
-                                if arq not in lista_sharepoint:
-                                    lista_sharepoint.append(arq)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
                         if item in dicionario["Ementa"][11]:
                             nome_titulo = bs_texto.find('Identifica').get_text()
                             if re.findall(item, ementa, re.IGNORECASE) \
                                     and not re.findall("Instrução Normativa BCB", nome_titulo, re.IGNORECASE):
                                 #print(ementa + " --- " + arq)
-                                if arq not in lista_sharepoint:
-                                    lista_sharepoint.append(arq)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
                         if item in dicionario['Ementa'][19]:
                             # padrao_130 = "(Poder (.*?Executivo))|(Poderes (.*?Executivo))"
                             # Extrai o título do arquivo xml
@@ -303,15 +322,15 @@ def buscar_artigo(dicionario, data=data_completa):
                                     and re.findall(item, ementa[inicio_busca:fim_busca], re.IGNORECASE) \
                                     and not re.findall("no âmbito da Secretaria de Gestão e Desempenho de Pessoal da Secretaria Especial de Desburocratização, Gestão e Governo Digital do Ministério da Economia", ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
-                                if arq not in lista_sharepoint:
-                                    lista_sharepoint.append(arq)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
                         if item in dicionario['Ementa'][0:5] \
                                 or item in dicionario['Ementa'][6:11] or item in dicionario['Ementa'][12:19] \
                                 or item in dicionario['Ementa'][20:fim]:
                             if re.findall(item, ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
-                                if arq not in lista_sharepoint:
-                                    lista_sharepoint.append(arq)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
                     #O parâmetro xml foi substituído por lxml para obter o conteúdo de um parágrafo específico:
@@ -334,24 +353,24 @@ def buscar_artigo(dicionario, data=data_completa):
                                 if bs_texto.find('p', {'class': 'cargo'}):
                                     print(str(assinatura.get_text()) + ' --- ' + str(
                                         cargos[indice_lista].get_text()) + ' --- '+ arq)
-                                    if arq not in lista_sharepoint:
-                                        lista_sharepoint.append(arq)
+                                    if arq not in artigos_encontrados:
+                                        artigos_encontrados.append(arq)
                                 else:
                                     print(str(assinatura.get_text()) + ' --- '+ arq)
-                                    if arq not in lista_sharepoint:
-                                        lista_sharepoint.append(arq)
+                                    if arq not in artigos_encontrados:
+                                        artigos_encontrados.append(arq)
                         for cargo in cargos:
                             if re.findall(item[0], str(cargo), re.IGNORECASE):
                                 indice_lista = cargos.index(cargo)
                                 if bs_texto.find('p', {'class': 'assina'}):
                                     print(str(assinaturas[indice_lista].get_text()) + ' --- ' + str(
                                         cargo.get_text()) + ' --- ' + arq)
-                                    if arq not in lista_sharepoint:
-                                        lista_sharepoint.append(arq)
+                                    if arq not in artigos_encontrados:
+                                        artigos_encontrados.append(arq)
                                 else:
                                     print(str(cargo.get_text()) + ' --- ' + arq)
-                                    if arq not in lista_sharepoint:
-                                        lista_sharepoint.append(arq)
+                                    if arq not in artigos_encontrados:
+                                        artigos_encontrados.append(arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
                     bs_texto = BeautifulSoup(conteudo_xml, 'xml')
@@ -379,61 +398,61 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall(item, conteudo[inicio_busca:fim_busca], re.IGNORECASE):
                                 print(" --- " + arq)
-                                if arq not in lista_sharepoint:
-                                    lista_sharepoint.append(arq)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][22]:
                             padrao = 'Presidente do COAF'
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall(padrao, conteudo, re.IGNORECASE):
                                 print(" --- " + arq)
-                                if arq not in lista_sharepoint:
-                                    lista_sharepoint.append(arq)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][28]:
                             escopo = bs_texto.find('article').get('artCategory')
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and (re.findall("Presidência da República", escopo, re.IGNORECASE) or
                                     re.findall("Secretaria Especial do Tesouro e Orçamento", escopo, re.IGNORECASE)):
                                 print(" --- " + arq)
-                                if arq not in lista_sharepoint:
-                                    lista_sharepoint.append(arq)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][29:33]:
                             escopo = bs_texto.find('article').get('artCategory')
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall("Presidência da República", escopo, re.IGNORECASE):
                                 print(" --- " + arq)
-                                if arq not in lista_sharepoint:
-                                    lista_sharepoint.append(arq)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][23:28] \
                                 or item in dicionario["Conteudo"][0:18] or item in dicionario["Conteudo"][20:22]:
                             if re.findall(item, conteudo, re.IGNORECASE):
                                 print(" --- " + arq)
-                                if arq not in lista_sharepoint:
-                                    lista_sharepoint.append(arq)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][33]:
                             pub_name_secao = bs_texto.find('article').get('pubName')
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                 and re.findall("DO2", pub_name_secao, re.IGNORECASE):
                                 print(texto_conteudo + " --- " + arq)
-                                if arq not in lista_sharepoint:
-                                    lista_sharepoint.append(arq)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][34]:
                             if re.findall(item, conteudo, re.IGNORECASE):
                                 print(" --- " + arq)
-                                if arq not in lista_sharepoint:
-                                    lista_sharepoint.append(arq)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][35]:
                             if re.findall(item, conteudo, re.IGNORECASE) and \
                                     re.findall("DO1", pub_name_secao, re.IGNORECASE):
                                 print(" --- " + arq)
-                                if arq not in lista_sharepoint:
-                                    lista_sharepoint.append(arq)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][36:fim]:
                             if re.findall(item, conteudo, re.IGNORECASE):
                                 print(" --- " + arq)
-                                if arq not in lista_sharepoint:
-                                    lista_sharepoint.append(arq)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
     print("Busca Encerrada!")
-    print(lista_sharepoint)
+    print(artigos_encontrados)
 
 
 def login():
@@ -478,7 +497,7 @@ def share_point_request():
         print(result.get("error_description"))
         print(result.get("correlation_id"))  # You may need this when reporting a bug
 
-    for item in lista_sharepoint:
+    for item in artigos_encontrados:
         with open(item, 'r', encoding="utf-8") as arquivo:
             conteudo_xml = arquivo.read()
             bs_texto = BeautifulSoup(conteudo_xml, 'xml')
@@ -560,8 +579,19 @@ def share_point_request():
             for n in range(0, tamanho):
                 lista_item = lista_itens[n]
                 if re.findall(titulo, lista_item['Title'], re.IGNORECASE) \
-                        and re.findall(data_hj, lista_item['Data']):
+                        and re.findall(data_hj, lista_item['Data']) \
+                        and re.findall("Despacho", lista_item['Title'], re.IGNORECASE) \
+                        and texto_conteudo == lista_item['Texto']:
                     id = lista_item['ID']
+                elif re.findall(titulo, lista_item['Title'], re.IGNORECASE) \
+                        and re.findall(data_hj, lista_item['Data']) \
+                        and not re.findall("Despacho", lista_item['Title'], re.IGNORECASE):
+                    id = lista_item['ID']
+
+            is_update = False
+            if id != 0: # nova inserção
+                is_update = True
+
             # Requisição para obter o FullEntityTypeFullName:
             request = requests.get(
                 "https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')?select=ListItemEntityTypeFullName",
@@ -576,23 +606,27 @@ def share_point_request():
                 "Se_x00e7__x00e3_o": "%s",
                 "Edi_x00e7__x00e3_o": "%s",
                 "SubEscopo": "%s",
-                "LinkArtigo": "%s"
-            }''' % (titulo, escopo, ementa, texto_conteudo, nova_assinatura, pub_name_secao, edicao, subescopo, link_artigo)
+                "LinkArtigo": "%s",
+                "IsUpdate": "%s"
+            }''' % (titulo, escopo, ementa, texto_conteudo, nova_assinatura, pub_name_secao, edicao, subescopo, link_artigo, is_update)
 
             if id == 0: # não encontrou nenhum item na data de hoje com o título do arquivo encontrado
                 # Requisição para inserir itens na lista do Sharepoint:
                 request_post = requests.post("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
                                         headers=headers, data=data.encode('utf-8', 'ignore'))
                 print(request_post.status_code)
+                print("Artigo inserido na lista do sharepoint!")
                 #print(request_post.content)
             else:
                 # Requisição para atualizar itens na lista do Sharepoint:
                 r_atualiza = requests.post(f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items({id})",
                                         headers=header_atualiza, data=data.encode('utf-8', 'ignore'))
                 print(r_atualiza.status_code)
+                print("Artigo já existe na lista do sharepoint!")
 
 
 #login()
 #buscar_artigo(dicionario)
 share_point_request()
-#data_anterior_util()
+#data_anterior_util("2022-03-03")
+#feriados()
