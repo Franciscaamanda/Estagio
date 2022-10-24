@@ -1,3 +1,4 @@
+import datetime
 from datetime import date,timedelta
 import zipfile
 import os
@@ -320,7 +321,8 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao_titulo, titulo, re.IGNORECASE) \
                                     and re.findall(item, ementa[inicio_busca:fim_busca], re.IGNORECASE) \
-                                    and not re.findall("no âmbito da Secretaria de Gestão e Desempenho de Pessoal da Secretaria Especial de Desburocratização, Gestão e Governo Digital do Ministério da Economia", ementa, re.IGNORECASE):
+                                    and not re.findall("no âmbito da Secretaria de Gestão e Desempenho de Pessoal da Secretaria Especial de Desburocratização, Gestão e Governo Digital do Ministério da Economia", ementa, re.IGNORECASE) \
+                                    and not re.findall("Protocolo ao Acordo de Comércio e Cooperação Econômica entre o Governo da República Federativa do Brasil e o Governo dos Estados Unidos da América Relacionado a Regras Comerciais e de Transparência", ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
@@ -511,9 +513,16 @@ def share_point_request():
                 subescopo = str(sub).strip('[]').replace("', '", "/").replace("'", "")
 
             ementa = bs_texto.find('Ementa').get_text()
+            if re.findall("Despacho", titulo, re.IGNORECASE):
+                ementa = "Autoriza o afastamento do país."
             pub_name_secao = bs_texto.find('article').get('pubName')
             edicao = bs_texto.find('article').get('editionNumber')
             link_artigo = bs_texto.find('article').get('pdfPage')
+            data_publicacao = bs_texto.find('article').get('pubDate').split("/")
+            dia_pub = data_publicacao[0]
+            mes_pub = data_publicacao[1]
+            ano_pub = data_publicacao[2]
+            data_utc = datetime.datetime.utcnow().replace(int(ano_pub), int(mes_pub), int(dia_pub))
             #print(link_artigo)
 
             # Para assinatura, muda o xml para lxml:
@@ -579,12 +588,12 @@ def share_point_request():
             for n in range(0, tamanho):
                 lista_item = lista_itens[n]
                 if re.findall(titulo, lista_item['Title'], re.IGNORECASE) \
-                        and re.findall(data_hj, lista_item['Data']) \
+                        and re.findall(str(data_utc)[0:10], lista_item['Data']) \
                         and re.findall("Despacho", lista_item['Title'], re.IGNORECASE) \
-                        and texto_conteudo == lista_item['Texto']:
+                        and texto_conteudo == str(lista_item['Texto']).replace('"', '\\"'):
                     id = lista_item['ID']
                 elif re.findall(titulo, lista_item['Title'], re.IGNORECASE) \
-                        and re.findall(data_hj, lista_item['Data']) \
+                        and re.findall(str(data_utc)[0:10], lista_item['Data']) \
                         and not re.findall("Despacho", lista_item['Title'], re.IGNORECASE):
                     id = lista_item['ID']
 
@@ -605,10 +614,11 @@ def share_point_request():
                 "Assinatura": "%s",
                 "Se_x00e7__x00e3_o": "%s",
                 "Edi_x00e7__x00e3_o": "%s",
+                "Data": "%s",
                 "SubEscopo": "%s",
                 "LinkArtigo": "%s",
                 "IsUpdate": "%s"
-            }''' % (titulo, escopo, ementa, texto_conteudo, nova_assinatura, pub_name_secao, edicao, subescopo, link_artigo, is_update)
+            }''' % (titulo, escopo, ementa, texto_conteudo, nova_assinatura, pub_name_secao, edicao, data_utc, subescopo, link_artigo, is_update)
 
             if id == 0: # não encontrou nenhum item na data de hoje com o título do arquivo encontrado
                 # Requisição para inserir itens na lista do Sharepoint:

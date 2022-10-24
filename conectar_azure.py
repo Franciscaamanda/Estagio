@@ -46,6 +46,7 @@ headers = {'Authorization': f'Bearer {result["access_token"]}',
 #Requisição para buscar itens na lista do Sharepoint:
 r = requests.get("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items", headers=headers)
 print(r.status_code)
+print(r.content)
 dicionario = r.json()
 lista = dicionario['d']['results']
 tam = len(lista)
