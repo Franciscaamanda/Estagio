@@ -34,6 +34,7 @@ data_completa = ano + "-" + mes + "-" + dia
 nova_data = '2022' + "-" + '09' + "-" + '09'
 
 artigos_encontrados = list()
+parametros_busca = dict()
 
 
 def feriados(data=data_completa):
@@ -257,6 +258,7 @@ def buscar_artigo(dicionario, data=data_completa):
                                     and (re.findall("Banco Central", ementa, re.IGNORECASE) or
                                          re.findall("Banco Central", texto, re.IGNORECASE)):
                                 print(titulo + " --- " + arq)
+                                print(f'Parâmetro da busca: {item}')
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario['Titulo'][4]:
@@ -264,11 +266,13 @@ def buscar_artigo(dicionario, data=data_completa):
                                     and (re.findall("Banco Central", ementa, re.IGNORECASE) or
                                          re.findall("Banco Central", texto, re.IGNORECASE)):
                                 print(titulo + " --- " + arq)
+                                print(f'Parâmetro da busca: {item}')
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario['Titulo'][0:2] or item in dicionario['Titulo'][3]:
                             if re.findall(item, titulo, re.IGNORECASE):
                                 print(titulo + " --- " + arq)
+                                print(f'Parâmetro da busca: {item}')
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario['Titulo'][5]:
@@ -276,6 +280,7 @@ def buscar_artigo(dicionario, data=data_completa):
                                     and (re.findall("Comissão de Valores Mobiliários", texto, re.IGNORECASE) or
                                          re.findall("treinamento ou em missões oficiais", texto, re.IGNORECASE)):
                                 print(titulo + " --- " + arq)
+                                print(f'Parâmetro da busca: {item}')
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
@@ -296,13 +301,15 @@ def buscar_artigo(dicionario, data=data_completa):
                                     and not re.findall(padrao2, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao3, ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
+                                print(f'Parâmetro da busca: {item}')
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario["Ementa"][11]:
                             nome_titulo = bs_texto.find('Identifica').get_text()
                             if re.findall(item, ementa, re.IGNORECASE) \
                                     and not re.findall("Instrução Normativa BCB", nome_titulo, re.IGNORECASE):
-                                #print(ementa + " --- " + arq)
+                                print(ementa + " --- " + arq)
+                                print(f'Parâmetro da busca: {item}')
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario['Ementa'][19]:
@@ -324,13 +331,23 @@ def buscar_artigo(dicionario, data=data_completa):
                                     and not re.findall("no âmbito da Secretaria de Gestão e Desempenho de Pessoal da Secretaria Especial de Desburocratização, Gestão e Governo Digital do Ministério da Economia", ementa, re.IGNORECASE) \
                                     and not re.findall("Protocolo ao Acordo de Comércio e Cooperação Econômica entre o Governo da República Federativa do Brasil e o Governo dos Estados Unidos da América Relacionado a Regras Comerciais e de Transparência", ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
+                                print(f'Parâmetro da busca: {item}')
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario['Ementa'][0:5] \
-                                or item in dicionario['Ementa'][6:11] or item in dicionario['Ementa'][12:19] \
+                                or item in dicionario['Ementa'][6:10] or item in dicionario['Ementa'][12:15] \
+                                or item in dicionario['Ementa'][16:19] \
                                 or item in dicionario['Ementa'][20:fim]:
                             if re.findall(item, ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
+                                print(f'Parâmetro da busca: {item}')
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
+                        if item in dicionario['Ementa'][10] or item in dicionario['Ementa'][15]:
+                            if re.findall(item, ementa, re.IGNORECASE) \
+                                    and not re.findall('Transforma a Autoridade Nacional de Proteção de Dados \(ANPD\) em autarquia', ementa, re.IGNORECASE):
+                                print(ementa + " --- " + arq)
+                                print(f'Parâmetro da busca: {item}')
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
@@ -355,10 +372,12 @@ def buscar_artigo(dicionario, data=data_completa):
                                 if bs_texto.find('p', {'class': 'cargo'}):
                                     print(str(assinatura.get_text()) + ' --- ' + str(
                                         cargos[indice_lista].get_text()) + ' --- '+ arq)
+                                    print(f'Parâmetro da busca: {item}')
                                     if arq not in artigos_encontrados:
                                         artigos_encontrados.append(arq)
                                 else:
                                     print(str(assinatura.get_text()) + ' --- '+ arq)
+                                    print(f'Parâmetro da busca: {item}')
                                     if arq not in artigos_encontrados:
                                         artigos_encontrados.append(arq)
                         for cargo in cargos:
@@ -367,10 +386,12 @@ def buscar_artigo(dicionario, data=data_completa):
                                 if bs_texto.find('p', {'class': 'assina'}):
                                     print(str(assinaturas[indice_lista].get_text()) + ' --- ' + str(
                                         cargo.get_text()) + ' --- ' + arq)
+                                    print(f'Parâmetro da busca: {item}')
                                     if arq not in artigos_encontrados:
                                         artigos_encontrados.append(arq)
                                 else:
                                     print(str(cargo.get_text()) + ' --- ' + arq)
+                                    print(f'Parâmetro da busca: {item}')
                                     if arq not in artigos_encontrados:
                                         artigos_encontrados.append(arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
@@ -400,6 +421,7 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall(item, conteudo[inicio_busca:fim_busca], re.IGNORECASE):
                                 print(" --- " + arq)
+                                print(f'Parâmetro da busca: {item}')
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][22]:
@@ -407,6 +429,7 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall(padrao, conteudo, re.IGNORECASE):
                                 print(" --- " + arq)
+                                print(f'Parâmetro da busca: {item}')
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][28]:
@@ -415,6 +438,7 @@ def buscar_artigo(dicionario, data=data_completa):
                                     and (re.findall("Presidência da República", escopo, re.IGNORECASE) or
                                     re.findall("Secretaria Especial do Tesouro e Orçamento", escopo, re.IGNORECASE)):
                                 print(" --- " + arq)
+                                print(f'Parâmetro da busca: {item}')
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][29:33]:
@@ -422,12 +446,14 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall("Presidência da República", escopo, re.IGNORECASE):
                                 print(" --- " + arq)
+                                print(f'Parâmetro da busca: {item}')
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][23:28] \
                                 or item in dicionario["Conteudo"][0:18] or item in dicionario["Conteudo"][20:22]:
                             if re.findall(item, conteudo, re.IGNORECASE):
                                 print(" --- " + arq)
+                                print(f'Parâmetro da busca: {item}')
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][33]:
@@ -435,22 +461,26 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                 and re.findall("DO2", pub_name_secao, re.IGNORECASE):
                                 print(texto_conteudo + " --- " + arq)
+                                print(f'Parâmetro da busca: {item}')
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][34]:
                             if re.findall(item, conteudo, re.IGNORECASE):
                                 print(" --- " + arq)
+                                print(f'Parâmetro da busca: {item}')
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][35]:
                             if re.findall(item, conteudo, re.IGNORECASE) and \
                                     re.findall("DO1", pub_name_secao, re.IGNORECASE):
                                 print(" --- " + arq)
+                                print(f'Parâmetro da busca: {item}')
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][36:fim]:
                             if re.findall(item, conteudo, re.IGNORECASE):
                                 print(" --- " + arq)
+                                print(f'Parâmetro da busca: {item}')
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
     print("Busca Encerrada!")
@@ -512,9 +542,6 @@ def share_point_request():
                 sub = escopo_completo[1:]
                 subescopo = str(sub).strip('[]').replace("', '", "/").replace("'", "")
 
-            ementa = bs_texto.find('Ementa').get_text()
-            if re.findall("Despacho", titulo, re.IGNORECASE):
-                ementa = "Autoriza o afastamento do país."
             pub_name_secao = bs_texto.find('article').get('pubName')
             edicao = bs_texto.find('article').get('editionNumber')
             link_artigo = bs_texto.find('article').get('pdfPage')
@@ -561,6 +588,71 @@ def share_point_request():
                 conteudo = bs_texto.find('Texto').get_text()
                 # Limpa o texto ao eliminar as tags e os atributos:
                 texto_conteudo = re.sub('<[^>]+?>', ' ', conteudo).replace('"', '\\"')
+
+            #Pega a ementa quando tiver no artigo:
+            ementa = bs_texto.find('Ementa').get_text()
+            #Ementa de despachos:
+            if re.findall("Despacho", titulo, re.IGNORECASE) \
+                    and re.findall("Banco Central", escopo, re.IGNORECASE) \
+                    and re.findall("servidor", texto_conteudo, re.IGNORECASE):
+                ementa = "Autoriza o afastamento do país."
+            elif re.findall("Despacho", titulo, re.IGNORECASE) \
+                    and re.findall("Banco Central", escopo, re.IGNORECASE):
+                inicio_texto = texto_conteudo.find('autoriza')
+                fim_texto = texto_conteudo.find('País') + len('País')
+                ementa = texto_conteudo[inicio_texto:fim_texto].replace("autoriza", "Autoriza") + "."
+            elif re.findall("Despacho", titulo, re.IGNORECASE) \
+                    and re.findall("Presidência da República", escopo, re.IGNORECASE):
+                inicio_texto = texto_conteudo.find('Exposição')
+                paragrafo_interesse = texto_conteudo.find('Afastamento')
+                fim_texto = texto_conteudo[paragrafo_interesse:].find(',') + paragrafo_interesse
+                ementa = texto_conteudo[inicio_texto:fim_texto] + "."
+            #Ementa de portarias:
+            if re.findall("Portaria", titulo, re.IGNORECASE)\
+                    and re.findall("Ministério da Economia", escopo, re.IGNORECASE) \
+                    and re.findall(pub_name_secao, 'DO2', re.IGNORECASE):
+                inicio_texto = texto_conteudo.find('Autorizar')
+                frase_interesse = texto_conteudo.find('ocupante')
+                fim_texto = texto_conteudo[frase_interesse:].find(',') + frase_interesse
+                ementa_completa = texto_conteudo[inicio_texto:fim_texto].replace('Autorizar', 'Autoriza') + "."
+                ementa = re.sub('[0-9]{1}[\.][0-9]{3}[\.][0-9]{3}[-][0-9]{1}[,]', '', ementa_completa).replace('matrícula', '').replace('nº', '')
+            #Ementa de extrato de ata:
+            if re.findall("Extrato de Ata", titulo, re.IGNORECASE):
+                inicio_texto = re.search('[0-9]{1}[\.][0-9]{3}', titulo)
+                fim_texto = titulo.find(' REALIZADA')
+                inicio = inicio_texto.span()[0]
+                ementa = titulo[inicio:fim_texto] + "."
+            #Ementa de extrato da seção 3:
+            if re.findall("Extrato de Acordo", titulo, re.IGNORECASE):
+                inicio_texto = texto_conteudo.find('Acordo')
+                fim_texto = texto_conteudo[inicio_texto:].find('.') + inicio_texto
+                ementa = texto_conteudo[inicio_texto:fim_texto]
+            elif re.findall("Extrato de Convênio", titulo, re.IGNORECASE):
+                inicio_texto = texto_conteudo.find('Termo')
+                fim_texto = texto_conteudo[inicio_texto:].find('.') + inicio_texto
+                ementa = texto_conteudo[inicio_texto:fim_texto]
+            #Ementa de decreto:
+            if re.findall("Decreto", titulo, re.IGNORECASE):
+                if re.findall("DESIGNAR", texto_conteudo, re.IGNORECASE):
+                    inicio_texto = texto_conteudo.find('DESIGNAR')
+                    fim_texto = texto_conteudo[inicio_texto:].find('.') + inicio_texto
+                    ementa = texto_conteudo[inicio_texto:fim_texto].replace('DESIGNAR', 'Designa')
+                if re.findall("NOMEAR", texto_conteudo, re.IGNORECASE):
+                    inicio_texto = texto_conteudo.find('NOMEAR')
+                    fim_texto = texto_conteudo[inicio_texto:].find('.') + inicio_texto
+                    ementa = texto_conteudo[inicio_texto:fim_texto].replace('NOMEAR', 'Nomeia')
+                if re.findall("Autorizar", texto_conteudo, re.IGNORECASE):
+                    inicio_texto = texto_conteudo.find('AUTORIZAR')
+                    fim_texto = texto_conteudo[inicio_texto:].find('.') + inicio_texto
+                    ementa = texto_conteudo[inicio_texto:fim_texto].replace('AUTORIZAR', 'Autoriza')
+                if re.findall("EXONERAR", texto_conteudo, re.IGNORECASE):
+                    inicio_texto = texto_conteudo.find('EXONERAR')
+                    fim_texto = texto_conteudo[inicio_texto:].find('.') + inicio_texto
+                    ementa = texto_conteudo[inicio_texto:fim_texto].replace('EXONERAR', 'Exonera')
+                if re.findall("HOMOLOGAR", texto_conteudo, re.IGNORECASE):
+                    inicio_texto = texto_conteudo.find('HOMOLOGAR')
+                    fim_texto = texto_conteudo[inicio_texto:].find('.') + inicio_texto
+                    ementa = texto_conteudo[inicio_texto:fim_texto].replace('HOMOLOGAR', 'Homologa')
 
             print(f'********* {item} *********')
 
