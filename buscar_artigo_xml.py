@@ -36,6 +36,19 @@ nova_data = '2022' + "-" + '09' + "-" + '09'
 artigos_encontrados = list()
 parametros_busca = dict()
 
+cargos_interesse = {"Cargos": ["(Comoc)|(Coremec)",
+                            "Ministro da Economia",
+                            "Secretário Especial de Fazenda",
+                            "Secretário-Executivo do Ministério da Economia",
+                            "Secretário de Política Econômica do Ministério da Economia",
+                            "Secretário do Tesouro Nacional",
+                            "Presidente da Casa da Moeda",
+                            "Comissão de Valores Mobiliários",
+                            "Superintendência de Seguros Privados",
+                            "Superintendência Nacional de Previdência Complementar",
+                            "Secretaria de Previdência da Secretaria Especial de Previdência e Trabalho do Ministério da Economia"]
+}
+
 
 def feriados(data=data_completa):
     feriados = holidays.Brazil()
@@ -608,7 +621,7 @@ def share_point_request():
                 fim_texto = texto_conteudo[paragrafo_interesse:].find(',') + paragrafo_interesse
                 ementa = texto_conteudo[inicio_texto:fim_texto] + "."
             #Ementa de portarias:
-            if re.findall("Portaria", titulo, re.IGNORECASE)\
+            if re.findall("Portaria ME", titulo, re.IGNORECASE)\
                     and re.findall("Ministério da Economia", escopo, re.IGNORECASE) \
                     and re.findall(pub_name_secao, 'DO2', re.IGNORECASE):
                 inicio_texto = texto_conteudo.find('Autorizar')
@@ -616,6 +629,27 @@ def share_point_request():
                 fim_texto = texto_conteudo[frase_interesse:].find(',') + frase_interesse
                 ementa_completa = texto_conteudo[inicio_texto:fim_texto].replace('Autorizar', 'Autoriza') + "."
                 ementa = re.sub('[0-9]{1}[\.][0-9]{3}[\.][0-9]{3}[-][0-9]{1}[,]', '', ementa_completa).replace('matrícula', '').replace('nº', '')
+            elif re.findall("Portaria", titulo, re.IGNORECASE) \
+                    and re.findall("DO1", pub_name_secao, re.IGNORECASE) \
+                    and not re.findall("Banco Central", escopo, re.IGNORECASE) \
+                    and not re.findall("Ministério da Economia", escopo, re.IGNORECASE):
+                paragrafos = bs_texto_lxml.find_all('p')
+                for paragrafo in paragrafos:
+                    if re.findall('Art\. 1º', str(paragrafo.get_text())):
+                        ementa = str(paragrafo.get_text().replace('Art. 1º ', '').replace('Homologar', 'Homologa').replace('Divulgar', 'Divulga').replace('Autorizar', 'Autoriza').replace('Nomear', 'Nomeia').replace('Exonerar', 'Exonera').replace('Designar', 'Designa'))
+            elif re.findall("Portarias", titulo, re.IGNORECASE) \
+                    and not re.findall("Banco Central", escopo, re.IGNORECASE) \
+                    and not re.findall("Ministério da Economia", escopo, re.IGNORECASE):
+                paragrafos = bs_texto_lxml.find_all('p')
+                ementa = ""
+                for cargo_interesse in cargos_interesse["Cargos"]:
+                    for paragrafo in paragrafos:
+                        if re.findall(cargo_interesse, str(paragrafo.get_text()), re.IGNORECASE):
+                            toda_ementa = str(paragrafo.get_text())
+                            # o verbo que inicia a ementa, fica no parágrafo anterior
+                            ind = paragrafos.index(paragrafo) - 1
+                            toda_ementa = str(paragrafos[ind].get_text()).replace('NOMEAR', 'Nomeia').replace('HOMOLOGAR', 'Homologa').replace('EXONERAR', 'Exonera').replace('AUTORIZAR', 'Autoriza').replace('DIVULGAR', 'Divulga') + " " + toda_ementa
+                            ementa = ementa + "\n" + toda_ementa
             #Ementa de extrato de ata:
             if re.findall("Extrato de Ata", titulo, re.IGNORECASE):
                 inicio_texto = re.search('[0-9]{1}[\.][0-9]{3}', titulo)
@@ -625,34 +659,36 @@ def share_point_request():
             #Ementa de extrato da seção 3:
             if re.findall("Extrato de Acordo", titulo, re.IGNORECASE):
                 inicio_texto = texto_conteudo.find('Acordo')
-                fim_texto = texto_conteudo[inicio_texto:].find('.') + inicio_texto
+                fim_texto = texto_conteudo[inicio_texto:].find('Objeto') + inicio_texto
                 ementa = texto_conteudo[inicio_texto:fim_texto]
             elif re.findall("Extrato de Convênio", titulo, re.IGNORECASE):
                 inicio_texto = texto_conteudo.find('Termo')
-                fim_texto = texto_conteudo[inicio_texto:].find('.') + inicio_texto
+                fim_texto = texto_conteudo[inicio_texto:].find('Objeto') + inicio_texto
                 ementa = texto_conteudo[inicio_texto:fim_texto]
             #Ementa de decreto:
-            if re.findall("Decreto", titulo, re.IGNORECASE):
+            if re.findall("DECRETO", titulo, re.IGNORECASE) and ementa == "" \
+                    and re.findall('DO2', pub_name_secao) \
+                    and re.findall("Atos do Poder Executivo", escopo, re.IGNORECASE):
                 if re.findall("DESIGNAR", texto_conteudo, re.IGNORECASE):
                     inicio_texto = texto_conteudo.find('DESIGNAR')
-                    fim_texto = texto_conteudo[inicio_texto:].find('.') + inicio_texto
-                    ementa = texto_conteudo[inicio_texto:fim_texto].replace('DESIGNAR', 'Designa')
-                if re.findall("NOMEAR", texto_conteudo, re.IGNORECASE):
+                    fim_texto = texto_conteudo[inicio_texto:].find('Brasília') + inicio_texto
+                    ementa = texto_conteudo[inicio_texto:fim_texto].replace('DESIGNAR  ', 'Designa')
+                elif re.findall("NOMEAR", texto_conteudo, re.IGNORECASE):
                     inicio_texto = texto_conteudo.find('NOMEAR')
-                    fim_texto = texto_conteudo[inicio_texto:].find('.') + inicio_texto
-                    ementa = texto_conteudo[inicio_texto:fim_texto].replace('NOMEAR', 'Nomeia')
-                if re.findall("Autorizar", texto_conteudo, re.IGNORECASE):
+                    fim_texto = texto_conteudo[inicio_texto:].find('Brasília') + inicio_texto
+                    ementa = texto_conteudo[inicio_texto:fim_texto].replace('NOMEAR  ', 'Nomeia')
+                elif re.findall("Autorizar", texto_conteudo, re.IGNORECASE):
                     inicio_texto = texto_conteudo.find('AUTORIZAR')
-                    fim_texto = texto_conteudo[inicio_texto:].find('.') + inicio_texto
-                    ementa = texto_conteudo[inicio_texto:fim_texto].replace('AUTORIZAR', 'Autoriza')
-                if re.findall("EXONERAR", texto_conteudo, re.IGNORECASE):
+                    fim_texto = texto_conteudo[inicio_texto:].find('Brasília') + inicio_texto
+                    ementa = texto_conteudo[inicio_texto:fim_texto].replace('AUTORIZAR  ', 'Autoriza')
+                elif re.findall("EXONERAR", texto_conteudo, re.IGNORECASE):
                     inicio_texto = texto_conteudo.find('EXONERAR')
-                    fim_texto = texto_conteudo[inicio_texto:].find('.') + inicio_texto
-                    ementa = texto_conteudo[inicio_texto:fim_texto].replace('EXONERAR', 'Exonera')
-                if re.findall("HOMOLOGAR", texto_conteudo, re.IGNORECASE):
+                    fim_texto = texto_conteudo[inicio_texto:].find('Brasília') + inicio_texto
+                    ementa = texto_conteudo[inicio_texto:fim_texto].replace('EXONERAR  ', 'Exonera')
+                elif re.findall("HOMOLOGAR", texto_conteudo, re.IGNORECASE):
                     inicio_texto = texto_conteudo.find('HOMOLOGAR')
-                    fim_texto = texto_conteudo[inicio_texto:].find('.') + inicio_texto
-                    ementa = texto_conteudo[inicio_texto:fim_texto].replace('HOMOLOGAR', 'Homologa')
+                    fim_texto = texto_conteudo[inicio_texto:].find('Brasília') + inicio_texto
+                    ementa = texto_conteudo[inicio_texto:fim_texto].replace('HOMOLOGAR  ', 'Homologa')
 
             print(f'********* {item} *********')
 
