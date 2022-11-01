@@ -155,7 +155,7 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                             ["Diretor de Política Monetária[<]", "Fabio Kanczuk"],
                             ["Diretor de Assuntos Internacionais e de Gestão de Riscos Corporativos[<]", "Fernanda Magalhães Rumenos Guardado"],
                             ["Diretor de Organização do Sistema Financeiro e de Resolução[<]", "João Manoel Pinho de Mello"],
-                            ["Diretor de Regulação[<]", "Otávio Ribeiro Damaso"],
+                            ["Diretor de Regulação[<]", "(Otávio Ribeiro Damaso)|(Otavio Ribeiro Damaso)"],
                             ["Diretor de Administração[<]", "Carolina de Assis Barros"]],
               "Conteudo": ["cargo de Presidente do Banco Central",
                            "cargo de (Diretor | Diretora) do Banco Central",
@@ -254,8 +254,9 @@ def buscar_artigo(dicionario, data=data_completa):
                             nova_lista.append(file)
                     if True in np.isin(dicionario['Escopo'][9:fim_dict], escopo.split('/')):
                             nova_lista.append(file)
-            #arquivos encontrados pelo escopo ficam armazenados na nova_lista e as buscas abaixo são feitas somente neles:
+            #Arquivos encontrados pelo escopo ficam armazenados na nova_lista e as buscas abaixo são feitas somente neles:
             for arq in nova_lista:
+                lista_parametros = list()
                 with open(arq, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
                     bs_texto = BeautifulSoup(conteudo_xml, 'xml')
@@ -263,7 +264,6 @@ def buscar_artigo(dicionario, data=data_completa):
                     titulo = bs_texto.find('Identifica').get_text()
                     ementa = bs_texto.find('Ementa').get_text()
                     texto = bs_texto.find('Texto').get_text()
-                    fim = len(dicionario['Titulo'])
                     # Faz a busca pelo atributo título:
                     for item in dicionario['Titulo']:
                         if item in dicionario['Titulo'][2]:
@@ -271,7 +271,8 @@ def buscar_artigo(dicionario, data=data_completa):
                                     and (re.findall("Banco Central", ementa, re.IGNORECASE) or
                                          re.findall("Banco Central", texto, re.IGNORECASE)):
                                 print(titulo + " --- " + arq)
-                                print(f'Parâmetro da busca: {item}')
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario['Titulo'][4]:
@@ -279,13 +280,15 @@ def buscar_artigo(dicionario, data=data_completa):
                                     and (re.findall("Banco Central", ementa, re.IGNORECASE) or
                                          re.findall("Banco Central", texto, re.IGNORECASE)):
                                 print(titulo + " --- " + arq)
-                                print(f'Parâmetro da busca: {item}')
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario['Titulo'][0:2] or item in dicionario['Titulo'][3]:
                             if re.findall(item, titulo, re.IGNORECASE):
                                 print(titulo + " --- " + arq)
-                                print(f'Parâmetro da busca: {item}')
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario['Titulo'][5]:
@@ -293,7 +296,8 @@ def buscar_artigo(dicionario, data=data_completa):
                                     and (re.findall("Comissão de Valores Mobiliários", texto, re.IGNORECASE) or
                                          re.findall("treinamento ou em missões oficiais", texto, re.IGNORECASE)):
                                 print(titulo + " --- " + arq)
-                                print(f'Parâmetro da busca: {item}')
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
@@ -314,7 +318,8 @@ def buscar_artigo(dicionario, data=data_completa):
                                     and not re.findall(padrao2, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao3, ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
-                                print(f'Parâmetro da busca: {item}')
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario["Ementa"][11]:
@@ -322,7 +327,8 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item, ementa, re.IGNORECASE) \
                                     and not re.findall("Instrução Normativa BCB", nome_titulo, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
-                                print(f'Parâmetro da busca: {item}')
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario['Ementa'][19]:
@@ -342,9 +348,11 @@ def buscar_artigo(dicionario, data=data_completa):
                                     and not re.findall(padrao_titulo, titulo, re.IGNORECASE) \
                                     and re.findall(item, ementa[inicio_busca:fim_busca], re.IGNORECASE) \
                                     and not re.findall("no âmbito da Secretaria de Gestão e Desempenho de Pessoal da Secretaria Especial de Desburocratização, Gestão e Governo Digital do Ministério da Economia", ementa, re.IGNORECASE) \
+                                    and not re.findall("no âmbito da", ementa, re.IGNORECASE) \
                                     and not re.findall("Protocolo ao Acordo de Comércio e Cooperação Econômica entre o Governo da República Federativa do Brasil e o Governo dos Estados Unidos da América Relacionado a Regras Comerciais e de Transparência", ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
-                                print(f'Parâmetro da busca: {item}')
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario['Ementa'][0:5] \
@@ -353,14 +361,16 @@ def buscar_artigo(dicionario, data=data_completa):
                                 or item in dicionario['Ementa'][20:fim]:
                             if re.findall(item, ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
-                                print(f'Parâmetro da busca: {item}')
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario['Ementa'][10] or item in dicionario['Ementa'][15]:
                             if re.findall(item, ementa, re.IGNORECASE) \
                                     and not re.findall('Transforma a Autoridade Nacional de Proteção de Dados \(ANPD\) em autarquia', ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
-                                print(f'Parâmetro da busca: {item}')
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
@@ -385,12 +395,14 @@ def buscar_artigo(dicionario, data=data_completa):
                                 if bs_texto.find('p', {'class': 'cargo'}):
                                     print(str(assinatura.get_text()) + ' --- ' + str(
                                         cargos[indice_lista].get_text()) + ' --- '+ arq)
-                                    print(f'Parâmetro da busca: {item}')
+                                    if item not in lista_parametros:
+                                        lista_parametros.append(item)
                                     if arq not in artigos_encontrados:
                                         artigos_encontrados.append(arq)
                                 else:
                                     print(str(assinatura.get_text()) + ' --- '+ arq)
-                                    print(f'Parâmetro da busca: {item}')
+                                    if item not in lista_parametros:
+                                        lista_parametros.append(item)
                                     if arq not in artigos_encontrados:
                                         artigos_encontrados.append(arq)
                         for cargo in cargos:
@@ -399,12 +411,14 @@ def buscar_artigo(dicionario, data=data_completa):
                                 if bs_texto.find('p', {'class': 'assina'}):
                                     print(str(assinaturas[indice_lista].get_text()) + ' --- ' + str(
                                         cargo.get_text()) + ' --- ' + arq)
-                                    print(f'Parâmetro da busca: {item}')
+                                    if item not in lista_parametros:
+                                        lista_parametros.append(item)
                                     if arq not in artigos_encontrados:
                                         artigos_encontrados.append(arq)
                                 else:
                                     print(str(cargo.get_text()) + ' --- ' + arq)
-                                    print(f'Parâmetro da busca: {item}')
+                                    if item not in lista_parametros:
+                                        lista_parametros.append(item)
                                     if arq not in artigos_encontrados:
                                         artigos_encontrados.append(arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
@@ -434,7 +448,8 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall(item, conteudo[inicio_busca:fim_busca], re.IGNORECASE):
                                 print(" --- " + arq)
-                                print(f'Parâmetro da busca: {item}')
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][22]:
@@ -442,7 +457,8 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall(padrao, conteudo, re.IGNORECASE):
                                 print(" --- " + arq)
-                                print(f'Parâmetro da busca: {item}')
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][28]:
@@ -451,7 +467,8 @@ def buscar_artigo(dicionario, data=data_completa):
                                     and (re.findall("Presidência da República", escopo, re.IGNORECASE) or
                                     re.findall("Secretaria Especial do Tesouro e Orçamento", escopo, re.IGNORECASE)):
                                 print(" --- " + arq)
-                                print(f'Parâmetro da busca: {item}')
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][29:33]:
@@ -459,45 +476,54 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall("Presidência da República", escopo, re.IGNORECASE):
                                 print(" --- " + arq)
-                                print(f'Parâmetro da busca: {item}')
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][23:28] \
                                 or item in dicionario["Conteudo"][0:18] or item in dicionario["Conteudo"][20:22]:
                             if re.findall(item, conteudo, re.IGNORECASE):
                                 print(" --- " + arq)
-                                print(f'Parâmetro da busca: {item}')
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][33]:
                             pub_name_secao = bs_texto.find('article').get('pubName')
                             if re.findall(item, conteudo, re.IGNORECASE) \
-                                and re.findall("DO2", pub_name_secao, re.IGNORECASE):
+                                    and re.findall("DO2", pub_name_secao, re.IGNORECASE):
                                 print(texto_conteudo + " --- " + arq)
-                                print(f'Parâmetro da busca: {item}')
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][34]:
                             if re.findall(item, conteudo, re.IGNORECASE):
                                 print(" --- " + arq)
-                                print(f'Parâmetro da busca: {item}')
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][35]:
                             if re.findall(item, conteudo, re.IGNORECASE) and \
                                     re.findall("DO1", pub_name_secao, re.IGNORECASE):
                                 print(" --- " + arq)
-                                print(f'Parâmetro da busca: {item}')
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
                         if item in dicionario["Conteudo"][36:fim]:
                             if re.findall(item, conteudo, re.IGNORECASE):
                                 print(" --- " + arq)
-                                print(f'Parâmetro da busca: {item}')
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
+                if len(lista_parametros) > 0:
+                    parametros_busca[arq] = lista_parametros
     print("Busca Encerrada!")
     print(artigos_encontrados)
+    print(parametros_busca)
 
 
 def login():
@@ -518,7 +544,7 @@ def share_point_request():
     app = PublicClientApplication(
         client_id,
         authority=f"https://login.microsoftonline.com/{tenant_id}")
-    # print(app.authority.tenant)
+
     result = None
     accounts = app.get_accounts()
     if accounts:
@@ -563,7 +589,6 @@ def share_point_request():
             mes_pub = data_publicacao[1]
             ano_pub = data_publicacao[2]
             data_utc = datetime.datetime.utcnow().replace(int(ano_pub), int(mes_pub), int(dia_pub))
-            #print(link_artigo)
 
             # Para assinatura, muda o xml para lxml:
             bs_texto_lxml = BeautifulSoup(conteudo_xml, 'lxml')
@@ -576,9 +601,6 @@ def share_point_request():
             for assinatura in assinaturas:
                 assinatura_str.append(str(assinatura.get_text()))
             nova_assinatura = str(assinatura_str).strip('[]').replace("'", "")
-            # print(texto_conteudo)
-            # print(titulo)
-            # print(escopo)
 
             #Concatena o texto de um conjunto de arquivos xml que estão no formato xxx_xxxxxxxx_xxxxxxxx-x.xml:
             lista_arquivo_extenso = list()
@@ -649,7 +671,7 @@ def share_point_request():
                             # o verbo que inicia a ementa, fica no parágrafo anterior
                             ind = paragrafos.index(paragrafo) - 1
                             toda_ementa = str(paragrafos[ind].get_text()).replace('NOMEAR', 'Nomeia').replace('HOMOLOGAR', 'Homologa').replace('EXONERAR', 'Exonera').replace('AUTORIZAR', 'Autoriza').replace('DIVULGAR', 'Divulga') + " " + toda_ementa
-                            ementa = ementa + "\n" + toda_ementa
+                            ementa = ementa + "\n\n" + toda_ementa
             #Ementa de extrato de ata:
             if re.findall("Extrato de Ata", titulo, re.IGNORECASE):
                 inicio_texto = re.search('[0-9]{1}[\.][0-9]{3}', titulo)
@@ -690,6 +712,29 @@ def share_point_request():
                     fim_texto = texto_conteudo[inicio_texto:].find('Brasília') + inicio_texto
                     ementa = texto_conteudo[inicio_texto:fim_texto].replace('HOMOLOGAR  ', 'Homologa')
 
+            #Pega os parâmetros das buscas pelo título, ementa, texto, escopo e assinatura:
+            filtro_titulo = ""
+            filtro_ementa = ""
+            filtro_texto = ""
+            filtro_assinatura = ""
+            filtro_escopo = escopo
+            for chave in parametros_busca.keys():
+                if item == chave:
+                    for filtro in parametros_busca[chave]:
+                        if re.findall(filtro, titulo, re.IGNORECASE):
+                            filtro_titulo = filtro_titulo + "\n\n" + str(filtro).replace('|', ' ou ').replace('(', '').replace(')', '').replace('[]', ' ')
+                        if re.findall(filtro, ementa, re.IGNORECASE):
+                            filtro_ementa = filtro_ementa + "\n\n" + str(filtro).replace('|', ' ou ').replace('(', '').replace(')', '').replace('.*?', '...')
+                        if re.findall(filtro, texto_conteudo, re.IGNORECASE):
+                            filtro_texto = filtro_texto + "\n\n" + str(filtro).replace('|', ' ou ').replace('(', '').replace(')', '').replace('.*?', '...')
+                        if re.findall(filtro, nova_assinatura, re.IGNORECASE):
+                            filtro_assinatura = filtro_assinatura + "\n\n" + str(filtro).replace('|', ' ou ').replace('(', '').replace(')', '').replace('[<]', '').replace(',', '-')
+            print(filtro_assinatura)
+            print(filtro_texto)
+            print(filtro_ementa)
+            print(filtro_titulo)
+            print(filtro_escopo)
+
             print(f'********* {item} *********')
 
             headers = {'Authorization': f'Bearer {result["access_token"]}',
@@ -707,11 +752,10 @@ def share_point_request():
                             headers=headers)
             #print(r.status_code)
 
-            #Pegar o id de um item da lista no sharepoint pelo título:
+            #Pegar o id de um item da lista no sharepoint pelo título para fazer a atualização:
             dados = r.json()
             lista_itens = dados['d']['results']
             tamanho = len(lista_itens)
-            data_hj = str(date.today())
             id = 0
             for n in range(0, tamanho):
                 lista_item = lista_itens[n]
@@ -728,11 +772,6 @@ def share_point_request():
             is_update = False
             if id != 0: # nova inserção
                 is_update = True
-
-            # Requisição para obter o FullEntityTypeFullName:
-            request = requests.get(
-                "https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')?select=ListItemEntityTypeFullName",
-                headers=headers)
 
             data = '''{ "__metadata": {"type": "SP.Data.ArtigosListItem"},
                 "Title": "%s",
