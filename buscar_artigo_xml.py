@@ -12,6 +12,9 @@ import holidays
 login = ""
 senha = ""
 
+client_id = ''
+tenant_id = ''
+
 #tipo_dou = "DO1 DO2 DO3"
 tipo_dou = "DO1 DO2 DO3 DO1E DO2E DO3E"  # Seções separadas por espaço
 # Opções DO1 DO2 DO3 DO1E DO2E DO3E
@@ -56,12 +59,6 @@ def feriados(data=data_completa):
         return True
     else:
         return False
-
-
-def lista_feriados():
-    feriados = holidays.Brazil()
-    for feriado in feriados['2022-01-01': '2022-12-31']:
-        print(feriado)
 
 
 def data_anterior_util(data=data_completa):
@@ -171,7 +168,7 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                            "cargo de Diretor da Superintendência de Seguros Privados",
                            "cargo de Diretor-Superintendente da Superintendência de Seguros Privados",
                            "cargo de Diretor de Licenciamento da Superintendência Nacional de Previdência Complementar",
-                           "cargo de Secretário Especial Adjunto da Secfretaria Especial de Previdência e Trabalho do Ministério da Economia",
+                           "cargo de Secretário Especial Adjunto da Secretaria Especial de Previdência e Trabalho do Ministério da Economia",
                            "cargo de Ministro de Estado do Trabalho e Previdência",
                            "cargo de Secretário-Executivo do Ministério do Trabalho e Previdência",
                            "cargo de Procurador-Geral Federal da Advocacia-Geral da União",
@@ -195,6 +192,41 @@ dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
                            "Presidente do Conselho de Controle de Atividades Financeiras",
                            "Portaria nº 179, de 22 de abril de 2019"]
               }
+
+
+def novo_dicionario():
+    app = PublicClientApplication(
+        client_id,
+        authority=f"https://login.microsoftonline.com/{tenant_id}")
+    result = app.acquire_token_interactive(scopes=[f"https://bacen.sharepoint.com/.default"])
+    headers = {'Authorization': f'Bearer {result["access_token"]}',
+               'Accept': 'application/json;odata=verbose',
+               'Content-Type': 'application/json;odata=verbose'}
+    r_key = requests.get(
+        "https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('SearchParameters')/items?$select=SearchKey",
+        headers=headers)
+    print(r_key.status_code)
+    chaves = r_key.json()
+    dados = chaves['d']['results']
+    lista_chaves = list()
+    for dado in dados:
+        if dado['SearchKey'] not in lista_chaves:
+            lista_chaves.append(dado['SearchKey'])
+    print(lista_chaves)
+    novo_dicio = dict()
+    lista_valores = list()
+    assinaturas = list()
+    for chave in lista_chaves:
+        r = requests.get(f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('SearchParameters')/items?$filter=SearchKey eq '{chave}'",
+                     headers=headers)
+        #print(r.status_code)
+        dados = r.json()
+        lista = dados['d']['results']
+        for valor in lista:
+            lista_valores.append(valor['SearchValue'])
+            #print(valor['SearchValue'])
+        novo_dicio[chave] = lista_valores
+    print(novo_dicio)
 
 
 def buscar_artigo(dicionario, data=data_completa):
@@ -431,9 +463,10 @@ def buscar_artigo(dicionario, data=data_completa):
                     escopo = bs_texto.find('article').get('artCategory')
                     fim = len(dicionario['Conteudo'])
                     #para obter só o arquivo principal dos arquivos que são divididos em vários arquivos xml:
-                    if re.findall('-[2-9]', arq, re.IGNORECASE):
+                    if re.findall('-', arq, re.IGNORECASE):
                         numero = arq.find('-')
-                        n = arq[numero:numero+2]
+                        fim = arq.find('.xml')
+                        n = arq[numero:fim]
                         # deixa no formato xxx_xxxxxxxx_xxxxxxxx-1.xml:
                         arq = arq.replace(n, '-1')
                     #Faz a busca pela tag Texto:
@@ -538,9 +571,6 @@ def share_point_request():
     login()
     buscar_artigo(dicionario)
 
-    client_id = ''
-    tenant_id = ''
-
     app = PublicClientApplication(
         client_id,
         authority=f"https://login.microsoftonline.com/{tenant_id}")
@@ -606,9 +636,10 @@ def share_point_request():
             lista_arquivo_extenso = list()
             texto_conteudo = ""
             if re.findall('-1', item):
-                for i in range(1, 10):
+                for i in range(1, 20):
                     numero = item.find('-')
-                    n = item[numero:numero + 2]
+                    fim = item.find('.xml')
+                    n = item[numero:fim]
                     item = item.replace(n, f'-{i}')
                     lista_arquivo_extenso.append(item)
                 for arquivo in lista_arquivo_extenso:
@@ -623,6 +654,15 @@ def share_point_request():
                 conteudo = bs_texto.find('Texto').get_text()
                 # Limpa o texto ao eliminar as tags e os atributos:
                 texto_conteudo = re.sub('<[^>]+?>', ' ', conteudo).replace('"', '\\"')
+
+            if re.findall('-', item):
+                numero = item.find('-')
+                fim = item.find('.xml')
+                n = item[numero:fim]
+                item = item.replace(n, '-1')
+                with open(item, 'r', encoding="utf-8") as a:
+                    conteudo_xml = a.read()
+                    bs_texto = BeautifulSoup(conteudo_xml, 'xml')
 
             #Pega a ementa quando tiver no artigo:
             ementa = bs_texto.find('Ementa').get_text()
@@ -712,29 +752,6 @@ def share_point_request():
                     fim_texto = texto_conteudo[inicio_texto:].find('Brasília') + inicio_texto
                     ementa = texto_conteudo[inicio_texto:fim_texto].replace('HOMOLOGAR  ', 'Homologa')
 
-            #Pega os parâmetros das buscas pelo título, ementa, texto, escopo e assinatura:
-            filtro_titulo = ""
-            filtro_ementa = ""
-            filtro_texto = ""
-            filtro_assinatura = ""
-            filtro_escopo = escopo
-            for chave in parametros_busca.keys():
-                if item == chave:
-                    for filtro in parametros_busca[chave]:
-                        if re.findall(filtro, titulo, re.IGNORECASE):
-                            filtro_titulo = filtro_titulo + "\n\n" + str(filtro).replace('|', ' ou ').replace('(', '').replace(')', '').replace('[]', ' ')
-                        if re.findall(filtro, ementa, re.IGNORECASE):
-                            filtro_ementa = filtro_ementa + "\n\n" + str(filtro).replace('|', ' ou ').replace('(', '').replace(')', '').replace('.*?', '...')
-                        if re.findall(filtro, texto_conteudo, re.IGNORECASE):
-                            filtro_texto = filtro_texto + "\n\n" + str(filtro).replace('|', ' ou ').replace('(', '').replace(')', '').replace('.*?', '...')
-                        if re.findall(filtro, nova_assinatura, re.IGNORECASE):
-                            filtro_assinatura = filtro_assinatura + "\n\n" + str(filtro).replace('|', ' ou ').replace('(', '').replace(')', '').replace('[<]', '').replace(',', '-')
-            print(filtro_assinatura)
-            print(filtro_texto)
-            print(filtro_ementa)
-            print(filtro_titulo)
-            print(filtro_escopo)
-
             print(f'********* {item} *********')
 
             headers = {'Authorization': f'Bearer {result["access_token"]}',
@@ -804,6 +821,7 @@ def share_point_request():
 
 #login()
 #buscar_artigo(dicionario)
-share_point_request()
+#share_point_request()
 #data_anterior_util("2022-03-03")
 #feriados()
+novo_dicionario()
