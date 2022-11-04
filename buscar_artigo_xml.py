@@ -105,93 +105,94 @@ def download(data=data_completa):
     print("Aplicação encerrada")
 
 
-dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
-                        "Secretaria Especial do Tesouro e Orçamento",
-                        "Superintendência de Seguros Privados",
-                        "Superintendência Nacional de Previdência Complementar",
-                        "Banco Central do Brasil",
-                        "Conselho de Controle de Atividades Financeiras",
-                        "Presidência da República",
-                        "Ministério da Economia",
-                        "Atos do Poder Legislativo",
-                        "Atos do Poder Executivo",
-                        "Controladoria-Geral da União"],
-              "Titulo": ["Resolução Coremec",
-                         "([ ]CMN[ ])|([ ]CMN[0-9])",
-                         "PORTARIA SETO",
-                         "Resolução BCB",
-                         "Despachos do Presidente da República",
-                         "Medida Provisória"],
-              "Ementa": ["Programa Nacional de Apoio às Microempresas e Empresas de Pequeno Porte",
-                         "lavagem de dinheiro",
-                         "Administração Pública federal direta, autárquia e fundacional",
-                         "Decreto nº 10.835",
-                         "Subdelega competências para a prática de atos de gestão de pessoas no âmbito do Ministério da Economia às Autoridades que menciona",
-                         "(Sistema de Pessoal Civil da Administração Pública Federal)|(Sistema de Pessoal Civil da Administração Federal)|(SIPEC)",
-                         "Comitê Gestor da Segurança da Informação",
-                         "Lei nº 8.429",
-                         "Lei nº 14.133",
-                         "Programa de Estímulo ao Crédito",
-                         "(Lei geral de proteção de dados)|(LGPD)",
-                         "Banco Central",
-                         "Conselho de Controle de Atividades Financeiras",
-                         "Grupo de Ação Financeira contra a Lavagem de Dinheiro e o Financiamento do Terrorismo",
-                         "Comitê de Regulação e Fiscalização dos Mercados Financeiro, de Capitais, de Seguros, de Previdência e Capitalização",
-                         "Proteção de Dados Pessoais",
-                         "Comitê de Estabilidade Financeira",
-                         "Educação Financeira",
-                         "Imposto sobre Operações Financeiras",
-                         "(Poder (.*?Executivo))|(Poderes (.*?Executivo))",
-                         "Decreto nº 93.872, de 23 de dezembro de 1986",
-                         "Altera a Consolidação das Leis do Trabalho",
-                         "Comissão de Valores Mobiliários"],
-              "Assinatura": [["Presidente do Banco Central do Brasil[<]", "Roberto de Oliveira Campos Neto"],
-                            ["Diretor de Relacionamento, Cidadania e Supervisão de Conduta[<]", "Maurício Costa de Moura"],
-                            ["Diretor de Fiscalização[<]", "Paulo sérgio Neves de Souza"],
-                            ["Diretor de Política Econômica[<]", "Bruno Serra Fernandes"],
-                            ["Diretor de Política Monetária[<]", "Fabio Kanczuk"],
-                            ["Diretor de Assuntos Internacionais e de Gestão de Riscos Corporativos[<]", "Fernanda Magalhães Rumenos Guardado"],
-                            ["Diretor de Organização do Sistema Financeiro e de Resolução[<]", "João Manoel Pinho de Mello"],
-                            ["Diretor de Regulação[<]", "(Otávio Ribeiro Damaso)|(Otavio Ribeiro Damaso)"],
-                            ["Diretor de Administração[<]", "Carolina de Assis Barros"]],
-              "Conteudo": ["cargo de Presidente do Banco Central",
-                           "cargo de (Diretor | Diretora) do Banco Central",
-                           "cargo de Ministro de Estado da Economia",
-                           "cargo de Secretário Especial de Fazenda do Ministério da Economia",
-                           "cargo de Secretário-Executivo do Ministério da Economia",
-                           "cargo de Secretário de Política Econômica",
-                           "cargo de Secretário do Tesouro Nacional",
-                           "cargo de Secretário do Tesouro e Orçamento do Ministério da Economia",
-                           "cargo de Presidente da casa da Moeda do Brasil",
-                           "cargo de Diretor da Comissão de Valores Mobiliários",
-                           "cargo de Superintendente da Superintendência de Seguros Privados",
-                           "cargo de Diretor da Superintendência de Seguros Privados",
-                           "cargo de Diretor-Superintendente da Superintendência de Seguros Privados",
-                           "cargo de Diretor de Licenciamento da Superintendência Nacional de Previdência Complementar",
-                           "cargo de Secretário Especial Adjunto da Secretaria Especial de Previdência e Trabalho do Ministério da Economia",
-                           "cargo de Ministro de Estado do Trabalho e Previdência",
-                           "cargo de Secretário-Executivo do Ministério do Trabalho e Previdência",
-                           "cargo de Procurador-Geral Federal da Advocacia-Geral da União",
-                           "(Exposição de Motivos(.*?afastamento )(.*?Presidente do Banco Central do Brasil))|(Exposições de Motivos(.*?afastamento )(.*?Presidente do Banco Central do Brasil))|(Exposição de Motivos(.*?férias )(.*?Presidente do Banco Central do Brasil))|(Exposições de Motivos(.*?férias )(.*?Presidente do Banco Central do Brasil))",
-                           "(Exposição de Motivos(.*?afastamento )(.*?Ministro de Estado da Economia))|(Exposições de Motivos(.*?afastamento )(.*?Ministro de Estado da Economia))|(Exposição de Motivos(.*?férias )(.*?Ministro de Estado da Economia))|(Exposições de Motivos(.*?férias )(.*?Ministro de Estado da Economia))",
-                           "((A Diretora)|(O Diretor)) de Administração do Banco Central do Brasil",
-                           "((PORTARIA)(.*?O MINISTRO DE ESTADO DA ECONOMIA)(.*?afastamento)(.*?Banco Central))",
-                           "Despacho do Presidente do Banco Central do Brasil",
-                           "Comissão Técnica da Moeda e do Crédito",
-                           "Secretário-Executivo Adjunto da Secretaria-Executiva do Ministério do Trabalho e Previdência",
-                           "Comitê de Regulação e Fiscalização dos Mercados Financeiro, de Capitais, de Seguros, de Previdência e Capitalização",
-                           "temas jurídicos relevantes para a administração pública",
-                           "cargo de Secretária Especial Adjunta da Secretaria Especial de Comércio Exterior e Assuntos Internacionais do Ministério da Economia",
-                           "Banco Central",
-                           "Procuradores do Banco Central",
-                           "Procurador do Banco Central",
-                           "Procuradoria-Geral do Banco Central",
-                           "Procurador-Geral do Banco Central",
-                           "Presidência da CVM",
-                           "Diretor-Presidente do Conselho Diretor da Autoridade Nacional de Proteção de Dados",
-                           "Presidente do Conselho de Controle de Atividades Financeiras",
-                           "Portaria nº 179, de 22 de abril de 2019"]
-              }
+#dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
+#                        "Secretaria Especial do Tesouro e Orçamento",
+#                        "Superintendência de Seguros Privados",
+#                        "Superintendência Nacional de Previdência Complementar",
+#                        "Banco Central do Brasil",
+#                        "Conselho de Controle de Atividades Financeiras",
+#                        "Presidência da República",
+#                        "Ministério da Economia",
+#                        "Atos do Poder Legislativo",
+#                        "Atos do Poder Executivo",
+#                        "Controladoria-Geral da União"],
+#              "Titulo": ["Resolução Coremec",
+#                         "([ ]CMN[ ])|([ ]CMN[0-9])",
+#                         "PORTARIA SETO",
+#                         "Resolução BCB",
+#                         "Despachos do Presidente da República",
+#                         "Medida Provisória"],
+#              "Ementa": ["Programa Nacional de Apoio às Microempresas e Empresas de Pequeno Porte",
+#                         "lavagem de dinheiro",
+#                         "Administração Pública federal direta, autárquia e fundacional",
+#                         "Decreto nº 10.835",
+#                         "Subdelega competências para a prática de atos de gestão de pessoas no âmbito do Ministério da Economia às Autoridades que menciona",
+#                         "(Sistema de Pessoal Civil da Administração Pública Federal)|(Sistema de Pessoal Civil da Administração Federal)|(SIPEC)",
+#                         "Comitê Gestor da Segurança da Informação",
+#                         "Lei nº 8.429",
+#                         "Lei nº 14.133",
+#                         "Programa de Estímulo ao Crédito",
+#                         "(Lei geral de proteção de dados)|(LGPD)",
+#                         "Banco Central",
+#                         "Conselho de Controle de Atividades Financeiras",
+#                         "Grupo de Ação Financeira contra a Lavagem de Dinheiro e o Financiamento do Terrorismo",
+#                         "Comitê de Regulação e Fiscalização dos Mercados Financeiro, de Capitais, de Seguros, de Previdência e Capitalização",
+#                         "Proteção de Dados Pessoais",
+#                         "Comitê de Estabilidade Financeira",
+#                         "Educação Financeira",
+#                         "Imposto sobre Operações Financeiras",
+#                         "(Poder (.*?Executivo))|(Poderes (.*?Executivo))",
+#                         "Decreto nº 93.872, de 23 de dezembro de 1986",
+#                         "Altera a Consolidação das Leis do Trabalho",
+#                         "Comissão de Valores Mobiliários",
+#                         "Conselho de Recursos do Sistema Financeiro Nacional"],
+#              "Assinatura": [["Presidente do Banco Central do Brasil[<]", "Roberto de Oliveira Campos Neto"],
+#                            ["Diretor de Relacionamento, Cidadania e Supervisão de Conduta[<]", "Maurício Costa de Moura"],
+#                            ["Diretor de Fiscalização[<]", "Paulo sérgio Neves de Souza"],
+#                            ["Diretor de Política Econômica[<]", "Bruno Serra Fernandes"],
+#                            ["Diretor de Política Monetária[<]", "Fabio Kanczuk"],
+#                            ["Diretor de Assuntos Internacionais e de Gestão de Riscos Corporativos[<]", "Fernanda Magalhães Rumenos Guardado"],
+#                            ["Diretor de Organização do Sistema Financeiro e de Resolução[<]", "João Manoel Pinho de Mello"],
+#                            ["Diretor de Regulação[<]", "(Otávio Ribeiro Damaso)|(Otavio Ribeiro Damaso)"],
+#                            ["Diretor de Administração[<]", "Carolina de Assis Barros"]],
+#              "Conteudo": ["cargo de Presidente do Banco Central",
+#                           "cargo de (Diretor | Diretora) do Banco Central",
+#                           "cargo de Ministro de Estado da Economia",
+#                           "cargo de Secretário Especial de Fazenda do Ministério da Economia",
+#                           "cargo de Secretário-Executivo do Ministério da Economia",
+#                           "cargo de Secretário de Política Econômica",
+#                           "cargo de Secretário do Tesouro Nacional",
+#                           "cargo de Secretário do Tesouro e Orçamento do Ministério da Economia",
+#                           "cargo de Presidente da casa da Moeda do Brasil",
+#                           "cargo de Diretor da Comissão de Valores Mobiliários",
+#                           "cargo de Superintendente da Superintendência de Seguros Privados",
+#                           "cargo de Diretor da Superintendência de Seguros Privados",
+#                           "cargo de Diretor-Superintendente da Superintendência de Seguros Privados",
+#                           "cargo de Diretor de Licenciamento da Superintendência Nacional de Previdência Complementar",
+#                           "cargo de Secretário Especial Adjunto da Secretaria Especial de Previdência e Trabalho do Ministério da Economia",
+#                           "cargo de Ministro de Estado do Trabalho e Previdência",
+#                           "cargo de Secretário-Executivo do Ministério do Trabalho e Previdência",
+#                           "cargo de Procurador-Geral Federal da Advocacia-Geral da União",
+#                           "(Exposição de Motivos(.*?afastamento )(.*?Presidente do Banco Central do Brasil))|(Exposições de Motivos(.*?afastamento )(.*?Presidente do Banco Central do Brasil))|(Exposição de Motivos(.*?férias )(.*?Presidente do Banco Central do Brasil))|(Exposições de Motivos(.*?férias )(.*?Presidente do Banco Central do Brasil))",
+#                           "(Exposição de Motivos(.*?afastamento )(.*?Ministro de Estado da Economia))|(Exposições de Motivos(.*?afastamento )(.*?Ministro de Estado da Economia))|(Exposição de Motivos(.*?férias )(.*?Ministro de Estado da Economia))|(Exposições de Motivos(.*?férias )(.*?Ministro de Estado da Economia))",
+#                           "((A Diretora)|(O Diretor)) de Administração do Banco Central do Brasil",
+#                           "((PORTARIA)(.*?O MINISTRO DE ESTADO DA ECONOMIA)(.*?afastamento)(.*?Banco Central))",
+#                           "Despacho do Presidente do Banco Central do Brasil",
+#                           "Comissão Técnica da Moeda e do Crédito",
+#                           "Secretário-Executivo Adjunto da Secretaria-Executiva do Ministério do Trabalho e Previdência",
+#                           "Comitê de Regulação e Fiscalização dos Mercados Financeiro, de Capitais, de Seguros, de Previdência e Capitalização",
+#                           "temas jurídicos relevantes para a administração pública",
+#                           "cargo de Secretária Especial Adjunta da Secretaria Especial de Comércio Exterior e Assuntos Internacionais do Ministério da Economia",
+#                           "Banco Central",
+#                           "Procuradores do Banco Central",
+#                           "Procurador do Banco Central",
+#                           "Procuradoria-Geral do Banco Central",
+#                           "Procurador-Geral do Banco Central",
+#                           "Presidência da CVM",
+#                           "Diretor-Presidente do Conselho Diretor da Autoridade Nacional de Proteção de Dados",
+#                           "Presidente do Conselho de Controle de Atividades Financeiras",
+#                           "Portaria nº 179, de 22 de abril de 2019"]
+#              }
 
 
 def novo_dicionario():
@@ -202,31 +203,39 @@ def novo_dicionario():
     headers = {'Authorization': f'Bearer {result["access_token"]}',
                'Accept': 'application/json;odata=verbose',
                'Content-Type': 'application/json;odata=verbose'}
+    #Requisição para obter as chaves do dicionário:
     r_key = requests.get(
         "https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('SearchParameters')/items?$select=SearchKey",
         headers=headers)
-    print(r_key.status_code)
+    #print(r_key.status_code)
     chaves = r_key.json()
     dados = chaves['d']['results']
     lista_chaves = list()
     for dado in dados:
         if dado['SearchKey'] not in lista_chaves:
             lista_chaves.append(dado['SearchKey'])
-    print(lista_chaves)
     novo_dicio = dict()
     lista_valores = list()
     assinaturas = list()
     for chave in lista_chaves:
+        #Requisição para pegar os valores de cada chave do dicionário:
         r = requests.get(f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('SearchParameters')/items?$filter=SearchKey eq '{chave}'",
                      headers=headers)
         #print(r.status_code)
         dados = r.json()
         lista = dados['d']['results']
-        for valor in lista:
-            lista_valores.append(valor['SearchValue'])
+        lista_valores = list()
+        if chave == 'Assinatura':
+            for valor in lista:
+                assinaturas.append(str(valor['SearchValue']).split(' - '))
+            if len(assinaturas) > 0:
+                novo_dicio[chave] = assinaturas
+        if chave != 'Assinatura':
+            for valor in lista:
+                lista_valores.append(valor['SearchValue'])
             #print(valor['SearchValue'])
-        novo_dicio[chave] = lista_valores
-    print(novo_dicio)
+            novo_dicio[chave] = lista_valores
+    return novo_dicio
 
 
 def buscar_artigo(dicionario, data=data_completa):
@@ -275,12 +284,12 @@ def buscar_artigo(dicionario, data=data_completa):
                         nova_lista.append(file)
                     if True in np.isin(dicionario['Escopo'][6], escopo.split('/'))\
                             and not re.findall("PORTARIA CHGAB/VPR", titulo, re.IGNORECASE):
-                            nova_lista.append(file)
+                        nova_lista.append(file)
                     if True in np.isin(dicionario['Escopo'][7], escopo.split('/')) \
                             and not re.findall("Extrato de Inexigibilidade", art_type, re.IGNORECASE) \
                             and not re.findall("IECP", corpo_texto, re.IGNORECASE) \
                             and not re.findall("PORTARIA DE PESSOAL SEACO/SOF/SETO/ME", titulo, re.IGNORECASE):
-                            nova_lista.append(file)
+                        nova_lista.append(file)
                     if True in np.isin(dicionario['Escopo'][8], escopo.split('/')) \
                             and not re.findall("Turismo", ementa, re.IGNORECASE):
                             nova_lista.append(file)
@@ -297,8 +306,8 @@ def buscar_artigo(dicionario, data=data_completa):
                     ementa = bs_texto.find('Ementa').get_text()
                     texto = bs_texto.find('Texto').get_text()
                     # Faz a busca pelo atributo título:
-                    for item in dicionario['Titulo']:
-                        if item in dicionario['Titulo'][2]:
+                    for item in dicionario['Título']:
+                        if item in dicionario['Título'][2]:
                             if re.findall(item, titulo, re.IGNORECASE) \
                                     and (re.findall("Banco Central", ementa, re.IGNORECASE) or
                                          re.findall("Banco Central", texto, re.IGNORECASE)):
@@ -307,7 +316,7 @@ def buscar_artigo(dicionario, data=data_completa):
                                     lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
-                        if item in dicionario['Titulo'][4]:
+                        if item in dicionario['Título'][4]:
                             if re.findall(item, titulo, re.IGNORECASE) \
                                     and (re.findall("Banco Central", ementa, re.IGNORECASE) or
                                          re.findall("Banco Central", texto, re.IGNORECASE)):
@@ -316,14 +325,14 @@ def buscar_artigo(dicionario, data=data_completa):
                                     lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
-                        if item in dicionario['Titulo'][0:2] or item in dicionario['Titulo'][3]:
+                        if item in dicionario['Título'][0:2] or item in dicionario['Título'][3]:
                             if re.findall(item, titulo, re.IGNORECASE):
                                 print(titulo + " --- " + arq)
                                 if item not in lista_parametros:
                                     lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
-                        if item in dicionario['Titulo'][5]:
+                        if item in dicionario['Título'][5]:
                             if re.findall(item, titulo, re.IGNORECASE) \
                                     and (re.findall("Comissão de Valores Mobiliários", texto, re.IGNORECASE) or
                                          re.findall("treinamento ou em missões oficiais", texto, re.IGNORECASE)):
@@ -390,7 +399,7 @@ def buscar_artigo(dicionario, data=data_completa):
                         if item in dicionario['Ementa'][0:5] \
                                 or item in dicionario['Ementa'][6:10] or item in dicionario['Ementa'][12:15] \
                                 or item in dicionario['Ementa'][16:19] \
-                                or item in dicionario['Ementa'][20:fim]:
+                                or item in dicionario['Ementa'][20:23]:
                             if re.findall(item, ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
                                 if item not in lista_parametros:
@@ -400,6 +409,15 @@ def buscar_artigo(dicionario, data=data_completa):
                         if item in dicionario['Ementa'][10] or item in dicionario['Ementa'][15]:
                             if re.findall(item, ementa, re.IGNORECASE) \
                                     and not re.findall('Transforma a Autoridade Nacional de Proteção de Dados \(ANPD\) em autarquia', ementa, re.IGNORECASE):
+                                print(ementa + " --- " + arq)
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
+                        if item in dicionario['Ementa'][23]:
+                            if re.findall(item, ementa, re.IGNORECASE) \
+                                    and re.findall("Portaria ME", titulo, re.IGNORECASE) \
+                                    and re.findall('DO1', pub_name_secao, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
                                 if item not in lista_parametros:
                                     lista_parametros.append(item)
@@ -461,7 +479,7 @@ def buscar_artigo(dicionario, data=data_completa):
                     #Limpa o texto ao eliminar as tags e os atributos:
                     texto_conteudo = re.sub('<[^>]+?>', ' ', conteudo)
                     escopo = bs_texto.find('article').get('artCategory')
-                    fim = len(dicionario['Conteudo'])
+                    fim = len(dicionario['Texto'])
                     #para obter só o arquivo principal dos arquivos que são divididos em vários arquivos xml:
                     if re.findall('-', arq, re.IGNORECASE):
                         numero = arq.find('-')
@@ -470,8 +488,8 @@ def buscar_artigo(dicionario, data=data_completa):
                         # deixa no formato xxx_xxxxxxxx_xxxxxxxx-1.xml:
                         arq = arq.replace(n, '-1')
                     #Faz a busca pela tag Texto:
-                    for item in dicionario['Conteudo']:
-                        if item in dicionario["Conteudo"][18] or item in dicionario["Conteudo"][19]:
+                    for item in dicionario['Texto']:
+                        if item in dicionario["Texto"][18] or item in dicionario["Texto"][19]:
                             if texto_conteudo.find('Exposição de Motivos'):
                                 inicio_busca = texto_conteudo.find('Exposição de Motivos')
                                 fim_busca = inicio_busca + len('Exposição de Motivos') + 200
@@ -485,7 +503,7 @@ def buscar_artigo(dicionario, data=data_completa):
                                     lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
-                        if item in dicionario["Conteudo"][22]:
+                        if item in dicionario["Texto"][22]:
                             padrao = 'Presidente do COAF'
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall(padrao, conteudo, re.IGNORECASE):
@@ -494,7 +512,7 @@ def buscar_artigo(dicionario, data=data_completa):
                                     lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
-                        if item in dicionario["Conteudo"][28]:
+                        if item in dicionario["Texto"][28]:
                             escopo = bs_texto.find('article').get('artCategory')
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and (re.findall("Presidência da República", escopo, re.IGNORECASE) or
@@ -504,7 +522,7 @@ def buscar_artigo(dicionario, data=data_completa):
                                     lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
-                        if item in dicionario["Conteudo"][29:33]:
+                        if item in dicionario["Texto"][29:33]:
                             escopo = bs_texto.find('article').get('artCategory')
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall("Presidência da República", escopo, re.IGNORECASE):
@@ -513,15 +531,15 @@ def buscar_artigo(dicionario, data=data_completa):
                                     lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
-                        if item in dicionario["Conteudo"][23:28] \
-                                or item in dicionario["Conteudo"][0:18] or item in dicionario["Conteudo"][20:22]:
+                        if item in dicionario["Texto"][23:28] \
+                                or item in dicionario["Texto"][0:18] or item in dicionario["Texto"][20:22]:
                             if re.findall(item, conteudo, re.IGNORECASE):
                                 print(" --- " + arq)
                                 if item not in lista_parametros:
                                     lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
-                        if item in dicionario["Conteudo"][33]:
+                        if item in dicionario["Texto"][33]:
                             pub_name_secao = bs_texto.find('article').get('pubName')
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and re.findall("DO2", pub_name_secao, re.IGNORECASE):
@@ -530,14 +548,14 @@ def buscar_artigo(dicionario, data=data_completa):
                                     lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
-                        if item in dicionario["Conteudo"][34]:
+                        if item in dicionario["Texto"][34]:
                             if re.findall(item, conteudo, re.IGNORECASE):
                                 print(" --- " + arq)
                                 if item not in lista_parametros:
                                     lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
-                        if item in dicionario["Conteudo"][35]:
+                        if item in dicionario["Texto"][35]:
                             if re.findall(item, conteudo, re.IGNORECASE) and \
                                     re.findall("DO1", pub_name_secao, re.IGNORECASE):
                                 print(" --- " + arq)
@@ -545,7 +563,7 @@ def buscar_artigo(dicionario, data=data_completa):
                                     lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
-                        if item in dicionario["Conteudo"][36:fim]:
+                        if item in dicionario["Texto"][36:fim]:
                             if re.findall(item, conteudo, re.IGNORECASE):
                                 print(" --- " + arq)
                                 if item not in lista_parametros:
@@ -569,7 +587,7 @@ def login():
 
 def share_point_request():
     login()
-    buscar_artigo(dicionario)
+    buscar_artigo(novo_dicionario())
 
     app = PublicClientApplication(
         client_id,
@@ -650,6 +668,8 @@ def share_point_request():
                             conteudo = bs_texto.find('Texto').get_text()
                             texto_limpo = re.sub('<[^>]+?>', ' ', conteudo).replace('"', '\\"')
                             texto_conteudo = texto_conteudo + texto_limpo
+                    else:
+                        break
             else:
                 conteudo = bs_texto.find('Texto').get_text()
                 # Limpa o texto ao eliminar as tags e os atributos:
@@ -764,6 +784,18 @@ def share_point_request():
                                'If-Match': '*',
                                'X-HTTP-Method': "MERGE"}
 
+            #Requisição para buscar id pelo título e pela data:
+            r1 = requests.get(
+                f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items?$filter=(Title eq '{titulo}')and(Data eq '{str(data_utc)[0:10]}')",
+                headers=headers)
+            #print(r1.status_code)
+            dado_item = r1.json()['d']['results']
+            if len(dado_item) > 0 and re.findall("Despacho", dado_item[0]['Title'], re.IGNORECASE) \
+                        and texto_conteudo == str(dado_item[0]['Texto']).replace('"', '\\"'):
+                id_item = dado_item[0]['ID']
+            elif len(dado_item) > 0 and not re.findall("Despacho", dado_item[0]['Title'], re.IGNORECASE):
+                id_item = dado_item[0]['ID']
+
             # Requisição para buscar itens na lista do Sharepoint:
             r = requests.get("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
                             headers=headers)
@@ -821,7 +853,7 @@ def share_point_request():
 
 #login()
 #buscar_artigo(dicionario)
-#share_point_request()
+share_point_request()
 #data_anterior_util("2022-03-03")
 #feriados()
-novo_dicionario()
+#print(novo_dicionario())
