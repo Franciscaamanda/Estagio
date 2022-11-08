@@ -124,7 +124,7 @@ def download(data=data_completa):
 #                         "Medida Provisória"],
 #              "Ementa": ["Programa Nacional de Apoio às Microempresas e Empresas de Pequeno Porte",
 #                         "lavagem de dinheiro",
-#                         "Administração Pública federal direta, autárquia e fundacional",
+#                         "Administração Pública federal direta, autárquica e fundacional",
 #                         "Decreto nº 10.835",
 #                         "Subdelega competências para a prática de atos de gestão de pessoas no âmbito do Ministério da Economia às Autoridades que menciona",
 #                         "(Sistema de Pessoal Civil da Administração Pública Federal)|(Sistema de Pessoal Civil da Administração Federal)|(SIPEC)",
@@ -193,6 +193,48 @@ def download(data=data_completa):
 #                           "Presidente do Conselho de Controle de Atividades Financeiras",
 #                           "Portaria nº 179, de 22 de abril de 2019"]
 #              }
+def teste_dicionario():
+    app = PublicClientApplication(
+        client_id,
+        authority=f"https://login.microsoftonline.com/{tenant_id}")
+    result = app.acquire_token_interactive(scopes=[f"https://bacen.sharepoint.com/.default"])
+    headers = {'Authorization': f'Bearer {result["access_token"]}',
+               'Accept': 'application/json;odata=verbose',
+               'Content-Type': 'application/json;odata=verbose'}
+    # Requisição para obter as chaves do dicionário:
+    r_key = requests.get(
+        "https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('TestWithoutTitle')/items?$select=Chave",
+        headers=headers)
+    print(r_key.status_code)
+    chaves = r_key.json()
+    dados = chaves['d']['results']
+    lista_chaves = list()
+    for dado in dados:
+        if dado['Chave'] not in lista_chaves:
+            lista_chaves.append(dado['Chave'])
+    novo_dicio = dict()
+    lista_valores = list()
+    assinaturas = list()
+    for chave in lista_chaves:
+        # Requisição para pegar os valores de cada chave do dicionário:
+        r = requests.get(
+            f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('TestWithoutTitle')/items?$filter=Chave eq '{chave}'",
+            headers=headers)
+        # print(r.status_code)
+        dados = r.json()
+        lista = dados['d']['results']
+        lista_valores = list()
+        if chave == 'Assinatura':
+            for valor in lista:
+                assinaturas.append(str(valor['Valor']).split(' - '))
+            if len(assinaturas) > 0:
+                novo_dicio[chave] = assinaturas
+        if chave != 'Assinatura':
+            for valor in lista:
+                lista_valores.append(valor['Valor'])
+            # print(valor['SearchValue'])
+            novo_dicio[chave] = lista_valores
+    print(novo_dicio)
 
 
 def novo_dicionario():
@@ -714,11 +756,11 @@ def share_point_request():
             elif re.findall("Portaria", titulo, re.IGNORECASE) \
                     and re.findall("DO1", pub_name_secao, re.IGNORECASE) \
                     and not re.findall("Banco Central", escopo, re.IGNORECASE) \
-                    and not re.findall("Ministério da Economia", escopo, re.IGNORECASE):
+                    and ementa == '':
                 paragrafos = bs_texto_lxml.find_all('p')
                 for paragrafo in paragrafos:
                     if re.findall('Art\. 1º', str(paragrafo.get_text())):
-                        ementa = str(paragrafo.get_text().replace('Art. 1º ', '').replace('Homologar', 'Homologa').replace('Divulgar', 'Divulga').replace('Autorizar', 'Autoriza').replace('Nomear', 'Nomeia').replace('Exonerar', 'Exonera').replace('Designar', 'Designa'))
+                        ementa = str(paragrafo.get_text().replace('Art. 1º ', '').replace('Homologar', 'Homologa').replace('Divulgar', 'Divulga').replace('Autorizar', 'Autoriza').replace('Nomear', 'Nomeia').replace('Exonerar', 'Exonera').replace('Designar', 'Designa').replace('Modificar', 'Modifica'))
             elif re.findall("Portarias", titulo, re.IGNORECASE) \
                     and not re.findall("Banco Central", escopo, re.IGNORECASE) \
                     and not re.findall("Ministério da Economia", escopo, re.IGNORECASE):
@@ -771,6 +813,11 @@ def share_point_request():
                     inicio_texto = texto_conteudo.find('HOMOLOGAR')
                     fim_texto = texto_conteudo[inicio_texto:].find('Brasília') + inicio_texto
                     ementa = texto_conteudo[inicio_texto:fim_texto].replace('HOMOLOGAR  ', 'Homologa')
+            #Ementa da seção 3:
+            if re.findall("Edital de consulta pública", titulo, re.IGNORECASE) \
+                    and ('DO3', pub_name_secao) and ementa == '':
+                paragrafos = bs_texto_lxml.find_all('p')
+                ementa = str(paragrafos[2].get_text()) #pega o primeiro parágrafo do texto que fica no índice 2
 
             print(f'********* {item} *********')
 
@@ -857,3 +904,4 @@ share_point_request()
 #data_anterior_util("2022-03-03")
 #feriados()
 #print(novo_dicionario())
+#teste_dicionario()
