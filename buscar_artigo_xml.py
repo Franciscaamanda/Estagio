@@ -269,7 +269,9 @@ def novo_dicionario():
         lista_valores = list()
         if chave == 'Assinatura':
             for valor in lista:
-                assinaturas.append(str(valor['SearchValue']).split(' - '))
+                lista_assinatura = str(valor['SearchValue']).split(' - ')
+                lista_assinatura[0] = str(lista_assinatura[0]) + "[<]"
+                assinaturas.append(lista_assinatura)
             if len(assinaturas) > 0:
                 novo_dicio[chave] = assinaturas
         if chave != 'Assinatura':
@@ -501,12 +503,14 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item[0], str(cargo), re.IGNORECASE):
                                 indice_lista = cargos.index(cargo)
                                 if bs_texto.find('p', {'class': 'assina'}):
-                                    print(str(assinaturas[indice_lista].get_text()) + ' --- ' + str(
-                                        cargo.get_text()) + ' --- ' + arq)
-                                    if item not in lista_parametros:
-                                        lista_parametros.append(item)
-                                    if arq not in artigos_encontrados:
-                                        artigos_encontrados.append(arq)
+                                    #if str(assinaturas[indice_lista].get_text()) in dicionario['Assinatura']:
+                                    if re.findall(item[1], str(assinaturas[indice_lista].get_text())):
+                                        print(str(assinaturas[indice_lista].get_text()) + ' --- ' + str(
+                                            cargo.get_text()) + ' --- ' + arq)
+                                        if item not in lista_parametros:
+                                            lista_parametros.append(item)
+                                        if arq not in artigos_encontrados:
+                                            artigos_encontrados.append(arq)
                                 else:
                                     print(str(cargo.get_text()) + ' --- ' + arq)
                                     if item not in lista_parametros:
@@ -832,16 +836,22 @@ def share_point_request():
                                'X-HTTP-Method': "MERGE"}
 
             #Requisição para buscar id pelo título e pela data:
-            r1 = requests.get(
-                f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items?$filter=(Title eq '{titulo}')and(Data eq '{str(data_utc)[0:10]}')",
-                headers=headers)
-            #print(r1.status_code)
-            dado_item = r1.json()['d']['results']
-            if len(dado_item) > 0 and re.findall("Despacho", dado_item[0]['Title'], re.IGNORECASE) \
-                        and texto_conteudo == str(dado_item[0]['Texto']).replace('"', '\\"'):
-                id_item = dado_item[0]['ID']
-            elif len(dado_item) > 0 and not re.findall("Despacho", dado_item[0]['Title'], re.IGNORECASE):
-                id_item = dado_item[0]['ID']
+            dat = str(data_utc)[0:10]
+            #r1 = requests.get(
+            #    f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items?$filter=(Title eq '{titulo}')",
+            #    headers=headers)
+            #print(r1.content)
+
+            #dado_item = r1.json()['d']['results']
+            #print(len(dado_item))
+            #id = 0
+            #if len(dado_item) > 0 and re.findall("Despacho", dado_item[0]['Title'], re.IGNORECASE) \
+            #            and texto_conteudo == str(dado_item[0]['Texto']).replace('"', '\\"'):
+            #    id = dado_item[0]['ID']
+            #    print(id)
+            #elif len(dado_item) > 0 and not re.findall("Despacho", dado_item[0]['Title'], re.IGNORECASE):
+            #    id = dado_item[0]['ID']
+            #    print(id)
 
             # Requisição para buscar itens na lista do Sharepoint:
             r = requests.get("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
