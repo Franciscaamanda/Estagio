@@ -9,9 +9,6 @@ import requests
 from msal import PublicClientApplication
 import holidays
 
-login = ""
-senha = ""
-
 client_id = ''
 tenant_id = ''
 
@@ -19,17 +16,6 @@ tenant_id = ''
 tipo_dou = "DO1 DO2 DO3 DO1E DO2E DO3E"  # Seções separadas por espaço
 # Opções DO1 DO2 DO3 DO1E DO2E DO3E
 
-url_login = "https://inlabs.in.gov.br/logar.php"
-url_download = "https://inlabs.in.gov.br/index.php?p="
-
-payload = {"email": login, "password": senha}
-headers = {
-    "Content-Type": "application/x-www-form-urlencoded",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-}
-s = requests.Session()
-
-# Montagem da URL:
 ano = date.today().strftime("%Y")
 mes = date.today().strftime("%m")
 dia = date.today().strftime("%d")
@@ -78,163 +64,6 @@ def data_anterior_util(data=data_completa):
         return data_anterior_util(str(data_anterior))
     else:
         return data_anterior
-
-
-def download(data=data_completa):
-    data_anterior = data_anterior_util()
-    if s.cookies.get('inlabs_session_cookie'):
-        cookie = s.cookies.get('inlabs_session_cookie')
-    else:
-        print("Falha ao obter cookie. Verifique suas credenciais");
-        exit(37)
-    for dou_secao in tipo_dou.split(' '):
-        if dou_secao == 'DO1E' or dou_secao == 'DO2E' or dou_secao == 'DO3E':
-            data = str(data_anterior)
-        print("Aguarde Download...")
-        url_arquivo = url_download + data + "&dl=" + data + "-" + dou_secao + ".zip"
-        cabecalho_arquivo = {'Cookie': 'inlabs_session_cookie=' + cookie, 'origem': '736372697074'}
-        response_arquivo = s.request("GET", url_arquivo, headers=cabecalho_arquivo)
-        if response_arquivo.status_code == 200:
-            with open(data + "-" + dou_secao + ".zip", "wb") as f:
-                f.write(response_arquivo.content)
-                print("Arquivo %s salvo." % (data + "-" + dou_secao + ".zip"))
-            del response_arquivo
-            del f
-        elif response_arquivo.status_code == 404:
-            print("Arquivo não encontrado: %s" % (data + "-" + dou_secao + ".zip"))
-    print("Aplicação encerrada")
-
-
-#dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
-#                        "Secretaria Especial do Tesouro e Orçamento",
-#                        "Superintendência de Seguros Privados",
-#                        "Superintendência Nacional de Previdência Complementar",
-#                        "Banco Central do Brasil",
-#                        "Conselho de Controle de Atividades Financeiras",
-#                        "Presidência da República",
-#                        "Ministério da Economia",
-#                        "Atos do Poder Legislativo",
-#                        "Atos do Poder Executivo",
-#                        "Controladoria-Geral da União"],
-#              "Titulo": ["Resolução Coremec",
-#                         "([ ]CMN[ ])|([ ]CMN[0-9])",
-#                         "PORTARIA SETO",
-#                         "Resolução BCB",
-#                         "Despachos do Presidente da República",
-#                         "Medida Provisória"],
-#              "Ementa": ["Programa Nacional de Apoio às Microempresas e Empresas de Pequeno Porte",
-#                         "lavagem de dinheiro",
-#                         "Administração Pública federal direta, autárquica e fundacional",
-#                         "Decreto nº 10.835",
-#                         "Subdelega competências para a prática de atos de gestão de pessoas no âmbito do Ministério da Economia às Autoridades que menciona",
-#                         "(Sistema de Pessoal Civil da Administração Pública Federal)|(Sistema de Pessoal Civil da Administração Federal)|(SIPEC)",
-#                         "Comitê Gestor da Segurança da Informação",
-#                         "Lei nº 8.429",
-#                         "Lei nº 14.133",
-#                         "Programa de Estímulo ao Crédito",
-#                         "(Lei geral de proteção de dados)|(LGPD)",
-#                         "Banco Central",
-#                         "Conselho de Controle de Atividades Financeiras",
-#                         "Grupo de Ação Financeira contra a Lavagem de Dinheiro e o Financiamento do Terrorismo",
-#                         "Comitê de Regulação e Fiscalização dos Mercados Financeiro, de Capitais, de Seguros, de Previdência e Capitalização",
-#                         "Proteção de Dados Pessoais",
-#                         "Comitê de Estabilidade Financeira",
-#                         "Educação Financeira",
-#                         "Imposto sobre Operações Financeiras",
-#                         "(Poder (.*?Executivo))|(Poderes (.*?Executivo))",
-#                         "Decreto nº 93.872, de 23 de dezembro de 1986",
-#                         "Altera a Consolidação das Leis do Trabalho",
-#                         "Comissão de Valores Mobiliários",
-#                         "Conselho de Recursos do Sistema Financeiro Nacional"],
-#              "Assinatura": [["Presidente do Banco Central do Brasil[<]", "Roberto de Oliveira Campos Neto"],
-#                            ["Diretor de Relacionamento, Cidadania e Supervisão de Conduta[<]", "Maurício Costa de Moura"],
-#                            ["Diretor de Fiscalização[<]", "Paulo sérgio Neves de Souza"],
-#                            ["Diretor de Política Econômica[<]", "Bruno Serra Fernandes"],
-#                            ["Diretor de Política Monetária[<]", "Fabio Kanczuk"],
-#                            ["Diretor de Assuntos Internacionais e de Gestão de Riscos Corporativos[<]", "Fernanda Magalhães Rumenos Guardado"],
-#                            ["Diretor de Organização do Sistema Financeiro e de Resolução[<]", "João Manoel Pinho de Mello"],
-#                            ["Diretor de Regulação[<]", "(Otávio Ribeiro Damaso)|(Otavio Ribeiro Damaso)"],
-#                            ["Diretor de Administração[<]", "Carolina de Assis Barros"]],
-#              "Conteudo": ["cargo de Presidente do Banco Central",
-#                           "cargo de (Diretor | Diretora) do Banco Central",
-#                           "cargo de Ministro de Estado da Economia",
-#                           "cargo de Secretário Especial de Fazenda do Ministério da Economia",
-#                           "cargo de Secretário-Executivo do Ministério da Economia",
-#                           "cargo de Secretário de Política Econômica",
-#                           "cargo de Secretário do Tesouro Nacional",
-#                           "cargo de Secretário do Tesouro e Orçamento do Ministério da Economia",
-#                           "cargo de Presidente da casa da Moeda do Brasil",
-#                           "cargo de Diretor da Comissão de Valores Mobiliários",
-#                           "cargo de Superintendente da Superintendência de Seguros Privados",
-#                           "cargo de Diretor da Superintendência de Seguros Privados",
-#                           "cargo de Diretor-Superintendente da Superintendência de Seguros Privados",
-#                           "cargo de Diretor de Licenciamento da Superintendência Nacional de Previdência Complementar",
-#                           "cargo de Secretário Especial Adjunto da Secretaria Especial de Previdência e Trabalho do Ministério da Economia",
-#                           "cargo de Ministro de Estado do Trabalho e Previdência",
-#                           "cargo de Secretário-Executivo do Ministério do Trabalho e Previdência",
-#                           "cargo de Procurador-Geral Federal da Advocacia-Geral da União",
-#                           "(Exposição de Motivos(.*?afastamento )(.*?Presidente do Banco Central do Brasil))|(Exposições de Motivos(.*?afastamento )(.*?Presidente do Banco Central do Brasil))|(Exposição de Motivos(.*?férias )(.*?Presidente do Banco Central do Brasil))|(Exposições de Motivos(.*?férias )(.*?Presidente do Banco Central do Brasil))",
-#                           "(Exposição de Motivos(.*?afastamento )(.*?Ministro de Estado da Economia))|(Exposições de Motivos(.*?afastamento )(.*?Ministro de Estado da Economia))|(Exposição de Motivos(.*?férias )(.*?Ministro de Estado da Economia))|(Exposições de Motivos(.*?férias )(.*?Ministro de Estado da Economia))",
-#                           "((A Diretora)|(O Diretor)) de Administração do Banco Central do Brasil",
-#                           "((PORTARIA)(.*?O MINISTRO DE ESTADO DA ECONOMIA)(.*?afastamento)(.*?Banco Central))",
-#                           "Despacho do Presidente do Banco Central do Brasil",
-#                           "Comissão Técnica da Moeda e do Crédito",
-#                           "Secretário-Executivo Adjunto da Secretaria-Executiva do Ministério do Trabalho e Previdência",
-#                           "Comitê de Regulação e Fiscalização dos Mercados Financeiro, de Capitais, de Seguros, de Previdência e Capitalização",
-#                           "temas jurídicos relevantes para a administração pública",
-#                           "cargo de Secretária Especial Adjunta da Secretaria Especial de Comércio Exterior e Assuntos Internacionais do Ministério da Economia",
-#                           "Banco Central",
-#                           "Procuradores do Banco Central",
-#                           "Procurador do Banco Central",
-#                           "Procuradoria-Geral do Banco Central",
-#                           "Procurador-Geral do Banco Central",
-#                           "Presidência da CVM",
-#                           "Diretor-Presidente do Conselho Diretor da Autoridade Nacional de Proteção de Dados",
-#                           "Presidente do Conselho de Controle de Atividades Financeiras",
-#                           "Portaria nº 179, de 22 de abril de 2019"]
-#              }
-def teste_dicionario():
-    app = PublicClientApplication(
-        client_id,
-        authority=f"https://login.microsoftonline.com/{tenant_id}")
-    result = app.acquire_token_interactive(scopes=[f"https://bacen.sharepoint.com/.default"])
-    headers = {'Authorization': f'Bearer {result["access_token"]}',
-               'Accept': 'application/json;odata=verbose',
-               'Content-Type': 'application/json;odata=verbose'}
-    # Requisição para obter as chaves do dicionário:
-    r_key = requests.get(
-        "https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('TestWithoutTitle')/items?$select=Chave",
-        headers=headers)
-    print(r_key.status_code)
-    chaves = r_key.json()
-    dados = chaves['d']['results']
-    lista_chaves = list()
-    for dado in dados:
-        if dado['Chave'] not in lista_chaves:
-            lista_chaves.append(dado['Chave'])
-    novo_dicio = dict()
-    lista_valores = list()
-    assinaturas = list()
-    for chave in lista_chaves:
-        # Requisição para pegar os valores de cada chave do dicionário:
-        r = requests.get(
-            f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('TestWithoutTitle')/items?$filter=Chave eq '{chave}'",
-            headers=headers)
-        # print(r.status_code)
-        dados = r.json()
-        lista = dados['d']['results']
-        lista_valores = list()
-        if chave == 'Assinatura':
-            for valor in lista:
-                assinaturas.append(str(valor['Valor']).split(' - '))
-            if len(assinaturas) > 0:
-                novo_dicio[chave] = assinaturas
-        if chave != 'Assinatura':
-            for valor in lista:
-                lista_valores.append(valor['Valor'])
-            # print(valor['SearchValue'])
-            novo_dicio[chave] = lista_valores
-    print(novo_dicio)
 
 
 def novo_dicionario():
@@ -488,7 +317,7 @@ def buscar_artigo(dicionario, data=data_completa):
                                 indice_lista = assinaturas.index(assinatura)
                                 if bs_texto.find('p', {'class': 'cargo'}):
                                     print(str(assinatura.get_text()) + ' --- ' + str(
-                                            cargos[indice_lista].get_text()) + ' --- ' + arq)
+                                        cargos[indice_lista].get_text()) + ' --- ' + arq)
                                     if item not in lista_parametros:
                                         lista_parametros.append(item)
                                     if arq not in artigos_encontrados:
@@ -503,7 +332,7 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item[0], str(cargo), re.IGNORECASE):
                                 indice_lista = cargos.index(cargo)
                                 if bs_texto.find('p', {'class': 'assina'}):
-                                    if re.findall(item[1], str(assinaturas[indice_lista].get_text()), re.IGNORECASE):
+                                    if re.findall(item[1], str(assinaturas[indice_lista].get_text())):
                                         print(str(assinaturas[indice_lista].get_text()) + ' --- ' + str(
                                             cargo.get_text()) + ' --- ' + arq)
                                         if item not in lista_parametros:
@@ -622,16 +451,7 @@ def buscar_artigo(dicionario, data=data_completa):
     print(parametros_busca)
 
 
-def login():
-    try:
-        response = s.request("POST", url_login, data=payload, headers=headers)
-        download()
-    except requests.exceptions.ConnectionError:
-        login()
-
-
 def share_point_request():
-    login()
     buscar_artigo(novo_dicionario())
 
     app = PublicClientApplication(
@@ -836,25 +656,25 @@ def share_point_request():
 
             #Requisição para buscar id pelo título e pela data:
             dat = str(data_utc)[0:10]
-            # formato: xxxx-xx-xxTxx:xx:xxZ
+            #formato: 2022-11-10T14:56:02Z
             dat_inicial = dat + "T00:00:00Z"
             dat_final = dat + "T23:59:59Z"
 
             r1 = requests.get(
                 f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items?$filter=(Title eq '{titulo}')and(Data ge '{dat_inicial}')and(Data le '{dat_final}')",
                 headers=headers)
-            #print(r1.content)
+            print(r1.content)
+
             dado_item = r1.json()['d']['results']
-            tamanho = len(dado_item)
+            print(len(dado_item))
             id = 0
-            if len(dado_item) > 0:
-                for v in range(0, tamanho):
-                    lista_item = dado_item[v]
-                    if re.findall("Despacho", lista_item['Title'], re.IGNORECASE) \
-                            and texto_conteudo == str(lista_item['Texto']).replace('"', '\\"'):
-                        id = lista_item['ID']
-                    elif not re.findall("Despacho", lista_item['Title'], re.IGNORECASE):
-                        id = lista_item['ID']
+            if len(dado_item) > 0 and re.findall("Despacho", dado_item[0]['Title'], re.IGNORECASE) \
+                        and texto_conteudo == str(dado_item[0]['Texto']).replace('"', '\\"'):
+                id = dado_item[0]['ID']
+                print(id)
+            elif len(dado_item) > 0 and not re.findall("Despacho", dado_item[0]['Title'], re.IGNORECASE):
+                id = dado_item[0]['ID']
+                print(id)
 
             # Requisição para buscar itens na lista do Sharepoint:
             r = requests.get("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
@@ -862,9 +682,9 @@ def share_point_request():
             #print(r.status_code)
 
             #Pegar o id de um item da lista no sharepoint pelo título para fazer a atualização:
-            #dados = r.json()
-            #lista_itens = dados['d']['results']
-            #tamanho = len(lista_itens)
+            dados = r.json()
+            lista_itens = dados['d']['results']
+            tamanho = len(lista_itens)
             #id = 0
             #for n in range(0, tamanho):
             #    lista_item = lista_itens[n]
@@ -911,10 +731,4 @@ def share_point_request():
                 print("Artigo já existe na lista do sharepoint!")
 
 
-#login()
-#buscar_artigo(dicionario)
 share_point_request()
-#data_anterior_util("2022-03-03")
-#feriados()
-#print(novo_dicionario())
-#teste_dicionario()
