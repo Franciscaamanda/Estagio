@@ -145,7 +145,10 @@ def download(data=data_completa):
 #                         "Decreto nº 93.872, de 23 de dezembro de 1986",
 #                         "Altera a Consolidação das Leis do Trabalho",
 #                         "Comissão de Valores Mobiliários",
-#                         "Conselho de Recursos do Sistema Financeiro Nacional"],
+#                         "Conselho de Recursos do Sistema Financeiro Nacional",
+#                         "Lei nº 8.112, de 11 de dezembro de 1990",
+#                         "divulga os dias de feriados nacionais",
+#                         "estabelece os dias de ponto facultativo"],
 #              "Assinatura": [["Presidente do Banco Central do Brasil[<]", "Roberto de Oliveira Campos Neto"],
 #                            ["Diretor de Relacionamento, Cidadania e Supervisão de Conduta[<]", "Maurício Costa de Moura"],
 #                            ["Diretor de Fiscalização[<]", "Paulo sérgio Neves de Souza"],
@@ -191,52 +194,9 @@ def download(data=data_completa):
 #                           "Presidência da CVM",
 #                           "Diretor-Presidente do Conselho Diretor da Autoridade Nacional de Proteção de Dados",
 #                           "Presidente do Conselho de Controle de Atividades Financeiras",
-#                           "Portaria nº 179, de 22 de abril de 2019"]
+#                           "Portaria nº 179, de 22 de abril de 2019",
+#                           "(Autoriza)(.*?Presidente da Comissão de Valores Mobiliários)"]
 #              }
-def teste_dicionario():
-    app = PublicClientApplication(
-        client_id,
-        authority=f"https://login.microsoftonline.com/{tenant_id}")
-    result = app.acquire_token_interactive(scopes=[f"https://bacen.sharepoint.com/.default"])
-    headers = {'Authorization': f'Bearer {result["access_token"]}',
-               'Accept': 'application/json;odata=verbose',
-               'Content-Type': 'application/json;odata=verbose'}
-    # Requisição para obter as chaves do dicionário:
-    r_key = requests.get(
-        "https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('TestWithoutTitle')/items?$select=Chave",
-        headers=headers)
-    print(r_key.status_code)
-    chaves = r_key.json()
-    dados = chaves['d']['results']
-    lista_chaves = list()
-    for dado in dados:
-        if dado['Chave'] not in lista_chaves:
-            lista_chaves.append(dado['Chave'])
-    novo_dicio = dict()
-    lista_valores = list()
-    assinaturas = list()
-    for chave in lista_chaves:
-        # Requisição para pegar os valores de cada chave do dicionário:
-        r = requests.get(
-            f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('TestWithoutTitle')/items?$filter=Chave eq '{chave}'",
-            headers=headers)
-        # print(r.status_code)
-        dados = r.json()
-        lista = dados['d']['results']
-        lista_valores = list()
-        if chave == 'Assinatura':
-            for valor in lista:
-                assinaturas.append(str(valor['Valor']).split(' - '))
-            if len(assinaturas) > 0:
-                novo_dicio[chave] = assinaturas
-        if chave != 'Assinatura':
-            for valor in lista:
-                lista_valores.append(valor['Valor'])
-            # print(valor['SearchValue'])
-            novo_dicio[chave] = lista_valores
-    print(novo_dicio)
-
-
 def novo_dicionario():
     app = PublicClientApplication(
         client_id,
@@ -291,7 +251,7 @@ def buscar_artigo(dicionario, data=data_completa):
         diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
         arquivos = list()
         #Extrai os arquivos:
-        if os.path.isfile(nome_arquivo):
+        if os.path.isfile(nome_arquivo) and zipfile.is_zipfile(nome_arquivo):
             with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
                 zip_ref.extractall(diretorio_arquivo)
             #Adiciona os arquivos em uma lista
@@ -462,6 +422,13 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item, ementa, re.IGNORECASE) \
                                     and re.findall("Portaria ME", titulo, re.IGNORECASE) \
                                     and re.findall('DO1', pub_name_secao, re.IGNORECASE):
+                                print(ementa + " --- " + arq)
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
+                        if item in dicionario['Ementa'][24:]:
+                            if re.findall(item, ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
                                 if item not in lista_parametros:
                                     lista_parametros.append(item)
@@ -747,6 +714,13 @@ def share_point_request():
                 paragrafo_interesse = texto_conteudo.find('Afastamento')
                 fim_texto = texto_conteudo[paragrafo_interesse:].find(',') + paragrafo_interesse
                 ementa = texto_conteudo[inicio_texto:fim_texto] + "."
+            elif re.findall("Despacho", titulo, re.IGNORECASE) \
+                and re.findall("Ministério da Economia", escopo, re.IGNORECASE) \
+                    and re.findall("DO2", pub_name_secao) and ementa == '':
+                inicio_texto = texto_conteudo.find('autoriza')
+                paragrafo_interesse = texto_conteudo.find('Presidente')
+                fim_texto = texto_conteudo[paragrafo_interesse:].find(',') + paragrafo_interesse
+                ementa = texto_conteudo[inicio_texto:fim_texto].replace('autoriza', 'Autoriza') + "."
             #Ementa de portarias:
             if re.findall("Portaria ME", titulo, re.IGNORECASE)\
                     and re.findall("Ministério da Economia", escopo, re.IGNORECASE) \
@@ -898,16 +872,16 @@ def share_point_request():
 
             if id == 0: # não encontrou nenhum item na data de hoje com o título do arquivo encontrado
                 # Requisição para inserir itens na lista do Sharepoint:
-                #request_post = requests.post("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
-                #                        headers=headers, data=data.encode('utf-8', 'ignore'))
-                #print(request_post.status_code)
+                request_post = requests.post("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
+                                        headers=headers, data=data.encode('utf-8', 'ignore'))
+                print(request_post.status_code)
                 print("Artigo inserido na lista do sharepoint!")
                 #print(request_post.content)
             else:
                 # Requisição para atualizar itens na lista do Sharepoint:
-                #r_atualiza = requests.post(f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items({id})",
-                #                        headers=header_atualiza, data=data.encode('utf-8', 'ignore'))
-                #print(r_atualiza.status_code)
+                r_atualiza = requests.post(f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items({id})",
+                                        headers=header_atualiza, data=data.encode('utf-8', 'ignore'))
+                print(r_atualiza.status_code)
                 print("Artigo já existe na lista do sharepoint!")
 
 
@@ -917,4 +891,3 @@ share_point_request()
 #data_anterior_util("2022-03-03")
 #feriados()
 #print(novo_dicionario())
-#teste_dicionario()
