@@ -1,5 +1,5 @@
 import datetime
-from datetime import date,timedelta
+from datetime import date, timedelta
 import zipfile
 import os
 from bs4 import BeautifulSoup
@@ -15,7 +15,7 @@ senha = ""
 client_id = ''
 tenant_id = ''
 
-#tipo_dou = "DO1 DO2 DO3"
+# tipo_dou = "DO1 DO2 DO3"
 tipo_dou = "DO1 DO2 DO3 DO1E DO2E DO3E"  # Seções separadas por espaço
 # Opções DO1 DO2 DO3 DO1E DO2E DO3E
 
@@ -40,17 +40,17 @@ artigos_encontrados = list()
 parametros_busca = dict()
 
 cargos_interesse = {"Cargos": ["(Comoc)|(Coremec)",
-                            "Ministro da Economia",
-                            "Secretário Especial de Fazenda",
-                            "Secretário-Executivo do Ministério da Economia",
-                            "Secretário de Política Econômica do Ministério da Economia",
-                            "Secretário do Tesouro Nacional",
-                            "Presidente da Casa da Moeda",
-                            "Comissão de Valores Mobiliários",
-                            "Superintendência de Seguros Privados",
-                            "Superintendência Nacional de Previdência Complementar",
-                            "Secretaria de Previdência da Secretaria Especial de Previdência e Trabalho do Ministério da Economia"]
-}
+                               "Ministro da Economia",
+                               "Secretário Especial de Fazenda",
+                               "Secretário-Executivo do Ministério da Economia",
+                               "Secretário de Política Econômica do Ministério da Economia",
+                               "Secretário do Tesouro Nacional",
+                               "Presidente da Casa da Moeda",
+                               "Comissão de Valores Mobiliários",
+                               "Superintendência de Seguros Privados",
+                               "Superintendência Nacional de Previdência Complementar",
+                               "Secretaria de Previdência da Secretaria Especial de Previdência e Trabalho do Ministério da Economia"]
+                    }
 
 
 def feriados(data=data_completa):
@@ -69,7 +69,7 @@ def data_anterior_util(data=data_completa):
     # Troca a data de hoje pela data que o usuário definir
     data_escolhida = date.today().replace(int(ano), int(mes), int(dia))
     dia_semana = data_escolhida.weekday()
-    if dia_semana == 0: #segunda-feira é representada pelo valor 0
+    if dia_semana == 0:  # segunda-feira é representada pelo valor 0
         data_anterior = data_escolhida - timedelta(3)
     else:
         data_anterior = data_escolhida - timedelta(1)
@@ -105,7 +105,7 @@ def download(data=data_completa):
     print("Aplicação encerrada")
 
 
-#dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
+# dicionario = {"Escopo": ["Gabinete de Segurança Institucional",
 #                        "Secretaria Especial do Tesouro e Orçamento",
 #                        "Superintendência de Seguros Privados",
 #                        "Superintendência Nacional de Previdência Complementar",
@@ -205,11 +205,11 @@ def novo_dicionario():
     headers = {'Authorization': f'Bearer {result["access_token"]}',
                'Accept': 'application/json;odata=verbose',
                'Content-Type': 'application/json;odata=verbose'}
-    #Requisição para obter as chaves do dicionário:
+    # Requisição para obter as chaves do dicionário:
     r_key = requests.get(
         "https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('SearchParameters')/items?$select=SearchKey",
         headers=headers)
-    #print(r_key.status_code)
+    # print(r_key.status_code)
     chaves = r_key.json()
     dados = chaves['d']['results']
     lista_chaves = list()
@@ -220,10 +220,11 @@ def novo_dicionario():
     lista_valores = list()
     assinaturas = list()
     for chave in lista_chaves:
-        #Requisição para pegar os valores de cada chave do dicionário:
-        r = requests.get(f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('SearchParameters')/items?$filter=SearchKey eq '{chave}'",
-                     headers=headers)
-        #print(r.status_code)
+        # Requisição para pegar os valores de cada chave do dicionário:
+        r = requests.get(
+            f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('SearchParameters')/items?$filter=SearchKey eq '{chave}'",
+            headers=headers)
+        # print(r.status_code)
         dados = r.json()
         lista = dados['d']['results']
         lista_valores = list()
@@ -237,7 +238,7 @@ def novo_dicionario():
         if chave != 'Assinatura':
             for valor in lista:
                 lista_valores.append(valor['SearchValue'])
-            #print(valor['SearchValue'])
+            # print(valor['SearchValue'])
             novo_dicio[chave] = lista_valores
     return novo_dicio
 
@@ -250,11 +251,11 @@ def buscar_artigo(dicionario, data=data_completa):
         nome_arquivo = data + "-" + dou_secao + ".zip"
         diretorio_arquivo = os.path.dirname(os.path.realpath(nome_arquivo))
         arquivos = list()
-        #Extrai os arquivos:
+        # Extrai os arquivos:
         if os.path.isfile(nome_arquivo) and zipfile.is_zipfile(nome_arquivo):
             with zipfile.ZipFile(nome_arquivo, 'r') as zip_ref:
                 zip_ref.extractall(diretorio_arquivo)
-            #Adiciona os arquivos em uma lista
+            # Adiciona os arquivos em uma lista
             for arq in zip_ref.namelist():
                 extensao = os.path.splitext(arq)
                 if extensao[1] == '.xml':
@@ -286,7 +287,7 @@ def buscar_artigo(dicionario, data=data_completa):
                     if True in np.isin(dicionario['Escopo'][0], escopo.split('/')) \
                             or True in np.isin(dicionario['Escopo'][2:5], escopo.split('/')):
                         nova_lista.append(file)
-                    if True in np.isin(dicionario['Escopo'][6], escopo.split('/'))\
+                    if True in np.isin(dicionario['Escopo'][6], escopo.split('/')) \
                             and not re.findall("PORTARIA CHGAB/VPR", titulo, re.IGNORECASE):
                         nova_lista.append(file)
                     if True in np.isin(dicionario['Escopo'][7], escopo.split('/')) \
@@ -296,10 +297,10 @@ def buscar_artigo(dicionario, data=data_completa):
                         nova_lista.append(file)
                     if True in np.isin(dicionario['Escopo'][8], escopo.split('/')) \
                             and not re.findall("Turismo", ementa, re.IGNORECASE):
-                            nova_lista.append(file)
+                        nova_lista.append(file)
                     if True in np.isin(dicionario['Escopo'][9:fim_dict], escopo.split('/')):
-                            nova_lista.append(file)
-            #Arquivos encontrados pelo escopo ficam armazenados na nova_lista e as buscas abaixo são feitas somente neles:
+                        nova_lista.append(file)
+            # Arquivos encontrados pelo escopo ficam armazenados na nova_lista e as buscas abaixo são feitas somente neles:
             for arq in nova_lista:
                 lista_parametros = list()
                 with open(arq, 'r', encoding="utf-8") as arquivo:
@@ -392,9 +393,13 @@ def buscar_artigo(dicionario, data=data_completa):
                             if re.findall(item, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao_titulo, titulo, re.IGNORECASE) \
                                     and re.findall(item, ementa[inicio_busca:fim_busca], re.IGNORECASE) \
-                                    and not re.findall("no âmbito da Secretaria de Gestão e Desempenho de Pessoal da Secretaria Especial de Desburocratização, Gestão e Governo Digital do Ministério da Economia", ementa, re.IGNORECASE) \
+                                    and not re.findall(
+                                "no âmbito da Secretaria de Gestão e Desempenho de Pessoal da Secretaria Especial de Desburocratização, Gestão e Governo Digital do Ministério da Economia",
+                                ementa, re.IGNORECASE) \
                                     and not re.findall("no âmbito da", ementa, re.IGNORECASE) \
-                                    and not re.findall("Protocolo ao Acordo de Comércio e Cooperação Econômica entre o Governo da República Federativa do Brasil e o Governo dos Estados Unidos da América Relacionado a Regras Comerciais e de Transparência", ementa, re.IGNORECASE):
+                                    and not re.findall(
+                                "Protocolo ao Acordo de Comércio e Cooperação Econômica entre o Governo da República Federativa do Brasil e o Governo dos Estados Unidos da América Relacionado a Regras Comerciais e de Transparência",
+                                ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
                                 if item not in lista_parametros:
                                     lista_parametros.append(item)
@@ -436,26 +441,26 @@ def buscar_artigo(dicionario, data=data_completa):
                                     artigos_encontrados.append(arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
-                    #O parâmetro xml foi substituído por lxml para obter o conteúdo de um parágrafo específico:
+                    # O parâmetro xml foi substituído por lxml para obter o conteúdo de um parágrafo específico:
                     bs_texto = BeautifulSoup(conteudo_xml, 'lxml')
-                    #Extrai todas as ocorrências do cargo e da assinatura do arquivo xml caso existam:
-                    if bs_texto.find('p', {'class':'assina'}):
-                        assinaturas = bs_texto.find_all('p', {'class':'assina'})
-                        #assinatura = bs_texto.find('p', {'class':'assina'}).get_text()
+                    # Extrai todas as ocorrências do cargo e da assinatura do arquivo xml caso existam:
+                    if bs_texto.find('p', {'class': 'assina'}):
+                        assinaturas = bs_texto.find_all('p', {'class': 'assina'})
+                        # assinatura = bs_texto.find('p', {'class':'assina'}).get_text()
                     else:
                         assinaturas = ""
                     if bs_texto.find('p', {'class': 'cargo'}):
                         cargos = bs_texto.find_all('p', {'class': 'cargo'})
                     else:
                         cargos = ""
-                    #Faz a busca pela assinatura e pelo cargo:
+                    # Faz a busca pela assinatura e pelo cargo:
                     for item in dicionario["Assinatura"]:
                         for assinatura in assinaturas:
                             if re.findall(item[1], str(assinatura), re.IGNORECASE):
                                 indice_lista = assinaturas.index(assinatura)
                                 if bs_texto.find('p', {'class': 'cargo'}):
                                     print(str(assinatura.get_text()) + ' --- ' + str(
-                                            cargos[indice_lista].get_text()) + ' --- ' + arq)
+                                        cargos[indice_lista].get_text()) + ' --- ' + arq)
                                     if item not in lista_parametros:
                                         lista_parametros.append(item)
                                     if arq not in artigos_encontrados:
@@ -486,20 +491,20 @@ def buscar_artigo(dicionario, data=data_completa):
                 with open(arq, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
                     bs_texto = BeautifulSoup(conteudo_xml, 'xml')
-                    #Extrai o conteúdo do identifica do arquivo xml:
+                    # Extrai o conteúdo do identifica do arquivo xml:
                     conteudo = bs_texto.find('Texto').get_text()
-                    #Limpa o texto ao eliminar as tags e os atributos:
+                    # Limpa o texto ao eliminar as tags e os atributos:
                     texto_conteudo = re.sub('<[^>]+?>', ' ', conteudo)
                     escopo = bs_texto.find('article').get('artCategory')
                     fim = len(dicionario['Texto'])
-                    #para obter só o arquivo principal dos arquivos que são divididos em vários arquivos xml:
+                    # para obter só o arquivo principal dos arquivos que são divididos em vários arquivos xml:
                     if re.findall('-', arq, re.IGNORECASE):
                         numero = arq.find('-')
                         fim = arq.find('.xml')
                         n = arq[numero:fim]
                         # deixa no formato xxx_xxxxxxxx_xxxxxxxx-1.xml:
                         arq = arq.replace(n, '-1')
-                    #Faz a busca pela tag Texto:
+                    # Faz a busca pela tag Texto:
                     for item in dicionario['Texto']:
                         if item in dicionario["Texto"][18] or item in dicionario["Texto"][19]:
                             if texto_conteudo.find('Exposição de Motivos'):
@@ -528,7 +533,8 @@ def buscar_artigo(dicionario, data=data_completa):
                             escopo = bs_texto.find('article').get('artCategory')
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and (re.findall("Presidência da República", escopo, re.IGNORECASE) or
-                                    re.findall("Secretaria Especial do Tesouro e Orçamento", escopo, re.IGNORECASE)):
+                                         re.findall("Secretaria Especial do Tesouro e Orçamento", escopo,
+                                                    re.IGNORECASE)):
                                 print(" --- " + arq)
                                 if item not in lista_parametros:
                                     lista_parametros.append(item)
@@ -662,7 +668,7 @@ def share_point_request():
                 assinatura_str.append(str(assinatura.get_text()))
             nova_assinatura = str(assinatura_str).strip('[]').replace("'", "")
 
-            #Concatena o texto de um conjunto de arquivos xml que estão no formato xxx_xxxxxxxx_xxxxxxxx-x.xml:
+            # Concatena o texto de um conjunto de arquivos xml que estão no formato xxx_xxxxxxxx_xxxxxxxx-x.xml:
             lista_arquivo_extenso = list()
             texto_conteudo = ""
             if re.findall('-1', item):
@@ -696,9 +702,9 @@ def share_point_request():
                     conteudo_xml = a.read()
                     bs_texto = BeautifulSoup(conteudo_xml, 'xml')
 
-            #Pega a ementa quando tiver no artigo:
+            # Pega a ementa quando tiver no artigo:
             ementa = bs_texto.find('Ementa').get_text()
-            #Ementa de despachos:
+            # Ementa de despachos:
             if re.findall("Despacho", titulo, re.IGNORECASE) \
                     and re.findall("Banco Central", escopo, re.IGNORECASE) \
                     and re.findall("servidor", texto_conteudo, re.IGNORECASE):
@@ -715,21 +721,22 @@ def share_point_request():
                 fim_texto = texto_conteudo[paragrafo_interesse:].find(',') + paragrafo_interesse
                 ementa = texto_conteudo[inicio_texto:fim_texto] + "."
             elif re.findall("Despacho", titulo, re.IGNORECASE) \
-                and re.findall("Ministério da Economia", escopo, re.IGNORECASE) \
+                    and re.findall("Ministério da Economia", escopo, re.IGNORECASE) \
                     and re.findall("DO2", pub_name_secao) and ementa == '':
                 inicio_texto = texto_conteudo.find('autoriza')
                 paragrafo_interesse = texto_conteudo.find('Presidente')
                 fim_texto = texto_conteudo[paragrafo_interesse:].find(',') + paragrafo_interesse
                 ementa = texto_conteudo[inicio_texto:fim_texto].replace('autoriza', 'Autoriza') + "."
-            #Ementa de portarias:
-            if re.findall("Portaria ME", titulo, re.IGNORECASE)\
+            # Ementa de portarias:
+            if re.findall("Portaria ME", titulo, re.IGNORECASE) \
                     and re.findall("Ministério da Economia", escopo, re.IGNORECASE) \
                     and re.findall(pub_name_secao, 'DO2', re.IGNORECASE):
                 inicio_texto = texto_conteudo.find('Autorizar')
                 frase_interesse = texto_conteudo.find('ocupante')
                 fim_texto = texto_conteudo[frase_interesse:].find(',') + frase_interesse
                 ementa_completa = texto_conteudo[inicio_texto:fim_texto].replace('Autorizar', 'Autoriza') + "."
-                ementa = re.sub('[0-9]{1}[\.][0-9]{3}[\.][0-9]{3}[-][0-9]{1}[,]', '', ementa_completa).replace('matrícula', '').replace('nº', '')
+                ementa = re.sub('[0-9]{1}[\.][0-9]{3}[\.][0-9]{3}[-][0-9]{1}[,]', '', ementa_completa).replace(
+                    'matrícula', '').replace('nº', '')
             elif re.findall("Portaria", titulo, re.IGNORECASE) \
                     and re.findall("DO1", pub_name_secao, re.IGNORECASE) \
                     and not re.findall("Banco Central", escopo, re.IGNORECASE) \
@@ -737,7 +744,11 @@ def share_point_request():
                 paragrafos = bs_texto_lxml.find_all('p')
                 for paragrafo in paragrafos:
                     if re.findall('Art\. 1º', str(paragrafo.get_text())):
-                        ementa = str(paragrafo.get_text().replace('Art. 1º ', '').replace('Homologar', 'Homologa').replace('Divulgar', 'Divulga').replace('Autorizar', 'Autoriza').replace('Nomear', 'Nomeia').replace('Exonerar', 'Exonera').replace('Designar', 'Designa').replace('Modificar', 'Modifica'))
+                        ementa = str(
+                            paragrafo.get_text().replace('Art. 1º ', '').replace('Homologar', 'Homologa').replace(
+                                'Divulgar', 'Divulga').replace('Autorizar', 'Autoriza').replace('Nomear',
+                                                                                                'Nomeia').replace(
+                                'Exonerar', 'Exonera').replace('Designar', 'Designa').replace('Modificar', 'Modifica'))
             elif re.findall("Portarias", titulo, re.IGNORECASE) \
                     and not re.findall("Banco Central", escopo, re.IGNORECASE) \
                     and not re.findall("Ministério da Economia", escopo, re.IGNORECASE):
@@ -749,15 +760,18 @@ def share_point_request():
                             toda_ementa = str(paragrafo.get_text())
                             # o verbo que inicia a ementa, fica no parágrafo anterior
                             ind = paragrafos.index(paragrafo) - 1
-                            toda_ementa = str(paragrafos[ind].get_text()).replace('NOMEAR', 'Nomeia').replace('HOMOLOGAR', 'Homologa').replace('EXONERAR', 'Exonera').replace('AUTORIZAR', 'Autoriza').replace('DIVULGAR', 'Divulga') + " " + toda_ementa
+                            toda_ementa = str(paragrafos[ind].get_text()).replace('NOMEAR', 'Nomeia').replace(
+                                'HOMOLOGAR', 'Homologa').replace('EXONERAR', 'Exonera').replace('AUTORIZAR',
+                                                                                                'Autoriza').replace(
+                                'DIVULGAR', 'Divulga') + " " + toda_ementa
                             ementa = ementa + "\n\n" + toda_ementa
-            #Ementa de extrato de ata:
+            # Ementa de extrato de ata:
             if re.findall("Extrato de Ata", titulo, re.IGNORECASE):
                 inicio_texto = re.search('[0-9]{1}[\.][0-9]{3}', titulo)
                 fim_texto = titulo.find(' REALIZADA')
                 inicio = inicio_texto.span()[0]
                 ementa = titulo[inicio:fim_texto] + "."
-            #Ementa de extrato da seção 3:
+            # Ementa de extrato da seção 3:
             if re.findall("Extrato de Acordo", titulo, re.IGNORECASE):
                 inicio_texto = texto_conteudo.find('Acordo')
                 fim_texto = texto_conteudo[inicio_texto:].find('Objeto') + inicio_texto
@@ -766,7 +780,7 @@ def share_point_request():
                 inicio_texto = texto_conteudo.find('Termo')
                 fim_texto = texto_conteudo[inicio_texto:].find('Objeto') + inicio_texto
                 ementa = texto_conteudo[inicio_texto:fim_texto]
-            #Ementa de decreto:
+            # Ementa de decreto:
             if re.findall("DECRETO", titulo, re.IGNORECASE) and ementa == "" \
                     and re.findall('DO2', pub_name_secao) \
                     and re.findall("Atos do Poder Executivo", escopo, re.IGNORECASE):
@@ -790,17 +804,17 @@ def share_point_request():
                     inicio_texto = texto_conteudo.find('HOMOLOGAR')
                     fim_texto = texto_conteudo[inicio_texto:].find('Brasília') + inicio_texto
                     ementa = texto_conteudo[inicio_texto:fim_texto].replace('HOMOLOGAR  ', 'Homologa')
-            #Ementa da seção 3:
+            # Ementa da seção 3:
             if re.findall("Edital de consulta pública", titulo, re.IGNORECASE) \
                     and ('DO3', pub_name_secao) and ementa == '':
                 paragrafos = bs_texto_lxml.find_all('p')
-                ementa = str(paragrafos[2].get_text()) #pega o primeiro parágrafo do texto que fica no índice 2
+                ementa = str(paragrafos[2].get_text())  # pega o primeiro parágrafo do texto que fica no índice 2
 
             print(f'********* {item} *********')
 
             headers = {'Authorization': f'Bearer {result["access_token"]}',
-                        'Accept': 'application/json;odata=verbose',
-                        'Content-Type': 'application/json;odata=verbose'}
+                       'Accept': 'application/json;odata=verbose',
+                       'Content-Type': 'application/json;odata=verbose'}
 
             header_atualiza = {'Authorization': f'Bearer {result["access_token"]}',
                                'Accept': 'application/json;odata=verbose',
@@ -808,7 +822,7 @@ def share_point_request():
                                'If-Match': '*',
                                'X-HTTP-Method': "MERGE"}
 
-            #Requisição para buscar id pelo título e pela data:
+            # Requisição para buscar id pelo título e pela data:
             dat = str(data_utc)[0:10]
             # formato: xxxx-xx-xxTxx:xx:xxZ
             dat_inicial = dat + "T00:00:00Z"
@@ -817,7 +831,7 @@ def share_point_request():
             r1 = requests.get(
                 f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items?$filter=(Title eq '{titulo}')and(Data ge '{dat_inicial}')and(Data le '{dat_final}')",
                 headers=headers)
-            #print(r1.content)
+            # print(r1.content)
             dado_item = r1.json()['d']['results']
             tamanho = len(dado_item)
             id = 0
@@ -832,15 +846,15 @@ def share_point_request():
 
             # Requisição para buscar itens na lista do Sharepoint:
             r = requests.get("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
-                            headers=headers)
-            #print(r.status_code)
+                             headers=headers)
+            # print(r.status_code)
 
-            #Pegar o id de um item da lista no sharepoint pelo título para fazer a atualização:
-            #dados = r.json()
-            #lista_itens = dados['d']['results']
-            #tamanho = len(lista_itens)
-            #id = 0
-            #for n in range(0, tamanho):
+            # Pegar o id de um item da lista no sharepoint pelo título para fazer a atualização:
+            # dados = r.json()
+            # lista_itens = dados['d']['results']
+            # tamanho = len(lista_itens)
+            # id = 0
+            # for n in range(0, tamanho):
             #    lista_item = lista_itens[n]
             #    if re.findall(titulo, lista_item['Title'], re.IGNORECASE) \
             #            and re.findall(str(data_utc)[0:10], lista_item['Data']) \
@@ -853,7 +867,7 @@ def share_point_request():
             #        id = lista_item['ID']
 
             is_update = False
-            if id != 0: # nova inserção
+            if id != 0:  # nova inserção
                 is_update = True
 
             data = '''{ "__metadata": {"type": "SP.Data.ArtigosListItem"},
@@ -867,27 +881,61 @@ def share_point_request():
                 "Data": "%s",
                 "SubEscopo": "%s",
                 "LinkArtigo": "%s",
-                "IsUpdate": "%s"
-            }''' % (titulo, escopo, ementa, texto_conteudo, nova_assinatura, pub_name_secao, edicao, data_utc, subescopo, link_artigo, is_update)
+                "IsUpdate": "%s",
+                "NomeArquivo": "%s"
+            }''' % (
+            titulo, escopo, ementa, texto_conteudo, nova_assinatura, pub_name_secao, edicao, data_utc, subescopo,
+            link_artigo, is_update, item)
 
-            if id == 0: # não encontrou nenhum item na data de hoje com o título do arquivo encontrado
+            if id == 0:  # não encontrou nenhum item na data de hoje com o título do arquivo encontrado
                 # Requisição para inserir itens na lista do Sharepoint:
-                request_post = requests.post("https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
-                                        headers=headers, data=data.encode('utf-8', 'ignore'))
+                request_post = requests.post(
+                    "https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
+                    headers=headers, data=data.encode('utf-8', 'ignore'))
                 print(request_post.status_code)
                 print("Artigo inserido na lista do sharepoint!")
-                #print(request_post.content)
+                # print(request_post.content)
             else:
                 # Requisição para atualizar itens na lista do Sharepoint:
-                r_atualiza = requests.post(f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items({id})",
-                                        headers=header_atualiza, data=data.encode('utf-8', 'ignore'))
+                r_atualiza = requests.post(
+                    f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items({id})",
+                    headers=header_atualiza, data=data.encode('utf-8', 'ignore'))
                 print(r_atualiza.status_code)
                 print("Artigo já existe na lista do sharepoint!")
 
 
-#login()
-#buscar_artigo(dicionario)
+def upload_file_library():
+    login()
+    buscar_artigo(novo_dicionario())
+
+    app = PublicClientApplication(
+        client_id,
+        authority=f"https://login.microsoftonline.com/{tenant_id}")
+    result = app.acquire_token_interactive(scopes=[f"https://bacen.sharepoint.com/.default"])
+    header = {'Authorization': f'Bearer {result["access_token"]}',
+              'Accept': 'application/json;odata=verbose',
+              'Content-Type': 'application/json;odata=verbose'}
+
+    for artigo in artigos_encontrados:
+        arquivo = open(artigo, "rb")
+        url_libray = f"https://bacen.sharepoint.com/sites/sumula/_api/web/GetFolderByServerRelativeUrl('Arquivos do inlabs')/Files/add(url='{artigo}',overwrite=true)"
+        #response = requests.post(url_libray, headers=header, files={"form_field_name": arquivo})
+        response = requests.post(url_libray, headers=header, data=arquivo)
+        if response.status_code == 200:
+            print("Arquivo inserido na biblioteca de documentos!")
+        print(response.status_code)
+        #print(response.json())
+
+        url_link = f"https://bacen.sharepoint.com/sites/sumula/_api/web/Lists/getByTitle('Arquivos do inlabs')/items?$select=EncodedAbsUrl&$filter=Nome eq '{artigo}'"
+        response2 = requests.get(url_link, headers=header)
+        print(response2.status_code)
+        print(response2.json())
+        
+
+# login()
+# buscar_artigo(dicionario)
 share_point_request()
-#data_anterior_util("2022-03-03")
-#feriados()
-#print(novo_dicionario())
+# data_anterior_util("2022-03-03")
+# feriados()
+# print(novo_dicionario())
+#upload_file_library()
