@@ -396,10 +396,8 @@ def buscar_artigo(dicionario, data=data_completa):
                                     and not re.findall(
                                 "no âmbito da Secretaria de Gestão e Desempenho de Pessoal da Secretaria Especial de Desburocratização, Gestão e Governo Digital do Ministério da Economia",
                                 ementa, re.IGNORECASE) \
-                                    and not re.findall("no âmbito da", ementa, re.IGNORECASE) \
-                                    and not re.findall(
-                                "Protocolo ao Acordo de Comércio e Cooperação Econômica entre o Governo da República Federativa do Brasil e o Governo dos Estados Unidos da América Relacionado a Regras Comerciais e de Transparência",
-                                ementa, re.IGNORECASE):
+                                    and not re.findall("((Poder Executivo)(.*?no âmbito))", ementa, re.IGNORECASE) \
+                                    and not re.findall("((Poderes Executivo)(.*?no âmbito))", ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
                                 if item not in lista_parametros:
                                     lista_parametros.append(item)
@@ -603,6 +601,34 @@ def login():
         login()
 
 
+def upload_file_library(nome_arquivo, header):
+    #Requisição para fazer upload dos arquivos para a biblioteca de documentos:
+    arquivo = open(nome_arquivo, "rb")
+    url_libray = f"https://bacen.sharepoint.com/sites/sumula/_api/web/GetFolderByServerRelativeUrl('Arquivos do inlabs')/Files/add(url='{nome_arquivo}',overwrite=true)"
+    #response = requests.post(url_libray, headers=header, files={"form_field_name": arquivo})
+    response = requests.post(url_libray, headers=header, data=arquivo)
+    if response.status_code == 200:
+        print("Arquivo inserido na biblioteca de documentos!")
+    #print(response.status_code)
+
+    #Requisição para obter o id de cada arquivo na biblioteca:
+    url_titulo = f"https://bacen.sharepoint.com/sites/sumula/_api/web/Lists/getByTitle('Arquivos do inlabs')/items?$filter=Title eq '{nome_arquivo}'"
+    response1 = requests.get(url_titulo, headers=header)
+    #print(response1.status_code)
+    resposta = response1.json()['d']['results']
+    id_arquivo = resposta[0]['ID']
+    #print(id_arquivo)
+
+    #Requisição para obter o link de cada arquivo na biblioteca:
+    url_link = f"https://bacen.sharepoint.com/sites/sumula/_api/web/Lists/getByTitle('Arquivos do inlabs')/items?$select=EncodedAbsUrl&$filter=Id eq {id_arquivo}"
+    response2 = requests.get(url_link, headers=header)
+    #print(response2.status_code)
+    resposta_link = response2.json()['d']['results']
+    link = resposta_link[0]['EncodedAbsUrl']
+    #print(link)
+    return link
+
+
 def share_point_request():
     login()
     buscar_artigo(novo_dicionario())
@@ -703,7 +729,7 @@ def share_point_request():
                     bs_texto = BeautifulSoup(conteudo_xml, 'xml')
 
             # Pega a ementa quando tiver no artigo:
-            ementa = bs_texto.find('Ementa').get_text()
+            ementa = bs_texto.find('Ementa').get_text().replace('"', '\\"')
             # Ementa de despachos:
             if re.findall("Despacho", titulo, re.IGNORECASE) \
                     and re.findall("Banco Central", escopo, re.IGNORECASE) \
@@ -870,6 +896,9 @@ def share_point_request():
             if id != 0:  # nova inserção
                 is_update = True
 
+            link_arquivo = upload_file_library(item, headers)
+            print(link_arquivo)
+
             data = '''{ "__metadata": {"type": "SP.Data.ArtigosListItem"},
                 "Title": "%s",
                 "Escopo": "%s",
@@ -882,10 +911,12 @@ def share_point_request():
                 "SubEscopo": "%s",
                 "LinkArtigo": "%s",
                 "IsUpdate": "%s",
-                "NomeArquivo": "%s"
-            }''' % (
-            titulo, escopo, ementa, texto_conteudo, nova_assinatura, pub_name_secao, edicao, data_utc, subescopo,
-            link_artigo, is_update, item)
+                "NomeArquivo": "%s",
+                "NomeArquivoLink": { "__metadata": { "type": "SP.FieldUrlValue"},
+                    "Description": "%s",
+                    "Url": "%s"}
+            }''' % (titulo, escopo, ementa, texto_conteudo, nova_assinatura, pub_name_secao, edicao, data_utc, subescopo,
+                    link_artigo, is_update, item, item, link_arquivo)
 
             if id == 0:  # não encontrou nenhum item na data de hoje com o título do arquivo encontrado
                 # Requisição para inserir itens na lista do Sharepoint:
@@ -903,34 +934,6 @@ def share_point_request():
                 print(r_atualiza.status_code)
                 print("Artigo já existe na lista do sharepoint!")
 
-
-def upload_file_library():
-    login()
-    buscar_artigo(novo_dicionario())
-
-    app = PublicClientApplication(
-        client_id,
-        authority=f"https://login.microsoftonline.com/{tenant_id}")
-    result = app.acquire_token_interactive(scopes=[f"https://bacen.sharepoint.com/.default"])
-    header = {'Authorization': f'Bearer {result["access_token"]}',
-              'Accept': 'application/json;odata=verbose',
-              'Content-Type': 'application/json;odata=verbose'}
-
-    for artigo in artigos_encontrados:
-        arquivo = open(artigo, "rb")
-        url_libray = f"https://bacen.sharepoint.com/sites/sumula/_api/web/GetFolderByServerRelativeUrl('Arquivos do inlabs')/Files/add(url='{artigo}',overwrite=true)"
-        #response = requests.post(url_libray, headers=header, files={"form_field_name": arquivo})
-        response = requests.post(url_libray, headers=header, data=arquivo)
-        if response.status_code == 200:
-            print("Arquivo inserido na biblioteca de documentos!")
-        print(response.status_code)
-        #print(response.json())
-
-        url_link = f"https://bacen.sharepoint.com/sites/sumula/_api/web/Lists/getByTitle('Arquivos do inlabs')/items?$select=EncodedAbsUrl&$filter=Nome eq '{artigo}'"
-        response2 = requests.get(url_link, headers=header)
-        print(response2.status_code)
-        print(response2.json())
-        
 
 # login()
 # buscar_artigo(dicionario)
