@@ -275,6 +275,11 @@ def buscar_artigo(dicionario, data=data_completa):
                     ementa = bs_texto.find('Ementa').get_text()
                     fim_dict = len(dicionario['Escopo'])
                     art_type = bs_texto.find('article').get('artType')
+                    bs_cargo = BeautifulSoup(conteudo_xml, 'lxml')
+                    if bs_cargo.find('p', {'class': 'cargo'}):
+                        cargos = bs_cargo.find_all('p', {'class': 'cargo'})
+                    else:
+                        cargos = ""
                     # Faz a busca pelo atributo artCategory:
                     if True in np.isin(dicionario['Escopo'][1], escopo.split('/')) and titulo is not None \
                             and not re.findall("IECP", corpo_texto, re.IGNORECASE) \
@@ -285,8 +290,15 @@ def buscar_artigo(dicionario, data=data_completa):
                             and re.findall("Portaria", tipo_normativo, re.IGNORECASE):
                         nova_lista.append(file)
                     if True in np.isin(dicionario['Escopo'][0], escopo.split('/')) \
-                            or True in np.isin(dicionario['Escopo'][2:5], escopo.split('/')):
+                            or True in np.isin(dicionario['Escopo'][2:4], escopo.split('/')):
                         nova_lista.append(file)
+                    if True in np.isin(dicionario['Escopo'][4], escopo.split('/')):
+                        if re.findall("DO3", pub_name_secao) and re.findall("Comunicado", titulo, re.IGNORECASE):
+                            for cargo in cargos:
+                                if re.findall("Diretor(a)", str(cargo), re.IGNORECASE):
+                                    nova_lista.append(file)
+                        else:
+                            nova_lista.append(file)
                     if True in np.isin(dicionario['Escopo'][6], escopo.split('/')) \
                             and not re.findall("PORTARIA CHGAB/VPR", titulo, re.IGNORECASE):
                         nova_lista.append(file)
