@@ -358,6 +358,14 @@ def buscar_artigo(dicionario, data=data_completa):
                                     lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
+                        if len(dicionario['Título']) > 6:
+                            if item in dicionario['Título'][6:]:
+                                if re.findall(item, titulo, re.IGNORECASE):
+                                    print(titulo + " --- " + arq)
+                                    if item not in lista_parametros:
+                                        lista_parametros.append(item)
+                                    if arq not in artigos_encontrados:
+                                        artigos_encontrados.append(arq)
                 with open(arq, 'r', encoding="utf-8") as arquivo:
                     conteudo_xml = arquivo.read()
                     bs_texto = BeautifulSoup(conteudo_xml, 'xml')
@@ -693,6 +701,7 @@ def share_point_request():
             mes_pub = data_publicacao[1]
             ano_pub = data_publicacao[2]
             data_utc = datetime.datetime.utcnow().replace(int(ano_pub), int(mes_pub), int(dia_pub))
+            data_triagem = datetime.datetime.utcnow()
 
             # Para assinatura, muda o xml para lxml:
             bs_texto_lxml = BeautifulSoup(conteudo_xml, 'lxml')
@@ -926,9 +935,10 @@ def share_point_request():
                 "NomeArquivo": "%s",
                 "NomeArquivoLink": { "__metadata": { "type": "SP.FieldUrlValue"},
                     "Description": "%s",
-                    "Url": "%s"}
-            }''' % (titulo, escopo, ementa, texto_conteudo, nova_assinatura, pub_name_secao, edicao, data_utc, subescopo,
-                    link_artigo, is_update, item, item, link_arquivo)
+                    "Url": "%s"},
+                "DataPublica_x00e7__x00e3_o": "%s"
+            }''' % (titulo, escopo, ementa, texto_conteudo, nova_assinatura, pub_name_secao, edicao, data_triagem,
+                    subescopo, link_artigo, is_update, item, item, link_arquivo, data_utc)
 
             if id == 0:  # não encontrou nenhum item na data de hoje com o título do arquivo encontrado
                 # Requisição para inserir itens na lista do Sharepoint:

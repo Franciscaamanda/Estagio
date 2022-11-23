@@ -6,7 +6,13 @@ Este projeto contém funcionalidades aplicadas aos arquivos do sistema de Impren
 
 2- Buscar palavras nos arquivos em PDF (funcionalidade semelhante ao Ctrl + F);
 
-3- Realizar as mesmas etapas mencionadas acima para arquivos em XML.
+3- Realizar as mesmas etapas mencionadas acima para arquivos em XML;
+
+4- Selecionar os arquivos de interesse segundo os critérios de busca;
+
+5- Inserir algumas infromações dos arquivos de interesse na lista do sharepoint;
+
+6- Armazenar os arquivos de interesse na biblioteca de documentos do sharepoint.
 
 # __Pré-Requisitos__:
 
@@ -18,6 +24,14 @@ Este projeto contém funcionalidades aplicadas aos arquivos do sistema de Impren
 >>pip install PyPDF2
 >
 >>pip install beautifulsoup4
+>
+>>pip install holidays
+>
+>>pip install msal
+>
+>>pip install numpy
+>
+>>pip install datetime
 
 As instruções abaixo descrevem o passo a passo para exportar o certificado digital do sistema no navegador Google Chrome, 
 sendo este procedimento fundamental para permitir o download dos arquivos.
@@ -65,5 +79,5 @@ Certificação";
 
 * Passo 11 - Esta operação só é necessária nos dois certificados mencionados acima;
 
-* Passo 12 - Tendo os certificados salvos, copiei todas as informações contidas nos arquivos e salve-as no final do arquivo
+* Passo 12 - Tendo os certificados salvos, copie todas as informações contidas nos arquivos e salve-as no final do arquivo
 cacert.pem.
