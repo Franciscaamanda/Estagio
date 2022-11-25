@@ -435,7 +435,8 @@ def buscar_artigo(dicionario, data=data_completa):
                                     artigos_encontrados.append(arq)
                         if item in dicionario['Ementa'][10] or item in dicionario['Ementa'][15]:
                             if re.findall(item, ementa, re.IGNORECASE) \
-                                    and not re.findall('Transforma a Autoridade Nacional de Proteção de Dados \(ANPD\) em autarquia', ementa, re.IGNORECASE):
+                                    and not re.findall('Transforma a Autoridade Nacional de Proteção de Dados \(ANPD\) em autarquia', ementa, re.IGNORECASE) \
+                                    and not re.findall("((Proteção de Dados Pessoais)(.*?no âmbito do Ministério da Economia))", ementa, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
                                 if item not in lista_parametros:
                                     lista_parametros.append(item)
@@ -551,8 +552,8 @@ def buscar_artigo(dicionario, data=data_completa):
                             escopo = bs_texto.find('article').get('artCategory')
                             if re.findall(item, conteudo, re.IGNORECASE) \
                                     and (re.findall("Presidência da República", escopo, re.IGNORECASE) or
-                                         re.findall("Secretaria Especial do Tesouro e Orçamento", escopo,
-                                                    re.IGNORECASE)):
+                                         re.findall("Secretaria Especial do Tesouro e Orçamento", escopo, re.IGNORECASE)
+                                         or re.findall("Secretaria Especial de Desburocratização, Gestão e Governo Digital", escopo, re.IGNORECASE)):
                                 print(" --- " + arq)
                                 if item not in lista_parametros:
                                     lista_parametros.append(item)
@@ -701,7 +702,8 @@ def share_point_request():
             mes_pub = data_publicacao[1]
             ano_pub = data_publicacao[2]
             data_utc = datetime.datetime.utcnow().replace(int(ano_pub), int(mes_pub), int(dia_pub))
-            data_triagem = datetime.datetime.utcnow()
+            data_triagem = datetime.datetime.now()
+            print(data_triagem)
 
             # Para assinatura, muda o xml para lxml:
             bs_texto_lxml = BeautifulSoup(conteudo_xml, 'lxml')
@@ -918,7 +920,6 @@ def share_point_request():
                 is_update = True
 
             link_arquivo = upload_file_library(item, headers)
-            print(link_arquivo)
 
             data = '''{ "__metadata": {"type": "SP.Data.ArtigosListItem"},
                 "Title": "%s",
@@ -928,7 +929,7 @@ def share_point_request():
                 "Assinatura": "%s",
                 "Se_x00e7__x00e3_o": "%s",
                 "Edi_x00e7__x00e3_o": "%s",
-                "Data": "%s",
+                "DataTriagem": "%s",
                 "SubEscopo": "%s",
                 "LinkArtigo": "%s",
                 "IsUpdate": "%s",
