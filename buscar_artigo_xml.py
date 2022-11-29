@@ -371,6 +371,7 @@ def buscar_artigo(dicionario, data=data_completa):
                     bs_texto = BeautifulSoup(conteudo_xml, 'xml')
                     # Extrai o conteúdo da ementa do arquivo xml:
                     ementa = bs_texto.find('Ementa').get_text()
+                    texto = bs_texto.find('Texto').get_text()
                     fim = len(dicionario['Ementa'])
                     # Faz a busca pela tag Ementa:
                     for item in dicionario['Ementa']:
@@ -423,11 +424,20 @@ def buscar_artigo(dicionario, data=data_completa):
                                     lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
-                        if item in dicionario['Ementa'][0:5] \
+                        if item in dicionario['Ementa'][0:2] or item in dicionario['Ementa'][3:5] \
                                 or item in dicionario['Ementa'][6:10] or item in dicionario['Ementa'][12:15] \
                                 or item in dicionario['Ementa'][16:19] \
                                 or item in dicionario['Ementa'][20:23]:
                             if re.findall(item, ementa, re.IGNORECASE):
+                                print(ementa + " --- " + arq)
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
+                        if item in dicionario['Ementa'][2]:
+                            if re.findall(item, ementa, re.IGNORECASE) \
+                                    and not re.findall(
+                                "órgãos e entidades da administração pública estadual, distrital ou municipal, direta ou indireta", texto, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
                                 if item not in lista_parametros:
                                     lista_parametros.append(item)
