@@ -81,7 +81,7 @@ def data_anterior_util(data=data_completa):
 
 
 def download(data=data_completa):
-    data_anterior = data_anterior_util()
+    data_anterior = data_anterior_util("2022-11-28")
     if s.cookies.get('inlabs_session_cookie'):
         cookie = s.cookies.get('inlabs_session_cookie')
     else:
@@ -244,7 +244,7 @@ def novo_dicionario():
 
 
 def buscar_artigo(dicionario, data=data_completa):
-    data_anterior = data_anterior_util()
+    data_anterior = data_anterior_util("2022-11-28")
     for dou_secao in tipo_dou.split(' '):
         if dou_secao == 'DO1E' or dou_secao == 'DO2E' or dou_secao == 'DO3E':
             data = str(data_anterior)
@@ -295,7 +295,7 @@ def buscar_artigo(dicionario, data=data_completa):
                     if True in np.isin(dicionario['Escopo'][4], escopo.split('/')):
                         if re.findall("DO3", pub_name_secao) and re.findall("Comunicado", titulo, re.IGNORECASE):
                             for cargo in cargos:
-                                if re.findall("Diretor(a)", str(cargo), re.IGNORECASE):
+                                if re.findall("Diretor", str(cargo), re.IGNORECASE):
                                     nova_lista.append(file)
                         else:
                             nova_lista.append(file)
@@ -462,6 +462,12 @@ def buscar_artigo(dicionario, data=data_completa):
                     conteudo_xml = arquivo.read()
                     # O parâmetro xml foi substituído por lxml para obter o conteúdo de um parágrafo específico:
                     bs_texto = BeautifulSoup(conteudo_xml, 'lxml')
+                    if re.findall('-', arq, re.IGNORECASE):
+                        numero = arq.find('-')
+                        fim = arq.find('.xml')
+                        n = arq[numero:fim]
+                        # deixa no formato xxx_xxxxxxxx_xxxxxxxx-1.xml:
+                        arq = arq.replace(n, '-1')
                     # Extrai todas as ocorrências do cargo e da assinatura do arquivo xml caso existam:
                     if bs_texto.find('p', {'class': 'assina'}):
                         assinaturas = bs_texto.find_all('p', {'class': 'assina'})
@@ -617,7 +623,7 @@ def buscar_artigo(dicionario, data=data_completa):
 def login():
     try:
         response = s.request("POST", url_login, data=payload, headers=headers)
-        download()
+        download("2022-11-28")
     except requests.exceptions.ConnectionError:
         login()
 
@@ -652,7 +658,7 @@ def upload_file_library(nome_arquivo, header):
 
 def share_point_request():
     login()
-    buscar_artigo(novo_dicionario())
+    buscar_artigo(novo_dicionario(), "2022-11-28")
 
     app = PublicClientApplication(
         client_id,
@@ -703,7 +709,6 @@ def share_point_request():
             ano_pub = data_publicacao[2]
             data_utc = datetime.datetime.utcnow().replace(int(ano_pub), int(mes_pub), int(dia_pub))
             data_triagem = datetime.datetime.now()
-            print(data_triagem)
 
             # Para assinatura, muda o xml para lxml:
             bs_texto_lxml = BeautifulSoup(conteudo_xml, 'lxml')
@@ -717,6 +722,17 @@ def share_point_request():
                 assinatura_str.append(str(assinatura.get_text()))
             nova_assinatura = str(assinatura_str).strip('[]').replace("'", "")
 
+            #Critérios de busca:
+            filtros = ""
+            contador = 0
+            for parametro in parametros_busca[item]:
+                qtd = len(parametros_busca[item])
+                contador += 1
+                filtro = str(parametro).replace(')|(', ' ou ').replace(')(.*?', '...').replace('(', '').replace(')', '').replace('|', ' ou ').replace("['", "").replace("[<]', '", " - ").replace("']", "").replace("[ ]", "___")
+                filtros = filtros + str(contador) + "- " + filtro + "." + "\n"
+                #if qtd == contador:
+                #    print(filtros)
+            #print(filtros)
             # Concatena o texto de um conjunto de arquivos xml que estão no formato xxx_xxxxxxxx_xxxxxxxx-x.xml:
             lista_arquivo_extenso = list()
             texto_conteudo = ""
@@ -933,13 +949,13 @@ def share_point_request():
                 "SubEscopo": "%s",
                 "LinkArtigo": "%s",
                 "IsUpdate": "%s",
-                "NomeArquivo": "%s",
                 "NomeArquivoLink": { "__metadata": { "type": "SP.FieldUrlValue"},
                     "Description": "%s",
                     "Url": "%s"},
-                "DataPublica_x00e7__x00e3_o": "%s"
+                "DataPublica_x00e7__x00e3_o": "%s",
+                "Crit_x00e9_rioBusca": "%s"
             }''' % (titulo, escopo, ementa, texto_conteudo, nova_assinatura, pub_name_secao, edicao, data_triagem,
-                    subescopo, link_artigo, is_update, item, item, link_arquivo, data_utc)
+                    subescopo, link_artigo, is_update, item, link_arquivo, data_utc, filtros)
 
             if id == 0:  # não encontrou nenhum item na data de hoje com o título do arquivo encontrado
                 # Requisição para inserir itens na lista do Sharepoint:
