@@ -81,7 +81,7 @@ def data_anterior_util(data=data_completa):
 
 
 def download(data=data_completa):
-    data_anterior = data_anterior_util("2022-11-28")
+    data_anterior = data_anterior_util("2022-10-03")
     if s.cookies.get('inlabs_session_cookie'):
         cookie = s.cookies.get('inlabs_session_cookie')
     else:
@@ -244,7 +244,7 @@ def novo_dicionario():
 
 
 def buscar_artigo(dicionario, data=data_completa):
-    data_anterior = data_anterior_util("2022-11-28")
+    data_anterior = data_anterior_util("2022-10-03")
     for dou_secao in tipo_dou.split(' '):
         if dou_secao == 'DO1E' or dou_secao == 'DO2E' or dou_secao == 'DO3E':
             data = str(data_anterior)
@@ -633,7 +633,7 @@ def buscar_artigo(dicionario, data=data_completa):
 def login():
     try:
         response = s.request("POST", url_login, data=payload, headers=headers)
-        download("2022-11-28")
+        download("2022-10-03")
     except requests.exceptions.ConnectionError:
         login()
 
@@ -668,7 +668,7 @@ def upload_file_library(nome_arquivo, header):
 
 def share_point_request():
     login()
-    buscar_artigo(novo_dicionario(), "2022-11-28")
+    buscar_artigo(novo_dicionario(), "2022-10-03")
 
     app = PublicClientApplication(
         client_id,
@@ -738,11 +738,9 @@ def share_point_request():
             for parametro in parametros_busca[item]:
                 qtd = len(parametros_busca[item])
                 contador += 1
-                filtro = str(parametro).replace(')|(', ' ou ').replace(')(.*?', '...').replace('(', '').replace(')', '').replace('|', ' ou ').replace("['", "").replace("[<]', '", " - ").replace("']", "").replace("[ ]", "___")
+                filtro = str(parametro).replace(')|(', ' ou ').replace(')(.*?', ' ... ').replace('(', '').replace(')', '').replace('|', ' ou ').replace("['", "").replace("[<]', '", " - ").replace("']", "").replace("[ ]", "___")
                 filtros = filtros + str(contador) + "- " + filtro + "." + "\n"
-                #if qtd == contador:
-                #    print(filtros)
-            #print(filtros)
+
             # Concatena o texto de um conjunto de arquivos xml que estão no formato xxx_xxxxxxxx_xxxxxxxx-x.xml:
             lista_arquivo_extenso = list()
             texto_conteudo = ""
@@ -884,6 +882,34 @@ def share_point_request():
                     and ('DO3', pub_name_secao) and ementa == '':
                 paragrafos = bs_texto_lxml.find_all('p')
                 ementa = str(paragrafos[2].get_text())  # pega o primeiro parágrafo do texto que fica no índice 2
+            # Ementas do Bccorreio (Portarias):
+            if re.findall("DO2", pub_name_secao) and ementa == '' \
+                and re.findall("PORTARIA Nº", titulo, re.IGNORECASE) \
+                    and re.findall("Banco Central", escopo, re.IGNORECASE):
+                if re.findall("Fica (designado)|(designada)", texto_conteudo, re.IGNORECASE):
+                    if not re.findall("Fica (dispensado)|(dispesada)", texto_conteudo, re.IGNORECASE):
+                        if not re.findall("para substituir o Presidente", texto_conteudo, re.IGNORECASE):
+                            inicio_texto = texto_conteudo.find("resolve")
+                            qtd_art = texto_conteudo[inicio_texto:].count("Art.")
+                            if qtd_art == 2: # irá substituir só um
+                                inicio = texto_conteudo.find("para substituir")
+                                fim = inicio + texto_conteudo[inicio:].find(",")
+                                ementa = texto_conteudo[inicio:fim].replace("para substituir", "Designa substituto para") + "."
+                            else:
+                                inicio = texto_conteudo.find("para substituir")
+                                fim = inicio + texto_conteudo[inicio:].find(",")
+                                ementa = texto_conteudo[inicio:fim].replace("para substituir", "Designa substitutos para") + "."
+                        if re.findall("(Ficam designados)(.*?para representar)", texto_conteudo, re.IGNORECASE):
+                            pass
+                        else:
+                            inicio_texto = texto_conteudo.find("Fica designado")
+                            inicio_cargo = inicio_texto + texto_conteudo[inicio_texto:].find(",")
+                            fim_cargo = inicio_cargo + texto_conteudo[inicio_cargo + 1:].find(",")
+                            cargo_completo = texto_conteudo[inicio_cargo:fim_cargo].split(" ")
+                            ementa = "Designa " + cargo_completo[1] + " para substituir o Presidente."
+                    else:
+                        if re.findall("(servidor)|(servidora)", texto_conteudo, re.IGNORECASE):
+                            ementa = "Dispensa e designa titulares da função comissionada."
 
             print(f'********* {item} *********')
 
@@ -904,7 +930,7 @@ def share_point_request():
             dat_final = dat + "T23:59:59Z"
 
             r1 = requests.get(
-                f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items?$filter=(Title eq '{titulo}')and(Data ge '{dat_inicial}')and(Data le '{dat_final}')",
+                f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items?$filter=(Title eq '{titulo}')and(DataPublica_x00e7__x00e3_o ge '{dat_inicial}')and(DataPublica_x00e7__x00e3_o le '{dat_final}')",
                 headers=headers)
             # print(r1.content)
             dado_item = r1.json()['d']['results']
