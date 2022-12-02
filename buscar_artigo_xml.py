@@ -81,7 +81,7 @@ def data_anterior_util(data=data_completa):
 
 
 def download(data=data_completa):
-    data_anterior = data_anterior_util("2022-10-03")
+    data_anterior = data_anterior_util()
     if s.cookies.get('inlabs_session_cookie'):
         cookie = s.cookies.get('inlabs_session_cookie')
     else:
@@ -115,7 +115,8 @@ def download(data=data_completa):
 #                        "Ministério da Economia",
 #                        "Atos do Poder Legislativo",
 #                        "Atos do Poder Executivo",
-#                        "Controladoria-Geral da União"],
+#                        "Controladoria-Geral da União",
+#                        "Gabinete do Ministro"],
 #              "Titulo": ["Resolução Coremec",
 #                         "([ ]CMN[ ])|([ ]CMN[0-9])",
 #                         "PORTARIA SETO",
@@ -244,7 +245,7 @@ def novo_dicionario():
 
 
 def buscar_artigo(dicionario, data=data_completa):
-    data_anterior = data_anterior_util("2022-10-03")
+    data_anterior = data_anterior_util()
     for dou_secao in tipo_dou.split(' '):
         if dou_secao == 'DO1E' or dou_secao == 'DO2E' or dou_secao == 'DO3E':
             data = str(data_anterior)
@@ -311,7 +312,8 @@ def buscar_artigo(dicionario, data=data_completa):
                             and not re.findall("Turismo", ementa, re.IGNORECASE):
                         nova_lista.append(file)
                     if True in np.isin(dicionario['Escopo'][9:fim_dict], escopo.split('/')):
-                        nova_lista.append(file)
+                        if False in np.isin("Ministério da Defesa", escopo.split('/')):
+                            nova_lista.append(file)
             # Arquivos encontrados pelo escopo ficam armazenados na nova_lista e as buscas abaixo são feitas somente neles:
             for arq in nova_lista:
                 lista_parametros = list()
@@ -633,7 +635,7 @@ def buscar_artigo(dicionario, data=data_completa):
 def login():
     try:
         response = s.request("POST", url_login, data=payload, headers=headers)
-        download("2022-10-03")
+        download()
     except requests.exceptions.ConnectionError:
         login()
 
@@ -668,7 +670,7 @@ def upload_file_library(nome_arquivo, header):
 
 def share_point_request():
     login()
-    buscar_artigo(novo_dicionario(), "2022-10-03")
+    buscar_artigo(novo_dicionario())
 
     app = PublicClientApplication(
         client_id,
