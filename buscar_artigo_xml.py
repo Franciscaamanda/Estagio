@@ -82,7 +82,7 @@ def data_anterior_util(data=data_completa):
 
 
 def download(data=data_completa):
-    data_anterior = data_anterior_util("2022-10-11")
+    data_anterior = data_anterior_util()
     if s.cookies.get('inlabs_session_cookie'):
         cookie = s.cookies.get('inlabs_session_cookie')
     else:
@@ -246,7 +246,7 @@ def novo_dicionario():
 
 
 def buscar_artigo(dicionario, data=data_completa):
-    data_anterior = data_anterior_util("2022-10-11")
+    data_anterior = data_anterior_util()
     for dou_secao in tipo_dou.split(' '):
         if dou_secao == 'DO1E' or dou_secao == 'DO2E' or dou_secao == 'DO3E':
             data = str(data_anterior)
@@ -361,8 +361,16 @@ def buscar_artigo(dicionario, data=data_completa):
                                     lista_parametros.append(item)
                                 if arq not in artigos_encontrados:
                                     artigos_encontrados.append(arq)
-                        if len(dicionario['Título']) > 6:
-                            if item in dicionario['Título'][6:]:
+                        if item in dicionario['Título'][6]:
+                            if re.findall(item, titulo, re.IGNORECASE) \
+                                    and re.findall("Banco Central", texto, re.IGNORECASE):
+                                print(titulo + " --- " + arq)
+                                if item not in lista_parametros:
+                                    lista_parametros.append(item)
+                                if arq not in artigos_encontrados:
+                                    artigos_encontrados.append(arq)
+                        if len(dicionario['Título']) > 7:
+                            if item in dicionario['Título'][7:]:
                                 if re.findall(item, titulo, re.IGNORECASE):
                                     print(titulo + " --- " + arq)
                                     if item not in lista_parametros:
@@ -636,7 +644,7 @@ def buscar_artigo(dicionario, data=data_completa):
 def login():
     try:
         response = s.request("POST", url_login, data=payload, headers=headers)
-        download("2022-10-11")
+        download()
     except requests.exceptions.ConnectionError:
         login()
 
@@ -669,19 +677,19 @@ def upload_file_library(nome_arquivo, header):
     return link
 
 
-def link_artigo_diario():
-    headers = {
+def link_artigo_diario(data_pub, n_secao, escopo_principal, titulo):
+    header_link = {
         "Accept": "application/json"
     }
-    headers2 = {
+    header_link2 = {
         "Content-Type": "application/x-www-form-urlencoded",
         "Accept": "text/xml,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
     }
-    r = requests.get(
-        f"https://www.in.gov.br/leiturajornal?data=24-11-2022&secao=DO2",
-        headers=headers)
-    print(r.status_code)
-    html_base = BeautifulSoup(r.text, 'lxml')
+    r_link = requests.get(
+        f"https://www.in.gov.br/leiturajornal?data={data_pub}&secao={n_secao}",
+        headers=header_link)
+    #print(r_link.status_code)
+    html_base = BeautifulSoup(r_link.text, 'lxml')
     script = html_base.find('script', {'id': 'params'})
     texto_do_script = script.string
     dados = json.loads(texto_do_script)
@@ -689,19 +697,19 @@ def link_artigo_diario():
 
     for dado in lista:
         link = "https://www.in.gov.br/web/dou/-/"
-        if "Presidência da República" in dado['hierarchyStr']:
-            print(dado)
+        if escopo_principal in dado['hierarchyStr'] and re.findall(dado['title'], titulo, re.IGNORECASE):
+            #print(dado)
             cod_link = link + dado['urlTitle']
-            print(cod_link)
-    r2 = requests.get("https://www.in.gov.br/web/dou/-/despacho-do-presidente-da-republica-435238326", headers=headers2)
-    html_pg = BeautifulSoup(r2.text, 'html.parser')
-    texto = html_pg.find(class_='texto-dou')
-    print(texto.text.replace('\n', ' ').replace(" ", ''))
+            return cod_link
+    #r2_link = requests.get("https://www.in.gov.br/web/dou/-/despacho-do-presidente-da-republica-435238326", headers=header_link2)
+    #html_pg = BeautifulSoup(r2_link.text, 'html.parser')
+    #texto = html_pg.find(class_='texto-dou')
+    #print(texto.text.replace('\n', ' ').replace(" ", ''))
 
 
 def share_point_request():
     login()
-    buscar_artigo(novo_dicionario(), "2022-10-11")
+    buscar_artigo(novo_dicionario())
 
     app = PublicClientApplication(
         client_id,
@@ -752,6 +760,7 @@ def share_point_request():
             ano_pub = data_publicacao[2]
             data_utc = datetime.datetime.utcnow().replace(int(ano_pub), int(mes_pub), int(dia_pub))
             data_triagem = datetime.datetime.now()
+            data_pub = bs_texto.find('article').get('pubDate').replace("/", "-")
 
             # Para assinatura, muda o xml para lxml:
             bs_texto_lxml = BeautifulSoup(conteudo_xml, 'lxml')
@@ -798,7 +807,7 @@ def share_point_request():
                 conteudo = bs_texto.find('Texto').get_text()
                 # Limpa o texto ao eliminar as tags e os atributos:
                 texto_conteudo = re.sub('<[^>]+?>', ' ', conteudo).replace('"', '\\"')
-            print(texto_conteudo.replace(" ", ''))
+            #print(texto_conteudo.replace(" ", ''))
             if re.findall('-', item):
                 numero = item.find('-')
                 fim = item.find('.xml')
@@ -879,9 +888,10 @@ def share_point_request():
                 ementa = titulo[inicio:fim_texto] + "."
             # Ementa de extrato da seção 3:
             if re.findall("Extrato de Acordo", titulo, re.IGNORECASE):
-                inicio_texto = texto_conteudo.find('Acordo')
-                fim_texto = texto_conteudo[inicio_texto:].find('Objeto') + inicio_texto
-                ementa = texto_conteudo[inicio_texto:fim_texto]
+                texto_limpo = re.sub('( CNPJ(.*?[0-9]{2}[\.][0-9]{3}[\.][0-9]{3}[/][0-9]{4}[-][0-9]{2}))', '', texto_conteudo)
+                inicio_texto = texto_limpo.find('Acordo de Cooperação')
+                fim_texto = texto_limpo[inicio_texto:].find('.') + inicio_texto
+                ementa = texto_limpo[inicio_texto:fim_texto].replace(',', '') + "."
             elif re.findall("Extrato de Convênio", titulo, re.IGNORECASE):
                 inicio_texto = texto_conteudo.find('Termo')
                 fim_texto = texto_conteudo[inicio_texto:].find('Objeto') + inicio_texto
@@ -919,9 +929,9 @@ def share_point_request():
             if re.findall("DO2", pub_name_secao) and ementa == '' \
                 and re.findall("PORTARIA Nº", titulo, re.IGNORECASE) \
                     and re.findall("Banco Central", escopo, re.IGNORECASE):
-                if re.findall("Fica (designado)|(designada)", texto_conteudo, re.IGNORECASE) \
+                if re.findall("(Fica (designado)|(designada))|(Designar)", texto_conteudo, re.IGNORECASE) \
                         and not re.findall("Coremec", texto_conteudo, re.IGNORECASE):
-                    if not re.findall("Fica (dispensado)|(dispesada)", texto_conteudo, re.IGNORECASE):
+                    if not re.findall("(Fica (dispensado)|(dispesada))|(Dispensar)", texto_conteudo, re.IGNORECASE):
                         if not re.findall("para substituir o Presidente", texto_conteudo, re.IGNORECASE):
                             inicio_texto = texto_conteudo.find("resolve")
                             qtd_art = texto_conteudo[inicio_texto:].count("Art.")
@@ -947,6 +957,11 @@ def share_point_request():
                     ementa = "Designa membros para o Comitê de Regulação e Fiscalização dos Mercados Financeiro, de Capitais, de Seguros, de Previdência e Capitalização (Coremec)."
                 if re.findall("(É aplicada ao servidor(.*?pena de demissão))|(É aplicada à servidora(.*?pena de demissão))", texto_conteudo, re.IGNORECASE):
                     ementa = "Demissão de servidor."
+
+            #Link do artigo no diário oficial:
+            title_complete = bs_texto.find('Identifica').get_text()
+            #print(title_complete)
+            link_article = link_artigo_diario(data_pub, pub_name_secao, escopo, title_complete)
 
             print(f'********* {item} *********')
 
@@ -1010,8 +1025,6 @@ def share_point_request():
 
             link_arquivo = upload_file_library(item, headers)
 
-            #link_artigo_diario()
-
             data = '''{ "__metadata": {"type": "SP.Data.ArtigosListItem"},
                 "Title": "%s",
                 "Escopo": "%s",
@@ -1030,30 +1043,31 @@ def share_point_request():
                 "DataPublica_x00e7__x00e3_o": "%s",
                 "Crit_x00e9_rioBusca": "%s"
             }''' % (titulo, escopo, ementa, texto_conteudo, nova_assinatura, pub_name_secao, edicao, data_triagem,
-                    subescopo, link_artigo, is_update, item, link_arquivo, data_utc, filtros)
+                    subescopo, link_article, is_update, item, link_arquivo, data_utc, filtros)
 
             if id == 0:  # não encontrou nenhum item na data de hoje com o título do arquivo encontrado
                 # Requisição para inserir itens na lista do Sharepoint:
-                #request_post = requests.post(
-                #    "https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
-                #    headers=headers, data=data.encode('utf-8', 'ignore'))
-                #print(request_post.status_code)
+                request_post = requests.post(
+                    "https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
+                    headers=headers, data=data.encode('utf-8', 'ignore'))
+                print(request_post.status_code)
                 print("Artigo inserido na lista do sharepoint!")
                 # print(request_post.content)
             else:
                 # Requisição para atualizar itens na lista do Sharepoint:
-                #r_atualiza = requests.post(
-                #    f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items({id})",
-                #    headers=header_atualiza, data=data.encode('utf-8', 'ignore'))
-                #print(r_atualiza.status_code)
+                r_atualiza = requests.post(
+                    f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items({id})",
+                    headers=header_atualiza, data=data.encode('utf-8', 'ignore'))
+                print(r_atualiza.status_code)
                 print("Artigo já existe na lista do sharepoint!")
 
 
 # login()
 # buscar_artigo(dicionario)
-#share_point_request()
+share_point_request()
 # data_anterior_util("2022-03-03")
 # feriados()
 # print(novo_dicionario())
 #upload_file_library()
-link_artigo_diario()
+#link_artigo_diario("05-12-2022", "DO2", "Banco Central do Brasil", "PORTARIA Nº 115.628, DE 2 DE DEZEMBRO DE 2022")
+#print(novo_dicionario())
