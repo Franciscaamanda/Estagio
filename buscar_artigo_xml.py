@@ -8,6 +8,7 @@ import numpy as np
 import requests
 from msal import PublicClientApplication
 import holidays
+import json
 
 login = ""
 senha = ""
@@ -81,7 +82,7 @@ def data_anterior_util(data=data_completa):
 
 
 def download(data=data_completa):
-    data_anterior = data_anterior_util()
+    data_anterior = data_anterior_util("2022-10-11")
     if s.cookies.get('inlabs_session_cookie'):
         cookie = s.cookies.get('inlabs_session_cookie')
     else:
@@ -245,7 +246,7 @@ def novo_dicionario():
 
 
 def buscar_artigo(dicionario, data=data_completa):
-    data_anterior = data_anterior_util()
+    data_anterior = data_anterior_util("2022-10-11")
     for dou_secao in tipo_dou.split(' '):
         if dou_secao == 'DO1E' or dou_secao == 'DO2E' or dou_secao == 'DO3E':
             data = str(data_anterior)
@@ -635,7 +636,7 @@ def buscar_artigo(dicionario, data=data_completa):
 def login():
     try:
         response = s.request("POST", url_login, data=payload, headers=headers)
-        download()
+        download("2022-10-11")
     except requests.exceptions.ConnectionError:
         login()
 
@@ -668,9 +669,39 @@ def upload_file_library(nome_arquivo, header):
     return link
 
 
+def link_artigo_diario():
+    headers = {
+        "Accept": "application/json"
+    }
+    headers2 = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "text/xml,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+    }
+    r = requests.get(
+        f"https://www.in.gov.br/leiturajornal?data=24-11-2022&secao=DO2",
+        headers=headers)
+    print(r.status_code)
+    html_base = BeautifulSoup(r.text, 'lxml')
+    script = html_base.find('script', {'id': 'params'})
+    texto_do_script = script.string
+    dados = json.loads(texto_do_script)
+    lista = dados['jsonArray']
+
+    for dado in lista:
+        link = "https://www.in.gov.br/web/dou/-/"
+        if "Presidência da República" in dado['hierarchyStr']:
+            print(dado)
+            cod_link = link + dado['urlTitle']
+            print(cod_link)
+    r2 = requests.get("https://www.in.gov.br/web/dou/-/despacho-do-presidente-da-republica-435238326", headers=headers2)
+    html_pg = BeautifulSoup(r2.text, 'html.parser')
+    texto = html_pg.find(class_='texto-dou')
+    print(texto.text.replace('\n', ' ').replace(" ", ''))
+
+
 def share_point_request():
     login()
-    buscar_artigo(novo_dicionario())
+    buscar_artigo(novo_dicionario(), "2022-10-11")
 
     app = PublicClientApplication(
         client_id,
@@ -767,7 +798,7 @@ def share_point_request():
                 conteudo = bs_texto.find('Texto').get_text()
                 # Limpa o texto ao eliminar as tags e os atributos:
                 texto_conteudo = re.sub('<[^>]+?>', ' ', conteudo).replace('"', '\\"')
-
+            print(texto_conteudo.replace(" ", ''))
             if re.findall('-', item):
                 numero = item.find('-')
                 fim = item.find('.xml')
@@ -888,7 +919,8 @@ def share_point_request():
             if re.findall("DO2", pub_name_secao) and ementa == '' \
                 and re.findall("PORTARIA Nº", titulo, re.IGNORECASE) \
                     and re.findall("Banco Central", escopo, re.IGNORECASE):
-                if re.findall("Fica (designado)|(designada)", texto_conteudo, re.IGNORECASE):
+                if re.findall("Fica (designado)|(designada)", texto_conteudo, re.IGNORECASE) \
+                        and not re.findall("Coremec", texto_conteudo, re.IGNORECASE):
                     if not re.findall("Fica (dispensado)|(dispesada)", texto_conteudo, re.IGNORECASE):
                         if not re.findall("para substituir o Presidente", texto_conteudo, re.IGNORECASE):
                             inicio_texto = texto_conteudo.find("resolve")
@@ -901,8 +933,6 @@ def share_point_request():
                                 inicio = texto_conteudo.find("para substituir")
                                 fim = inicio + texto_conteudo[inicio:].find(",")
                                 ementa = texto_conteudo[inicio:fim].replace("para substituir", "Designa substitutos para") + "."
-                        if re.findall("(Ficam designados)(.*?para representar)", texto_conteudo, re.IGNORECASE):
-                            pass
                         else:
                             inicio_texto = texto_conteudo.find("Fica designado")
                             inicio_cargo = inicio_texto + texto_conteudo[inicio_texto:].find(",")
@@ -912,6 +942,11 @@ def share_point_request():
                     else:
                         if re.findall("(servidor)|(servidora)", texto_conteudo, re.IGNORECASE):
                             ementa = "Dispensa e designa titulares da função comissionada."
+                if re.findall("Coremec", texto_conteudo, re.IGNORECASE) \
+                        and re.findall("(Ficam designados(.*?para representar))|(Fica designado(.*?para representar))", texto_conteudo, re.IGNORECASE):
+                    ementa = "Designa membros para o Comitê de Regulação e Fiscalização dos Mercados Financeiro, de Capitais, de Seguros, de Previdência e Capitalização (Coremec)."
+                if re.findall("(É aplicada ao servidor(.*?pena de demissão))|(É aplicada à servidora(.*?pena de demissão))", texto_conteudo, re.IGNORECASE):
+                    ementa = "Demissão de servidor."
 
             print(f'********* {item} *********')
 
@@ -975,6 +1010,8 @@ def share_point_request():
 
             link_arquivo = upload_file_library(item, headers)
 
+            #link_artigo_diario()
+
             data = '''{ "__metadata": {"type": "SP.Data.ArtigosListItem"},
                 "Title": "%s",
                 "Escopo": "%s",
@@ -997,25 +1034,26 @@ def share_point_request():
 
             if id == 0:  # não encontrou nenhum item na data de hoje com o título do arquivo encontrado
                 # Requisição para inserir itens na lista do Sharepoint:
-                request_post = requests.post(
-                    "https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
-                    headers=headers, data=data.encode('utf-8', 'ignore'))
-                print(request_post.status_code)
+                #request_post = requests.post(
+                #    "https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items",
+                #    headers=headers, data=data.encode('utf-8', 'ignore'))
+                #print(request_post.status_code)
                 print("Artigo inserido na lista do sharepoint!")
                 # print(request_post.content)
             else:
                 # Requisição para atualizar itens na lista do Sharepoint:
-                r_atualiza = requests.post(
-                    f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items({id})",
-                    headers=header_atualiza, data=data.encode('utf-8', 'ignore'))
-                print(r_atualiza.status_code)
+                #r_atualiza = requests.post(
+                #    f"https://bacen.sharepoint.com/sites/sumula/_api/web/lists/GetByTitle('Artigos')/items({id})",
+                #    headers=header_atualiza, data=data.encode('utf-8', 'ignore'))
+                #print(r_atualiza.status_code)
                 print("Artigo já existe na lista do sharepoint!")
 
 
 # login()
 # buscar_artigo(dicionario)
-share_point_request()
+#share_point_request()
 # data_anterior_util("2022-03-03")
 # feriados()
 # print(novo_dicionario())
 #upload_file_library()
+link_artigo_diario()
