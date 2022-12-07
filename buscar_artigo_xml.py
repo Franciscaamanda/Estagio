@@ -82,7 +82,7 @@ def data_anterior_util(data=data_completa):
 
 
 def download(data=data_completa):
-    data_anterior = data_anterior_util()
+    data_anterior = data_anterior_util("2022-11-10")
     if s.cookies.get('inlabs_session_cookie'):
         cookie = s.cookies.get('inlabs_session_cookie')
     else:
@@ -167,7 +167,7 @@ def download(data=data_completa):
 #                           "cargo de Secretário-Executivo do Ministério da Economia",
 #                           "cargo de Secretário de Política Econômica",
 #                           "cargo de Secretário do Tesouro Nacional",
-#                           "cargo de Secretário do Tesouro e Orçamento do Ministério da Economia",
+#                           "cargo de Secretário Especial do Tesouro e Orçamento do Ministério da Economia",
 #                           "cargo de Presidente da casa da Moeda do Brasil",
 #                           "cargo de Diretor da Comissão de Valores Mobiliários",
 #                           "cargo de Superintendente da Superintendência de Seguros Privados",
@@ -246,7 +246,7 @@ def novo_dicionario():
 
 
 def buscar_artigo(dicionario, data=data_completa):
-    data_anterior = data_anterior_util()
+    data_anterior = data_anterior_util("2022-11-10")
     for dou_secao in tipo_dou.split(' '):
         if dou_secao == 'DO1E' or dou_secao == 'DO2E' or dou_secao == 'DO3E':
             data = str(data_anterior)
@@ -457,7 +457,8 @@ def buscar_artigo(dicionario, data=data_completa):
                         if item in dicionario['Ementa'][10] or item in dicionario['Ementa'][15]:
                             if re.findall(item, ementa, re.IGNORECASE) \
                                     and not re.findall('Transforma a Autoridade Nacional de Proteção de Dados \(ANPD\) em autarquia', ementa, re.IGNORECASE) \
-                                    and not re.findall("((Proteção de Dados Pessoais)(.*?no âmbito do Ministério da Economia))", ementa, re.IGNORECASE):
+                                    and not re.findall("((Proteção de Dados Pessoais)(.*?no âmbito do Ministério da Economia))", ementa, re.IGNORECASE) \
+                                    and not re.findall("Resolução CCGD", titulo, re.IGNORECASE):
                                 print(ementa + " --- " + arq)
                                 if item not in lista_parametros:
                                     lista_parametros.append(item)
@@ -644,7 +645,7 @@ def buscar_artigo(dicionario, data=data_completa):
 def login():
     try:
         response = s.request("POST", url_login, data=payload, headers=headers)
-        download()
+        download("2022-11-10")
     except requests.exceptions.ConnectionError:
         login()
 
@@ -653,7 +654,6 @@ def upload_file_library(nome_arquivo, header):
     #Requisição para fazer upload dos arquivos para a biblioteca de documentos:
     arquivo = open(nome_arquivo, "rb")
     url_libray = f"https://bacen.sharepoint.com/sites/sumula/_api/web/GetFolderByServerRelativeUrl('Arquivos do inlabs')/Files/add(url='{nome_arquivo}',overwrite=true)"
-    #response = requests.post(url_libray, headers=header, files={"form_field_name": arquivo})
     response = requests.post(url_libray, headers=header, data=arquivo)
     if response.status_code == 200:
         print("Arquivo inserido na biblioteca de documentos!")
@@ -665,19 +665,16 @@ def upload_file_library(nome_arquivo, header):
     #print(response1.status_code)
     resposta = response1.json()['d']['results']
     id_arquivo = resposta[0]['ID']
-    #print(id_arquivo)
 
     #Requisição para obter o link de cada arquivo na biblioteca:
     url_link = f"https://bacen.sharepoint.com/sites/sumula/_api/web/Lists/getByTitle('Arquivos do inlabs')/items?$select=EncodedAbsUrl&$filter=Id eq {id_arquivo}"
     response2 = requests.get(url_link, headers=header)
-    #print(response2.status_code)
     resposta_link = response2.json()['d']['results']
     link = resposta_link[0]['EncodedAbsUrl']
-    #print(link)
     return link
 
 
-def link_artigo_diario(data_pub, n_secao, escopo_principal, titulo):
+def link_artigo_diario(data_pub, n_secao, escopo_principal, titulo, texto):
     header_link = {
         "Accept": "application/json"
     }
@@ -688,7 +685,7 @@ def link_artigo_diario(data_pub, n_secao, escopo_principal, titulo):
     r_link = requests.get(
         f"https://www.in.gov.br/leiturajornal?data={data_pub}&secao={n_secao}",
         headers=header_link)
-    #print(r_link.status_code)
+    print(r_link.status_code)
     html_base = BeautifulSoup(r_link.text, 'lxml')
     script = html_base.find('script', {'id': 'params'})
     texto_do_script = script.string
@@ -697,9 +694,21 @@ def link_artigo_diario(data_pub, n_secao, escopo_principal, titulo):
 
     for dado in lista:
         link = "https://www.in.gov.br/web/dou/-/"
-        if escopo_principal in dado['hierarchyStr'] and re.findall(dado['title'], titulo, re.IGNORECASE):
+        if escopo_principal in dado['hierarchyStr'] and re.findall(dado['title'], titulo, re.IGNORECASE) \
+                and not re.findall("Despacho", titulo, re.IGNORECASE):
+            print(dado)
+            cod_link = link + dado['urlTitle']
+            print(cod_link)
+            return cod_link
+        #elif re.findall("Despacho", titulo, re.IGNORECASE) and escopo_principal in dado['hierarchyStr'] \
+        #        and re.findall(dado['title'], titulo, re.IGNORECASE) \
+        #        and re.findall(str(dado['content']).replace(' ', '').replace('(', '').replace(')', ''), texto, re.IGNORECASE):
+        elif re.findall("Despacho", titulo, re.IGNORECASE) \
+                and re.findall(str(dado['content']).replace(' ', '').replace('(', '').replace(')', ''), texto, re.IGNORECASE):
             #print(dado)
             cod_link = link + dado['urlTitle']
+            print(cod_link)
+            #print(str(dado['content']).replace(' ', ''))
             return cod_link
     #r2_link = requests.get("https://www.in.gov.br/web/dou/-/despacho-do-presidente-da-republica-435238326", headers=header_link2)
     #html_pg = BeautifulSoup(r2_link.text, 'html.parser')
@@ -709,7 +718,7 @@ def link_artigo_diario(data_pub, n_secao, escopo_principal, titulo):
 
 def share_point_request():
     login()
-    buscar_artigo(novo_dicionario())
+    buscar_artigo(novo_dicionario(), "2022-11-10")
 
     app = PublicClientApplication(
         client_id,
@@ -753,7 +762,6 @@ def share_point_request():
 
             pub_name_secao = bs_texto.find('article').get('pubName')
             edicao = bs_texto.find('article').get('editionNumber')
-            link_artigo = bs_texto.find('article').get('pdfPage')
             data_publicacao = bs_texto.find('article').get('pubDate').split("/")
             dia_pub = data_publicacao[0]
             mes_pub = data_publicacao[1]
@@ -957,11 +965,14 @@ def share_point_request():
                     ementa = "Designa membros para o Comitê de Regulação e Fiscalização dos Mercados Financeiro, de Capitais, de Seguros, de Previdência e Capitalização (Coremec)."
                 if re.findall("(É aplicada ao servidor(.*?pena de demissão))|(É aplicada à servidora(.*?pena de demissão))", texto_conteudo, re.IGNORECASE):
                     ementa = "Demissão de servidor."
+                if re.findall("(Fica removido de ofício)|(Fica removida de ofício)", texto_conteudo, re.IGNORECASE) \
+                        and re.findall("servidor", texto_conteudo, re.IGNORECASE):
+                    ementa = "Autoriza remoção de ofício de servidor."
 
             #Link do artigo no diário oficial:
             title_complete = bs_texto.find('Identifica').get_text()
-            #print(title_complete)
-            link_article = link_artigo_diario(data_pub, pub_name_secao, escopo, title_complete)
+            link_artigo = link_artigo_diario(data_pub, pub_name_secao, escopo, title_complete.replace('  ', ' '), texto_conteudo.replace(' ', '').replace('(', '').replace(')', ''))
+            #link_artigo = bs_texto.find('article').get('pdfPage')
 
             print(f'********* {item} *********')
 
@@ -1043,7 +1054,7 @@ def share_point_request():
                 "DataPublica_x00e7__x00e3_o": "%s",
                 "Crit_x00e9_rioBusca": "%s"
             }''' % (titulo, escopo, ementa, texto_conteudo, nova_assinatura, pub_name_secao, edicao, data_triagem,
-                    subescopo, link_article, is_update, item, link_arquivo, data_utc, filtros)
+                    subescopo, link_artigo, is_update, item, link_arquivo, data_utc, filtros)
 
             if id == 0:  # não encontrou nenhum item na data de hoje com o título do arquivo encontrado
                 # Requisição para inserir itens na lista do Sharepoint:
@@ -1069,5 +1080,5 @@ share_point_request()
 # feriados()
 # print(novo_dicionario())
 #upload_file_library()
-#link_artigo_diario("05-12-2022", "DO2", "Banco Central do Brasil", "PORTARIA Nº 115.628, DE 2 DE DEZEMBRO DE 2022")
+#link_artigo_diario("05-10-2022", "DO2", "Banco Central do Brasil", "DESPACHO DO PRESIDENTE DE 3 de outubro de 2022", "teste")
 #print(novo_dicionario())
