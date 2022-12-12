@@ -82,7 +82,7 @@ def data_anterior_util(data=data_completa):
 
 
 def download(data=data_completa):
-    data_anterior = data_anterior_util("2022-11-10")
+    data_anterior = data_anterior_util("2022-12-07")
     if s.cookies.get('inlabs_session_cookie'):
         cookie = s.cookies.get('inlabs_session_cookie')
     else:
@@ -246,7 +246,7 @@ def novo_dicionario():
 
 
 def buscar_artigo(dicionario, data=data_completa):
-    data_anterior = data_anterior_util("2022-11-10")
+    data_anterior = data_anterior_util("2022-12-07")
     for dou_secao in tipo_dou.split(' '):
         if dou_secao == 'DO1E' or dou_secao == 'DO2E' or dou_secao == 'DO3E':
             data = str(data_anterior)
@@ -391,10 +391,12 @@ def buscar_artigo(dicionario, data=data_completa):
                             padrao2 = "dos servidores públicos dos Estados, do Distrito Federal e dos Municípios"
                             # Se tiver "no âmbito" só aceitar se for sucedida de "do Banco Central"
                             padrao3 = "(no âmbito )(?!do Banco Central)"
+                            padrao4 = "(no âmbito )(?!do Regime Próprio de Previdência Social da União)"
                             if re.findall(item, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao1, ementa, re.IGNORECASE) \
                                     and not re.findall(padrao2, ementa, re.IGNORECASE) \
-                                    and not re.findall(padrao3, ementa, re.IGNORECASE):
+                                    and not (re.findall(padrao3, ementa, re.IGNORECASE) and
+                                        re.findall(padrao4, ementa, re.IGNORECASE)):
                                 print(ementa + " --- " + arq)
                                 if item not in lista_parametros:
                                     lista_parametros.append(item)
@@ -645,7 +647,7 @@ def buscar_artigo(dicionario, data=data_completa):
 def login():
     try:
         response = s.request("POST", url_login, data=payload, headers=headers)
-        download("2022-11-10")
+        download("2022-12-07")
     except requests.exceptions.ConnectionError:
         login()
 
@@ -657,12 +659,10 @@ def upload_file_library(nome_arquivo, header):
     response = requests.post(url_libray, headers=header, data=arquivo)
     if response.status_code == 200:
         print("Arquivo inserido na biblioteca de documentos!")
-    #print(response.status_code)
 
     #Requisição para obter o id de cada arquivo na biblioteca:
     url_titulo = f"https://bacen.sharepoint.com/sites/sumula/_api/web/Lists/getByTitle('Arquivos do inlabs')/items?$filter=Title eq '{nome_arquivo}'"
     response1 = requests.get(url_titulo, headers=header)
-    #print(response1.status_code)
     resposta = response1.json()['d']['results']
     id_arquivo = resposta[0]['ID']
 
@@ -678,14 +678,9 @@ def link_artigo_diario(data_pub, n_secao, escopo_principal, titulo, texto):
     header_link = {
         "Accept": "application/json"
     }
-    header_link2 = {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Accept": "text/xml,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-    }
     r_link = requests.get(
         f"https://www.in.gov.br/leiturajornal?data={data_pub}&secao={n_secao}",
         headers=header_link)
-    print(r_link.status_code)
     html_base = BeautifulSoup(r_link.text, 'lxml')
     script = html_base.find('script', {'id': 'params'})
     texto_do_script = script.string
@@ -696,29 +691,24 @@ def link_artigo_diario(data_pub, n_secao, escopo_principal, titulo, texto):
         link = "https://www.in.gov.br/web/dou/-/"
         if escopo_principal in dado['hierarchyStr'] and re.findall(dado['title'], titulo, re.IGNORECASE) \
                 and not re.findall("Despacho", titulo, re.IGNORECASE):
-            print(dado)
             cod_link = link + dado['urlTitle']
             print(cod_link)
             return cod_link
-        #elif re.findall("Despacho", titulo, re.IGNORECASE) and escopo_principal in dado['hierarchyStr'] \
-        #        and re.findall(dado['title'], titulo, re.IGNORECASE) \
-        #        and re.findall(str(dado['content']).replace(' ', '').replace('(', '').replace(')', ''), texto, re.IGNORECASE):
-        elif re.findall("Despacho", titulo, re.IGNORECASE) \
+        elif re.findall("Despacho", titulo, re.IGNORECASE) and escopo_principal in dado['hierarchyStr'] \
+                and re.findall(dado['title'], titulo, re.IGNORECASE) \
                 and re.findall(str(dado['content']).replace(' ', '').replace('(', '').replace(')', ''), texto, re.IGNORECASE):
+        #elif re.findall("Despacho", titulo, re.IGNORECASE) \
+        #        and re.findall(str(dado['content']).replace(' ', '').replace('(', '').replace(')', ''), texto, re.IGNORECASE):
             #print(dado)
             cod_link = link + dado['urlTitle']
             print(cod_link)
             #print(str(dado['content']).replace(' ', ''))
             return cod_link
-    #r2_link = requests.get("https://www.in.gov.br/web/dou/-/despacho-do-presidente-da-republica-435238326", headers=header_link2)
-    #html_pg = BeautifulSoup(r2_link.text, 'html.parser')
-    #texto = html_pg.find(class_='texto-dou')
-    #print(texto.text.replace('\n', ' ').replace(" ", ''))
 
 
 def share_point_request():
     login()
-    buscar_artigo(novo_dicionario(), "2022-11-10")
+    buscar_artigo(novo_dicionario(), "2022-12-07")
 
     app = PublicClientApplication(
         client_id,
@@ -968,6 +958,14 @@ def share_point_request():
                 if re.findall("(Fica removido de ofício)|(Fica removida de ofício)", texto_conteudo, re.IGNORECASE) \
                         and re.findall("servidor", texto_conteudo, re.IGNORECASE):
                     ementa = "Autoriza remoção de ofício de servidor."
+                if re.findall("(Fica alterado(.*?Portaria nº))", texto_conteudo, re.IGNORECASE):
+                    inicio_texto = texto_conteudo.find("Fica alterado")
+                    print(texto_conteudo[inicio_texto:])
+                    inicio = texto_conteudo[inicio_texto:].find('Portaria') + inicio_texto
+                    print(inicio)
+                    ano = re.search('[0-9]{4}', texto_conteudo[inicio:])
+                    fim_texto = ano.span()[0] + inicio + 4
+                    ementa = "Altera a " + texto_conteudo[inicio:fim_texto].replace(',', '') + "."
 
             #Link do artigo no diário oficial:
             title_complete = bs_texto.find('Identifica').get_text()
@@ -1034,6 +1032,17 @@ def share_point_request():
             if id != 0:  # nova inserção
                 is_update = True
 
+            #Verifica se já o artigo já foi incluído na súmula:
+            incluido_sumula = False
+            data_hoje = str(data_triagem)[0:10].split('-')
+            data_hj = data_hoje[2] + "-" + data_hoje[1] + "-" + data_hoje[0]
+            if str(data_pub) != data_hj \
+                    and (pub_name_secao == 'DO1' or pub_name_secao == 'DO2' or pub_name_secao == 'DO3'):
+                incluido_sumula = True
+            if str(data_pub) != data_anterior_util(str(data_triagem)[0:10]) \
+                    and (pub_name_secao == 'DO1E' or pub_name_secao == 'DO2E' or pub_name_secao == 'DO3E'):
+                incluido_sumula = True
+
             link_arquivo = upload_file_library(item, headers)
 
             data = '''{ "__metadata": {"type": "SP.Data.ArtigosListItem"},
@@ -1052,9 +1061,10 @@ def share_point_request():
                     "Description": "%s",
                     "Url": "%s"},
                 "DataPublica_x00e7__x00e3_o": "%s",
-                "Crit_x00e9_rioBusca": "%s"
+                "Crit_x00e9_rioBusca": "%s",
+                "Inclu_x00ed_doNaS_x00fa_mula": "%s"
             }''' % (titulo, escopo, ementa, texto_conteudo, nova_assinatura, pub_name_secao, edicao, data_triagem,
-                    subescopo, link_artigo, is_update, item, link_arquivo, data_utc, filtros)
+                    subescopo, link_artigo, is_update, item, link_arquivo, data_utc, filtros, incluido_sumula)
 
             if id == 0:  # não encontrou nenhum item na data de hoje com o título do arquivo encontrado
                 # Requisição para inserir itens na lista do Sharepoint:
